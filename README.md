@@ -1,7 +1,7 @@
 # Frontend
 
 <div align="center">
-  <img src="/images/logo/hortaShop.png" alt="logo" style="height: 5cm;">
+  <img src="/assets/images/logo/hortaShop.png" alt="logo" style="height: 5cm;">
 </div>
 
 - Índice
