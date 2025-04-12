@@ -1,50 +1,106 @@
-# Welcome to your Expo app 👋
+# Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<div align="center">
+  <img src="/images/logo/hortaShop.png" alt="logo" style="height: 5cm;">
+</div>
 
-## Get started
+- Índice
+  - [Pré-requisitos](#pré-requisitos)
+  - [Configuração do Projeto](#configuração-do-projeto)
+    - [1. Clone o repositório](#1-clone-o-repositório)
+    - [2. Inicialize o Git Flow](#2-inicialize-o-git-flow)
+    - [3. Instale as dependências](#3-instale-as-dependências)
+    - [4. Inicie o projeto](#4-inicie-o-projeto)
+  - [Fluxo de Trabalho com Git Flow](#fluxo-de-trabalho-com-git-flow)
+    - [1. Criar uma nova feature](#1-criar-uma-nova-feature)
+    - [2. Trabalhar na feature](#2-trabalhar-na-feature)
+    - [3. Finalizar a feature](#3-finalizar-a-feature)
 
-1. Install dependencies
 
+[Voltar ao README principal](https://github.com/HortaShop-PS)
+
+
+Este é o repositório do FrontEnd do projeto Hortashop, desenvolvido com [Expo](https://expo.dev) e [React Native](https://reactnative.dev/). Este guia irá ajudar a configurar o ambiente, rodar o projeto e seguir o fluxo de trabalho com Git Flow.
+
+## Pré-requisitos
+
+Antes de começar, certifique-se de ter os seguintes itens instalados:
+
+1. **Git**: [Instalar Git](https://git-scm.com/)
+2. **Node.js**: [Instalar Node.js](https://nodejs.org/) (recomendado: versão LTS)
+3. **Expo CLI**: Instale globalmente com o comando:
    ```bash
-   npm install
+   npm install -g expo-cli
    ```
 
-2. Start the app
+## Configuração do Projeto
 
-   ```bash
-    npx expo start
-   ```
+### 1. Clone o repositório
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Clone o repositório para sua máquina local:
 
 ```bash
-npm run reset-project
+git clone https://github.com/HortaShop-PS/FrontEnd.git
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Inicialize o Git Flow
 
-## Learn more
+Inicialize o Git Flow no repositório:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+git flow init
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Durante a inicialização, você pode aceitar as configurações padrão pressionando `Enter` para cada pergunta.
 
-## Join the community
+### 3. Instale as dependências
 
-Join our community of developers creating universal apps.
+Instale as dependências do projeto:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm install
+```
+
+### 4. Inicie o projeto
+
+Inicie o servidor de desenvolvimento do Expo:
+
+```bash
+npx expo start
+```
+
+No terminal, você verá opções para abrir o app em:
+
+- Pelo aplicativo Expo Go no seu celular: escaneie o QR code com a câmera do celular ou com o aplicativo Expo Go. Disponivel para Android e iOS.
+
+## Fluxo de Trabalho com Git Flow
+
+### 1. Criar uma nova feature
+
+Para começar a trabalhar em uma nova funcionalidade, crie uma branch de feature:
+
+```bash
+git flow feature start nome-da-feature
+```
+
+Isso criará uma nova branch baseada na branch `develop`.
+
+### 2. Trabalhar na feature
+
+Implemente as alterações necessárias no código. Lembre-se de fazer commits regularmente:
+
+```bash
+git add .
+git commit -m "Descrição do commit"
+```
+
+### 3. Finalizar a feature
+
+Quando terminar de implementar e testar a funcionalidade, finalize a branch de feature:
+
+```bash
+git flow feature finish nome-da-feature
+```
+
+Isso fará o merge da branch de feature na branch `develop` e deletará a branch de feature local.
+
