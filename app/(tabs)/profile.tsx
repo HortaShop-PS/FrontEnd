@@ -67,7 +67,6 @@ export default function ProfileScreen() {
                     <View style={styles.menuItemRow}>
                         <Ionicons name="log-out-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
                         <Text style={styles.menuItemText}>Sair</Text>
-                        <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                     </View>
                 </TouchableOpacity>
             </View>
