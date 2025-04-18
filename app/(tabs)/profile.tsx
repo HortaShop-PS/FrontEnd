@@ -1,8 +1,14 @@
 import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular } from "@expo-google-fonts/poppins";
 
 export default function ProfileScreen() {
+
+    let [fontsLoaded, error] = useFonts({
+        Poppins_600SemiBold,
+        Poppins_400Regular,
+    })
     const router = useRouter();
     return (
         <View style={styles.container}>
@@ -74,7 +80,7 @@ export default function ProfileScreen() {
     );
 }
 
-const SPACING = 16;
+const SPACING = 13;
 
 const styles = StyleSheet.create({
     container: {
@@ -82,13 +88,13 @@ const styles = StyleSheet.create({
         flexDirection: "column",
         paddingTop: SPACING * 4,
         paddingBottom: SPACING * 2,
-        backgroundColor: "#fff",
+        backgroundColor: "#F4F5F9",
     },
     containerUser: {
         justifyContent: "center",
         alignItems: "center",
         flexDirection: "column",
-        marginVertical: SPACING * 2,
+        marginVertical: SPACING,
     },
     containerCircle: {
         width: 100,
@@ -112,18 +118,20 @@ const styles = StyleSheet.create({
         marginVertical: SPACING / 2,
     },
     textUserName: {
-        fontSize: 25,
-        fontWeight: "bold",
+        fontSize: 15,
+        fontFamily: "Poppins_600SemiBold", 
         marginVertical: SPACING / 16,
     },
     textUserEmail: {
         fontSize: 12,
-        marginVertical: SPACING / 16,
+        color: "#868889",
+        fontFamily: "Poppins_400Regular", 
+        marginVertical: SPACING / 16, 
     },
     containerBottomSection: {
         justifyContent: "center",
         flexDirection: "column",
-        paddingHorizontal: SPACING * 2,
+        paddingHorizontal: SPACING * 3,
     },
     menuItemRow: {
         flexDirection: "row",
@@ -134,9 +142,12 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     menuItemText: {
-        fontSize: 18,
+        fontSize: 12,
+        fontFamily: "Poppins_600SemiBold",
+        fontWeight: "semibold",
         color: "#333",
         flex: 1,
+        marginVertical: SPACING / 2 ,
     },
     chevronIcon: {
         marginLeft: 12,
