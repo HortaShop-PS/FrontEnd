@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# limbo
+limbo/
+
 # Expo
 .expo/
 dist/
