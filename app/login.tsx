@@ -45,7 +45,7 @@ export default function LoginScreen() {
         <StatusBar barStyle="dark-content" />
         <ImageBackground
             source={require("../assets/images/auth-background.png")}
-            style={styles.imageBackground} // Ocupará o espaço restante
+            style={styles.imageBackground} 
             resizeMode="cover"
         >
             <TouchableOpacity style={styles.backButton} onPress={() => router.replace('./welcome')}>
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     buttonText: {
         fontFamily: 'Poppins_600SemiBold',
         color: "#fff",
-        fontSize: 15, // Mantido como 16
+        fontSize: 15,
     },
     footerLinkContainer: {
         flexDirection: 'row',

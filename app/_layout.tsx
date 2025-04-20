@@ -6,7 +6,9 @@ export default function RootLayout() {
       {/* Rota inicial que redireciona */}
       <Stack.Screen name="index" options={{ headerShown: false }} /> 
       {/* Tela de boas-vindas */}
-      <Stack.Screen name="welcome" options={{ headerShown: false }} /> 
+      <Stack.Screen name="welcome" options={{ headerShown: false }} />
+      {/* Tela de boas-vindas 2 */}
+      <Stack.Screen name="welcome2" options={{ headerShown: false }} /> 
       {/* Tela de login */}
       <Stack.Screen name="login" options={{ headerShown: false }} /> 
       {/* Grupo de abas */}

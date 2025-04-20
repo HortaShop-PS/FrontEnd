@@ -14,7 +14,7 @@ export default function WelcomeScreen() {
     });
 
     function handleStart() {
-        router.replace("/login");
+        router.replace("./welcome2");
     }
 
     if (!fontsLoaded && !fontError) {
