@@ -1,23 +1,63 @@
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular } from "@expo-google-fonts/poppins";
+import { useEffect, useState } from "react";
+import { fetchUserProfile, getMockUserProfile } from "../../utils/userService";
+
+interface UserProfile {
+    id: string;
+    name: string;
+    email: string;
+    profileImage?: string;
+  }
+
 
 export default function ProfileScreen() {
-
-    let [fontsLoaded, error] = useFonts({
+    const [userData, setUserData] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    let [fontsLoaded] = useFonts({
         Poppins_600SemiBold,
         Poppins_400Regular,
     })
     const router = useRouter();
+
+    useEffect(() => {
+        const loadUserProfile = async () => {
+            try {
+                setLoading(true);
+                const data = await fetchUserProfile('1');
+                setUserData(data);
+            } catch (error) {
+                console.error("Error in profile component:", error);
+                setError(error instanceof Error ? error.message : "Failed to load profile");
+                setUserData(getMockUserProfile());
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        loadUserProfile();
+    }, []);
+    
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.centered]}>
+                <ActivityIndicator size="large" color="#6CC51D" />
+            </View>
+        );
+    }
+
+
     return (
         <View style={styles.container}>
             <View style={styles.containerUser}>
                 <View style={styles.containerCircle}>
                     <Ionicons name={'person'} color={"black"} size={110} style={styles.profileDP} />
                 </View>
-                <Text style={styles.textUserName}>Fulano de Tal</Text>
-                <Text style={styles.textUserEmail}>fulano@fulanomail.com</Text>
+                <Text style={styles.textUserName}>{userData?.name || "Fulano de Tal"}</Text>
+                <Text style={styles.textUserEmail}>{userData?.email || "fulano@fulanomail.com"}</Text>
             </View>
             <View style={styles.containerBottomSection}>
                 <TouchableOpacity onPress={() => router.push("/about")}>
@@ -149,7 +189,12 @@ const styles = StyleSheet.create({
         flex: 1,
         marginVertical: SPACING / 2 ,
     },
+    centered: {
+        justifyContent: "center",
+        alignItems: "center",
+    },
     chevronIcon: {
         marginLeft: 12,
     },
+    
 });
