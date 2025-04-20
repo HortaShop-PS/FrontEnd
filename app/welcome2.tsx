@@ -22,13 +22,11 @@ export default function AuthScreen() {
 
     function handleCreateAccount() {
         console.log("Ir para criar conta");
-        // TODO: Navegar para a tela de cadastro
         // router.push('/register'); 
     }
 
     function handleGoToLogin() {
         console.log("Ir para login com email/senha");
-        // Navegar para a tela de login tradicional
         router.push('/login'); 
     }
 
@@ -38,40 +36,32 @@ export default function AuthScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Ajuste barStyle conforme a cor do topo da imagem */}
-            <StatusBar barStyle="light-content" /> 
+            <StatusBar barStyle="light-content" />
             <ImageBackground
-                source={require("../assets/images/auth-background-2.png")} // Verifique se esta é a imagem correta
-                style={styles.imageBackground} // Estilo ajustado
+                source={require("../assets/images/auth-background-2.png")}
+                style={styles.imageBackground}
                 resizeMode="cover"
-            >
-                {/* Botão Voltar ajustado */}
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
+            />
 
-            </ImageBackground>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.replace('../welcome')}>
+                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
 
-            {/* Container inferior branco */}
             <View style={styles.bottomContainer}>
-                {/* ... (conteúdo do bottomContainer) ... */}
                 <Text style={styles.title}>Bem-Vindo</Text>
                 <Text style={styles.subtitle}>
                     Faça login ou crie uma conta para ter acesso a todo o frescor da horta.
                 </Text>
 
-                {/* Botão Google */}
                 <TouchableOpacity style={[styles.button, styles.googleButton]} onPress={handleGoogleLogin}>
                     <AntDesign name="google" size={20} color="#DB4437" style={styles.icon} />
                     <Text style={[styles.buttonText, styles.googleButtonText]}>Continuar com Google</Text>
                 </TouchableOpacity>
 
-                {/* Botão Criar Conta*/}
                 <TouchableOpacity style={[styles.button, styles.createButton]} onPress={handleCreateAccount}>
                     <Text style={[styles.buttonText, styles.createButtonText]}>Criar conta</Text>
                 </TouchableOpacity>
 
-                {/* Link para Entrar */}
                 <View style={styles.loginLinkContainer}>
                     <Text style={styles.loginLinkText}>Já tem uma conta? </Text>
                     <TouchableOpacity onPress={handleGoToLogin}>
@@ -86,37 +76,42 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F6F6F6', 
     },
     imageBackground: {
-        flex: 1,
-        width: '70%', // Corrigido para 100%
-        // height removido
-        justifyContent: 'flex-start', 
-        alignItems: 'flex-start', 
-        paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight + 15 : 50, 
-        paddingLeft: 20, 
-        marginTop: 50, // Adicionado marginTop para "descer" a imagem
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%',
     },
     backButton: {
-        padding: 5, 
+        position: 'absolute',
+        top: StatusBar.currentHeight ? StatusBar.currentHeight + 15 : 50,
+        left: 20,
+        padding: 5,
+        zIndex: 1,
     },
     bottomContainer: {
-        // flex: -1, // Removido flex inválido
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
         paddingHorizontal: 24,
         paddingTop: 30,
-        paddingBottom: 20, 
+        paddingBottom: 30,
     },
-    // ... (restante dos estilos) ...
     title: {
         fontFamily: 'Poppins_700Bold',
         fontSize: 26,
         color: '#333',
         textAlign: 'left',
         marginBottom: 8,
+        width: '100%',
     },
     subtitle: {
         fontFamily: 'Poppins_400Regular',
@@ -125,6 +120,7 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         marginBottom: 35,
         lineHeight: 20,
+        width: '100%',
     },
     button: {
         flexDirection: 'row',
@@ -145,7 +141,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#7ABC00',
     },
     icon: {
-        marginRight: 20,
+        marginRight: 12,
     },
     buttonText: {
         fontFamily: 'Poppins_600SemiBold',
@@ -160,15 +156,16 @@ const styles = StyleSheet.create({
     loginLinkContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: 20, 
+        marginTop: 20,
+        width: '100%',
     },
     loginLinkText: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 14,
-        color: '#888', 
+        color: '#888',
     },
     loginLinkAction: {
         fontFamily: 'Poppins_600SemiBold',
-        color: '#333', 
+        color: '#333',
     },
 });

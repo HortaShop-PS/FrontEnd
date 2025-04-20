@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-// Removido ScrollView dos imports
-import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, StatusBar, Switch } from "react-native"; 
+import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, StatusBar, Switch } from "react-native";
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import LoadingIndicator from "./loadingIndicator";
 
 export default function LoginScreen() {
-    // ... (useState, useFonts, handlers - sem alterações) ...
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -40,20 +38,19 @@ export default function LoginScreen() {
     }
 
     return (
-      // O container principal ainda precisa de flex: 1
-      <View style={styles.container}> 
-        <StatusBar barStyle="dark-content" />
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
         <ImageBackground
             source={require("../assets/images/auth-background.png")}
-            style={styles.imageBackground} 
+            style={styles.imageBackground}
             resizeMode="cover"
-        >
-            <TouchableOpacity style={styles.backButton} onPress={() => router.replace('./welcome')}>
+        />
+
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                 <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
-        </ImageBackground>
 
-            <View style={styles.bottomContainer}> 
+            <View style={styles.bottomContainer}>
                 <Text style={styles.title}>Bem-Vindo de Volta!</Text>
                 <Text style={styles.subtitle}>Entre na sua conta</Text>
 
@@ -125,27 +122,32 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F6F6F6',
     },
     imageBackground: {
-        flex: 1,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         width: '100%',
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight + 15 : 50,
-        paddingLeft: 20,
+        height: '100%',
     },
     backButton: {
+        position: 'absolute',
+        top: StatusBar.currentHeight ? StatusBar.currentHeight + 15 : 50,
         padding: 5,
-    },
+        zIndex: 1,
+    },    
     bottomContainer: {
-
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
-        marginTop: -30,
         paddingHorizontal: 24,
-        paddingTop: 30,
+        paddingTop: 20,
         paddingBottom: 20,
     },
     title: {
@@ -206,7 +208,7 @@ const styles = StyleSheet.create({
         color: '#555',
     },
     linkText: {
-        fontFamily: 'Poppins_400Regular',
+        fontFamily: 'Poppins_400Reular',
         fontSize: 13,
         color: '#7ABC00',
     },
@@ -221,7 +223,7 @@ const styles = StyleSheet.create({
     buttonText: {
         fontFamily: 'Poppins_600SemiBold',
         color: "#fff",
-        fontSize: 15,
+        fontSize: 16,
     },
     footerLinkContainer: {
         flexDirection: 'row',
