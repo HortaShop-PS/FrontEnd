@@ -11,7 +11,9 @@ console.log("Conectando à API:", API_URL, "Usuário:", USER_ID)
 
 export default function AboutMe() {
   const router = useRouter()
-  const [showPassword, setShowPassword] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -230,11 +232,18 @@ export default function AboutMe() {
               onChangeText={(text) => handleChange("currentPassword", text)}
               placeholder="Senha atual"
               placeholderTextColor="#868889"
-              secureTextEntry={true}
+              secureTextEntry={!showCurrentPassword}
               editable={!loading}
             />
-            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#868889" />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowCurrentPassword((prev) => !prev)}
+            >
+              <Ionicons
+                name={showCurrentPassword ? "eye-outline" : "eye-off-outline"}
+                size={20}
+                color="#868889"
+              />
             </TouchableOpacity>
           </View>
 
@@ -248,11 +257,18 @@ export default function AboutMe() {
               onChangeText={(text) => handleChange("newPassword", text)}
               placeholder="Nova senha"
               placeholderTextColor="#868889"
-              secureTextEntry={!showPassword}
+              secureTextEntry={!showNewPassword}
               editable={!loading}
             />
-            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#868889" />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowNewPassword((prev) => !prev)}
+            >
+              <Ionicons
+                name={showNewPassword ? "eye-outline" : "eye-off-outline"}
+                size={20}
+                color="#868889"
+              />
             </TouchableOpacity>
           </View>
 
@@ -266,11 +282,18 @@ export default function AboutMe() {
               onChangeText={(text) => handleChange("confirmPassword", text)}
               placeholder="Confirmar senha"
               placeholderTextColor="#868889"
-              secureTextEntry={true}
+              secureTextEntry={!showConfirmPassword}
               editable={!loading}
             />
-            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#868889" />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowConfirmPassword((prev) => !prev)}
+            >
+              <Ionicons
+                name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
+                size={20}
+                color="#868889"
+              />
             </TouchableOpacity>
           </View>
         </View>
