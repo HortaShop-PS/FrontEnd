@@ -3,7 +3,9 @@ interface UserProfile {
   name: string;
   email: string;
 }
+
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
 export const fetchUserProfile = async (userId: string): Promise<UserProfile> => {
   
   try {
