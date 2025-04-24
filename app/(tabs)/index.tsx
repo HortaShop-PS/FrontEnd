@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular } from "@expo-google-fonts/poppins";
 import { useEffect, useState } from "react";
 import { fetchFeaturedProducts } from "../../utils/homeService";
+import { Platform } from "react-native";
 
 export default function Index() {
   let [fontsLoaded] = useFonts({
@@ -88,7 +89,7 @@ export default function Index() {
             ) : error ? (
               <Text style={styles.errorText}>{error}</Text>
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.containerProdutos}>
                 {featuredProducts.map((produto) => (
                   <TouchableOpacity key={produto.id} style={styles.produtoCard}>
                     {produto.isNew && (
@@ -112,7 +113,7 @@ export default function Index() {
                     </View>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
             )}
           </View>
         </View>
@@ -122,6 +123,7 @@ export default function Index() {
 }
 
 const SPACING = 13;
+const SPACING_TOP = Platform.OS === 'android' ? 3 : 13;
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -136,7 +138,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: SPACING * 4,
+    marginVertical: SPACING_TOP * 4,
     padding: SPACING,
     borderRadius: 5,
     backgroundColor: "#F4F5F9",
@@ -201,9 +203,10 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   produtoImagem: {
-    width: '80%',
+    width: 100,
     height: 100,
     borderRadius: 5,
+
   },
   produtoInfo: {
     padding: SPACING,
@@ -248,5 +251,11 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
     textAlign: 'center',
     padding: SPACING,
-  }
+  },containerProdutos: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    paddingVertical: SPACING,
+  },
 });
