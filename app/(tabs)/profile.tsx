@@ -3,14 +3,15 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular } from "@expo-google-fonts/poppins";
 import { useEffect, useState } from "react";
-import { fetchUserProfile, getMockUserProfile } from "../../utils/userService";
+import { getProfile, logout } from "../../utils/authServices";
+import * as SecureStore from 'expo-secure-store';
 
 interface UserProfile {
     id: string;
     name: string;
     email: string;
     profileImage?: string;
-  }
+}
 
 
 export default function ProfileScreen() {
@@ -27,20 +28,34 @@ export default function ProfileScreen() {
         const loadUserProfile = async () => {
             try {
                 setLoading(true);
-                const data = await fetchUserProfile('1');
-                setUserData(data);
+
+                const data = await getProfile();
+                setUserData({
+                    id: data.id.toString(),
+                    name: data.name,
+                    email: data.email,
+                });
             } catch (error) {
-                console.error("Error in profile component:", error);
-                setError(error instanceof Error ? error.message : "Failed to load profile");
-                setUserData(getMockUserProfile());
+                console.error("Erro no componente de perfil:", error);
+                setError(error instanceof Error ? error.message : "Falha ao carregar o perfil do usuário");
+                router.replace('/welcome2');
             } finally {
                 setLoading(false);
             }
         };
-        
+
         loadUserProfile();
     }, []);
-    
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            router.replace('/welcome2');
+        } catch (error) {
+            console.error("Erro ao fazer logout:", error);
+        }
+    };
+
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
@@ -109,7 +124,7 @@ export default function ProfileScreen() {
                         <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                     </View>
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={handleLogout}>
                     <View style={styles.menuItemRow}>
                         <Ionicons name="log-out-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
                         <Text style={styles.menuItemText}>Sair</Text>
@@ -159,14 +174,14 @@ const styles = StyleSheet.create({
     },
     textUserName: {
         fontSize: 15,
-        fontFamily: "Poppins_600SemiBold", 
+        fontFamily: "Poppins_600SemiBold",
         marginVertical: SPACING / 16,
     },
     textUserEmail: {
         fontSize: 12,
         color: "#868889",
-        fontFamily: "Poppins_400Regular", 
-        marginVertical: SPACING / 16, 
+        fontFamily: "Poppins_400Regular",
+        marginVertical: SPACING / 16,
     },
     containerBottomSection: {
         justifyContent: "center",
@@ -187,7 +202,7 @@ const styles = StyleSheet.create({
         fontWeight: "semibold",
         color: "#333",
         flex: 1,
-        marginVertical: SPACING / 2 ,
+        marginVertical: SPACING / 2,
     },
     centered: {
         justifyContent: "center",
@@ -196,5 +211,5 @@ const styles = StyleSheet.create({
     chevronIcon: {
         marginLeft: 12,
     },
-    
+
 });
