@@ -1,0 +1,77 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #333;
+  text-align: center;
+}
+
+.subtitle {
+  color: #777;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.inputWrapper,
+.passwordInputWrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.icon {
+  margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  /* Adicione estilos para o ícone conforme necessário */
+}
+
+.passwordInputWrapper {
+  position: relative;
+}
+
+.eyeButton {
+  background: none;
+  border: none;
+  padding: 0;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.eyeIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.links {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.links p {
+  margin: 5px 0;
+  font-size: 0.9em;
+}
+
+.links a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}

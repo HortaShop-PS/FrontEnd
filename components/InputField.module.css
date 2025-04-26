@@ -1,0 +1,15 @@
+.inputContainer {
+  flex-grow: 1; /* Para o input ocupar o espaço restante */
+}
+
+.input {
+  width: 100%;
+  border: none;
+  padding: 8px 0;
+  font-size: 1em;
+  outline: none;
+}
+
+.input::placeholder {
+  color: #aaa;
+}
