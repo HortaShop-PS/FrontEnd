@@ -1,18 +1,18 @@
 import React, { useState } from "react";
-import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, StatusBar, Switch, Alert, ActivityIndicator } from "react-native"; // Adicionado Alert e ActivityIndicator
+import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, StatusBar, Switch, Alert, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import LoadingIndicator from "./loadingIndicator";
-import { login } from "../utils/authServices"; // Importar a função de login
+import { login } from "../utils/authServices";
 
 export default function LoginScreen() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [rememberMe, setRememberMe] = useState(false); // Lógica de 'rememberMe' não implementada no service ainda
+    const [rememberMe, setRememberMe] = useState(false);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // Estado para loading
+    const [isLoading, setIsLoading] = useState(false);
 
     const [fontsLoaded, fontError] = useFonts({
         Poppins_600SemiBold,
@@ -25,18 +25,17 @@ export default function LoginScreen() {
             Alert.alert("Erro", "Por favor, preencha o email e a senha.");
             return;
         }
-        setIsLoading(true); // Inicia o loading
+        setIsLoading(true);
         try {
-            console.log("Tentativa de Login:", { email }); // Não logar senha
+            console.log("Tentativa de Login:", { email });
             await login({ email, password });
             Alert.alert("Sucesso", "Login realizado com sucesso!");
-            // TODO: Atualizar estado global de autenticação (Context/Redux/Zustand)
-            router.replace('/(tabs)'); // Navega para a área logada
+            router.replace('/(tabs)');
         } catch (error: any) {
             console.error("Falha no login:", error.message);
             Alert.alert("Erro de Login", error.message || "Não foi possível fazer login. Verifique suas credenciais.");
         } finally {
-            setIsLoading(false); // Termina o loading
+            setIsLoading(false);
         }
     }
 
@@ -48,9 +47,7 @@ export default function LoginScreen() {
 
     function handleGoToRegister() {
         console.log("Navegar para: Cadastro");
-        // Idealmente, você teria uma tela de registro separada
         // router.push('/register');
-        // Por enquanto, podemos voltar para a tela anterior que tem o botão "Criar conta"
         router.replace('/welcome2');
     }
 
@@ -85,7 +82,7 @@ export default function LoginScreen() {
                         keyboardType="email-address"
                         autoCapitalize="none"
                         placeholderTextColor="#A0A0A0"
-                        editable={!isLoading} // Desabilita enquanto carrega
+                        editable={!isLoading}
                     />
                 </View>
 
@@ -98,7 +95,7 @@ export default function LoginScreen() {
                         onChangeText={setPassword}
                         secureTextEntry={!isPasswordVisible}
                         placeholderTextColor="#A0A0A0"
-                        editable={!isLoading} // Desabilita enquanto carrega
+                        editable={!isLoading}
                     />
                     <TouchableOpacity onPress={() => setIsPasswordVisible(prev => !prev)} disabled={isLoading}>
                         <Ionicons
@@ -129,12 +126,12 @@ export default function LoginScreen() {
                 </View>
 
                 <TouchableOpacity
-                    style={[styles.button, isLoading && styles.buttonDisabled]} // Estilo desabilitado
+                    style={[styles.button, isLoading && styles.buttonDisabled]}
                     onPress={handleLogin}
-                    disabled={isLoading} // Desabilita o botão
+                    disabled={isLoading}
                 >
                     {isLoading ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" /> // Mostra loading no botão
+                        <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
                         <Text style={styles.buttonText}>Entrar</Text>
                     )}
@@ -151,9 +148,7 @@ export default function LoginScreen() {
     );
 }
 
-// Adicione o estilo para o botão desabilitado aos seus styles
 const styles = StyleSheet.create({
-    // ... (seus estilos existentes)
     button: {
         backgroundColor: '#7ABC00',
         paddingVertical: 16,
@@ -163,14 +158,13 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     buttonDisabled: {
-        backgroundColor: '#AED581', // Cor mais clara para indicar desabilitado
+        backgroundColor: '#AED581',
     },
     buttonText: {
         fontFamily: 'Poppins_600SemiBold',
         color: "#fff",
         fontSize: 16,
     },
-    // ... (restante dos seus estilos)
     container: {
         flex: 1,
     },
@@ -186,7 +180,7 @@ const styles = StyleSheet.create({
     backButton: {
         position: 'absolute',
         top: StatusBar.currentHeight ? StatusBar.currentHeight + 15 : 50,
-        left: 20, // Ajustado para esquerda
+        left: 20,
         padding: 5,
         zIndex: 1,
     },
@@ -260,7 +254,6 @@ const styles = StyleSheet.create({
         color: '#555',
     },
     linkText: {
-        // Corrigido: Poppins_400Regular
         fontFamily: 'Poppins_400Regular',
         fontSize: 13,
         color: '#7ABC00',
