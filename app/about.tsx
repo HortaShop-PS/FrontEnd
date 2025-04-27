@@ -2,12 +2,9 @@ import {Text, View,StyleSheet,TouchableOpacity,TextInput,ScrollView,SafeAreaView
 import { Ionicons } from "@expo/vector-icons"
 import { Stack, useRouter } from "expo-router"
 import { useState, useEffect } from "react"
+import { getProfile, authUtils } from "../utils/authServices"
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-console.log("API_URL:", API_URL);
-const USER_ID = "1"
-
-console.log("Conectando à API:", API_URL, "Usuário:", USER_ID)
 
 export default function AboutMe() {
   const router = useRouter()
@@ -15,6 +12,7 @@ export default function AboutMe() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [userId, setUserId] = useState<number | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,25 +23,28 @@ export default function AboutMe() {
   })
 
   useEffect(() => {
-    fetchUserData()
+    checkAuthentication()
   }, [])
 
-  const fetchUserData = async () => {
+  const checkAuthentication = async () => {
     try {
-      setLoading(true)
-      const response = await fetch(`${API_URL}/users/${USER_ID}`)
-      if (!response.ok) throw new Error("Erro ao buscar dados do usuário")
-      const data = await response.json()
-      setFormData((prev) => ({
-        ...prev,
-        name: data.name,
-        email: data.email,
-        phone: data.phone || "",
-      }))
+      const userProfile = await getProfile()
+      if (userProfile && userProfile.id) {
+        setUserId(userProfile.id)
+        setFormData((prev) => ({
+          ...prev,
+          name: userProfile.name,
+          email: userProfile.email,
+          phone: userProfile.phone || "",
+        }))
+      } else {
+        Alert.alert("Erro", "Não foi possível obter os dados do usuário.")
+        router.replace("/welcome2")
+      }
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar seus dados. Tente novamente mais tarde.")
-    } finally {
-      setLoading(false)
+      console.error("Erro ao verificar autenticação:", error)
+      Alert.alert("Sessão expirada", "Por favor, faça login novamente.")
+      router.replace("/welcome2")
     }
   }
 
@@ -94,7 +95,7 @@ export default function AboutMe() {
   }
 
   const handleSave = async () => {
-    if (!validateForm()) return
+    if (!validateForm() || !userId) return
 
     try {
       setLoading(true)
@@ -104,26 +105,43 @@ export default function AboutMe() {
         phone: formData.phone,
       }
 
-      const response = await fetch(`${API_URL}/users/${USER_ID}`, {
+      // Obter o token JWT
+      const token = await authUtils.getToken()
+      if (!token) {
+        throw new Error("Usuário não autenticado")
+      }
+
+      // Atualizar dados do perfil
+      const response = await fetch(`${API_URL}/users/${userId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(profileData),
       })
+      
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || "Erro ao salvar dados")
       }
 
+      // Atualizar senha se necessário
       if (formData.currentPassword && formData.newPassword) {
         const passwordData = {
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword,
         }
-        const passwordResponse = await fetch(`${API_URL}/users/${USER_ID}/password`, {
+        
+        const passwordResponse = await fetch(`${API_URL}/users/${userId}/password`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify(passwordData),
         })
+        
         if (!passwordResponse.ok) {
           const errorData = await passwordResponse.json()
           throw new Error(errorData.message || "Erro ao atualizar senha")

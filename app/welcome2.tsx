@@ -1,39 +1,34 @@
-import React, { useEffect, useState } from "react"; // Adicionado useEffect, useState
-import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, Alert } from "react-native"; // Adicionado ActivityIndicator, Alert
+import React, { useEffect, useState } from "react";
+import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins"; // Adicionado Poppins_700Bold se necessário
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { Ionicons, AntDesign } from '@expo/vector-icons';
 import LoadingIndicator from "./loadingIndicator";
-import * as WebBrowser from 'expo-web-browser'; // Adicionado
-import * as Google from 'expo-auth-session/providers/google'; // Adicionado
-import * as Linking from 'expo-linking'; // Adicionado
-import { handleOAuthCallback } from "../utils/authServices"; // Adicionado
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import * as Linking from 'expo-linking';
+import { handleOAuthCallback } from "../utils/authServices";
 
-// Garante que o WebBrowser possa ser dispensado
-WebBrowser.maybeCompleteAuthSession(); // Adicionado
+WebBrowser.maybeCompleteAuthSession();
 
 export default function AuthScreen() {
     const router = useRouter();
-    const [isLoadingGoogle, setIsLoadingGoogle] = useState(false); // Adicionado estado de loading
+    const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
 
     const [fontsLoaded, fontError] = useFonts({
         Poppins_600SemiBold,
         Poppins_400Regular,
-        Poppins_700Bold, // Mantido se usado nos estilos
+        Poppins_700Bold,
     });
 
-    // --- Configuração do Expo Auth Session para Google --- (Adicionado)
     const [request, response, promptAsync] = Google.useAuthRequest({
         clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-        // iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-        // androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
     });
 
-    // --- Efeito para lidar com a resposta do Google --- (Adicionado)
     useEffect(() => {
         const handleResponse = async () => {
             if (response) {
-                setIsLoadingGoogle(false); // Termina o loading ao receber resposta
+                setIsLoadingGoogle(false);
                 console.log("Resposta do AuthSession:", JSON.stringify(response, null, 2));
 
                 if (response.type === 'success') {
@@ -44,7 +39,6 @@ export default function AuthScreen() {
                         const token = await handleOAuthCallback(url);
                         if (token) {
                             Alert.alert("Sucesso", "Login com Google realizado!");
-                            // TODO: Atualizar estado global de autenticação
                             router.replace('/(tabs)');
                         } else {
                             Alert.alert("Erro", "Não foi possível obter o token da resposta do servidor.");
@@ -65,9 +59,6 @@ export default function AuthScreen() {
         handleResponse();
     }, [response, router]);
 
-    // --- Funções de Navegação ---
-
-    // Atualizado handleGoogleLogin
     async function handleGoogleLogin() {
         console.log("Iniciando login com Google...");
         setIsLoadingGoogle(true);
@@ -85,7 +76,7 @@ export default function AuthScreen() {
 
     function handleCreateAccount() {
         console.log("Ir para criar conta");
-        // router.push('/register');
+        router.push('/register');
     }
 
     function handleGoToLogin() {
@@ -93,7 +84,6 @@ export default function AuthScreen() {
         router.push('/login');
     }
 
-    // --- Renderização ---
     if (!fontsLoaded && !fontError) {
         return <LoadingIndicator />;
     }
@@ -102,31 +92,28 @@ export default function AuthScreen() {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
             <ImageBackground
-                source={require("../assets/images/auth-background-2.png")} // Verifique o nome da imagem
+                source={require("../assets/images/auth-background-2.png")}
                 style={styles.imageBackground}
                 resizeMode="cover"
             />
 
-            {/* Botão Voltar posicionado absolutamente */}
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()} disabled={isLoadingGoogle}>
                 <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
 
-            {/* Container inferior posicionado absolutamente */}
             <View style={styles.bottomContainer}>
                 <Text style={styles.title}>Bem-Vindo</Text>
                 <Text style={styles.subtitle}>
                     Faça login ou crie uma conta para ter acesso a todo o frescor da horta.
                 </Text>
 
-                {/* Botão Google com loading e estado desabilitado */}
                 <TouchableOpacity
                     style={[styles.button, styles.googleButton, isLoadingGoogle && styles.buttonDisabled]}
                     onPress={handleGoogleLogin}
-                    disabled={!request || isLoadingGoogle} // Desabilita se request não pronto ou carregando
+                    disabled={!request || isLoadingGoogle}
                 >
                     {isLoadingGoogle ? (
-                        <ActivityIndicator size="small" color="#555" /> // Indicador de loading
+                        <ActivityIndicator size="small" color="#555" />
                     ) : (
                         <>
                             <AntDesign name="google" size={20} color="#DB4437" style={styles.icon} />
@@ -135,16 +122,14 @@ export default function AuthScreen() {
                     )}
                 </TouchableOpacity>
 
-                {/* Botão Criar Conta com estado desabilitado */}
                 <TouchableOpacity
                     style={[styles.button, styles.createButton, isLoadingGoogle && styles.buttonDisabled]}
                     onPress={handleCreateAccount}
-                    disabled={isLoadingGoogle} // Desabilita durante login Google
+                    disabled={isLoadingGoogle}
                 >
                     <Text style={[styles.buttonText, styles.createButtonText]}>Criar conta</Text>
                 </TouchableOpacity>
 
-                {/* Link para Entrar com estado desabilitado */}
                 <View style={styles.loginLinkContainer}>
                     <Text style={styles.loginLinkText}>Já tem uma conta? </Text>
                     <TouchableOpacity onPress={handleGoToLogin} disabled={isLoadingGoogle}>
@@ -156,7 +141,6 @@ export default function AuthScreen() {
     );
 }
 
-// --- Estilos --- (Adicionado buttonDisabled e linkDisabled)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -184,7 +168,7 @@ const styles = StyleSheet.create({
         paddingBottom: 30,
     },
     title: {
-        fontFamily: 'Poppins_700Bold', // Certifique-se que Poppins_700Bold está carregada
+        fontFamily: 'Poppins_700Bold',
         fontSize: 26,
         color: '#333',
         textAlign: 'left',
@@ -208,9 +192,9 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         borderRadius: 10,
         marginBottom: 15,
-        elevation: 5, // Mantido como 5
+        elevation: 5,
     },
-    buttonDisabled: { // Estilo para botões desabilitados
+    buttonDisabled: {
         opacity: 0.6,
     },
     googleButton: {
@@ -219,20 +203,20 @@ const styles = StyleSheet.create({
         borderColor: '#E0E0E0',
     },
     createButton: {
-        backgroundColor: '#7ABC00', // Mantido verde
+        backgroundColor: '#7ABC00',
     },
     icon: {
-        marginRight: 12, // Mantido 12
+        marginRight: 12,
     },
     buttonText: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 16,
     },
     googleButtonText: {
-        color: '#555', // Mantido cinza escuro
+        color: '#555',
     },
     createButtonText: {
-        color: '#FFFFFF', // Mantido branco
+        color: '#FFFFFF',
     },
     loginLinkContainer: {
         flexDirection: 'row',
@@ -249,7 +233,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Poppins_600SemiBold',
         color: '#333',
     },
-    linkDisabled: { // Estilo para link desabilitado
+    linkDisabled: {
         opacity: 0.6,
     }
 });
