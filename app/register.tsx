@@ -1,7 +1,7 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform, StatusBar, Dimensions, ImageBackground,} from "react-native"
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, StatusBar, ImageBackground, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
-import { useRouter, Stack } from "expo-router"
+import { useRouter } from "expo-router"
 import axios from "axios"
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:3000"
@@ -119,7 +119,11 @@ export default function Register() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
       <StatusBar barStyle="light-content" />
       <ImageBackground
         source={require("../assets/images/grocery-shopping.png")}
@@ -131,98 +135,100 @@ export default function Register() {
         <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
       </TouchableOpacity>
 
-      <View style={styles.bottomContainer}>
-        <Text style={styles.title}>Criar Conta</Text>
-        <Text style={styles.subtitle}>Crie sua conta e comece a comprar</Text>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.bottomContainer}>
+          <Text style={styles.title}>Criar Conta</Text>
+          <Text style={styles.subtitle}>Crie sua conta e comece a comprar</Text>
 
-        <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="account-outline" size={22} color="#A0A0A0" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Nome completo"
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
-            placeholderTextColor="#A0A0A0"
-            editable={!loading}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="email-outline" size={22} color="#A0A0A0" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de E-mail"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            placeholderTextColor="#A0A0A0"
-            editable={!loading}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="phone-outline" size={22} color="#A0A0A0" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Número de telefone"
-            value={phone}
-            onChangeText={handlePhoneChange}
-            keyboardType="phone-pad"
-            placeholderTextColor="#A0A0A0"
-            editable={!loading}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="lock-outline" size={22} color="#A0A0A0" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!passwordVisible}
-            placeholderTextColor="#A0A0A0"
-            editable={!loading}
-          />
-          <TouchableOpacity onPress={togglePasswordVisibility} disabled={loading}>
-            <Ionicons
-              name={passwordVisible ? "eye-off-outline" : "eye-outline"}
-              size={24}
-              color="#A0A0A0"
-              style={styles.eyeIcon}
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons name="account-outline" size={22} color="#A0A0A0" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Nome completo"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              placeholderTextColor="#A0A0A0"
+              editable={!loading}
             />
-          </TouchableOpacity>
-        </View>
+          </View>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleRegister}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.buttonText}>Criar Conta</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons name="email-outline" size={22} color="#A0A0A0" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço de E-mail"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholderTextColor="#A0A0A0"
+              editable={!loading}
+            />
+          </View>
 
-        <View style={styles.footerLinkContainer}>
-          <Text style={styles.footerLinkText}>Já tem uma conta? </Text>
-          <TouchableOpacity onPress={handleGoToLogin} disabled={loading}>
-            <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Entrar</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons name="phone-outline" size={22} color="#A0A0A0" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Número de telefone"
+              value={phone}
+              onChangeText={handlePhoneChange}
+              keyboardType="phone-pad"
+              placeholderTextColor="#A0A0A0"
+              editable={!loading}
+            />
+          </View>
 
-        <View style={styles.footerLinkContainer}>
-          <Text style={styles.footerLinkText}>É produtor? </Text>
-          <TouchableOpacity onPress={handleGoToSellerRegister} disabled={loading}>
-            <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Criar conta de vendedor</Text>
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons name="lock-outline" size={22} color="#A0A0A0" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!passwordVisible}
+              placeholderTextColor="#A0A0A0"
+              editable={!loading}
+            />
+            <TouchableOpacity onPress={togglePasswordVisibility} disabled={loading}>
+              <Ionicons
+                name={passwordVisible ? "eye-off-outline" : "eye-outline"}
+                size={24}
+                color="#A0A0A0"
+                style={styles.eyeIcon}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Criar Conta</Text>
+            )}
           </TouchableOpacity>
+
+          <View style={styles.footerLinkContainer}>
+            <Text style={styles.footerLinkText}>Já tem uma conta? </Text>
+            <TouchableOpacity onPress={handleGoToLogin} disabled={loading}>
+              <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Entrar</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footerLinkContainer}>
+            <Text style={styles.footerLinkText}>É produtor? </Text>
+            <TouchableOpacity onPress={handleGoToSellerRegister} disabled={loading}>
+              <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Criar conta de vendedor</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
@@ -246,18 +252,17 @@ const styles = StyleSheet.create({
     padding: 5,
     zIndex: 1,
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+  },
   bottomContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 20,
-    maxHeight: '65%', 
   },
   title: {
     fontFamily: 'Poppins_600SemiBold',

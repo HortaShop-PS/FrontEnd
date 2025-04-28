@@ -1,0 +1,43 @@
+{
+  "cli": {
+    "version": ">= 16.3.3",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://10.0.2.2:3000",
+        "EXPO_PUBLIC_API_BASE_URL_IOS": "http://localhost:3000",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "960742824878-e1afo42fuv72la28o7ibmp6l2h3909rp.apps.googleusercontent.com"
+      }
+    },
+    "preview2": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://10.0.2.2:3000",
+        "EXPO_PUBLIC_API_BASE_URL_IOS": "http://localhost:3000",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "960742824878-e1afo42fuv72la28o7ibmp6l2h3909rp.apps.googleusercontent.com"
+      }
+    },
+    "preview3": {
+      "developmentClient": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://10.0.2.2:3000",
+        "EXPO_PUBLIC_API_BASE_URL_IOS": "http://localhost:3000",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "960742824878-e1afo42fuv72la28o7ibmp6l2h3909rp.apps.googleusercontent.com"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://10.0.2.2:3000",
+        "EXPO_PUBLIC_API_BASE_URL_IOS": "http://localhost:3000",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "960742824878-e1afo42fuv72la28o7ibmp6l2h3909rp.apps.googleusercontent.com"
+      }
+    }
+  }
+}
