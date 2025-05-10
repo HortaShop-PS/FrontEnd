@@ -45,7 +45,7 @@ async function saveToken(token: string): Promise<void> {
   }
 }
 
-async function getToken(): Promise<string | null> {
+ export async  function getToken(): Promise<string | null> {
   try {
     const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
     return token;
