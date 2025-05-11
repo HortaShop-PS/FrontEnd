@@ -45,3 +45,48 @@ export const fetchFeaturedProducts = async (): Promise<Product[]> => {
         throw error;
     }
 };
+
+export const searchProducts = async (params: {
+  name?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  isOrganic?: boolean;
+  limit?: number;
+}): Promise<Product[]> => {
+  try {
+    // Construir a URL com os parâmetros de consulta
+    const queryParams = new URLSearchParams();
+    
+    if (params.name) queryParams.append('name', params.name);
+    if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
+    if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
+    if (params.isOrganic !== undefined) queryParams.append('isOrganic', params.isOrganic.toString());
+    if (params.limit !== undefined) queryParams.append('limit', params.limit.toString());
+    
+    const queryString = queryParams.toString();
+    const url = `${API_BASE_URL}/products/search${queryString ? `?${queryString}` : ''}`;
+    
+    console.log(`Buscando produtos em: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Resposta do servidor: ${errorText}`);
+      throw new Error(`Falha ao buscar produtos: ${response.status}`);
+    }
+    
+    const products: Product[] = await response.json();
+    console.log('Produtos encontrados:', products);
+    return products;
+  } catch (error) {
+    console.error('Erro ao buscar produtos:', error);
+    throw error;
+  }
+};
