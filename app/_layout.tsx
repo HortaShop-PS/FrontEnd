@@ -14,11 +14,14 @@ export default function RootLayout() {
 
       <Stack.Screen name="register" options={{ headerShown: false }} /> 
 
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} /> 
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+      <Stack.Screen name="(tabsProducers)" options={{ headerShown: false }} />
 
       <Stack.Screen name='about' options={{headerShown: true, headerTitle: "Sobre mim", headerTitleAlign: "center", headerTitleStyle: {fontFamily: "Poppins_400Medium", fontSize: 18}}}/>
       
       <Stack.Screen name='productDetails' options={{ headerShown: false }} />
+
       <Stack.Screen name='favorites' options={{ headerShown: false }} />
     </Stack>
   );

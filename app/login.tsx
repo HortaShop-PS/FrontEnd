@@ -30,7 +30,7 @@ export default function LoginScreen() {
             console.log("Tentativa de Login:", { email });
             await login({ email, password });
             Alert.alert("Sucesso", "Login realizado com sucesso!");
-            router.replace('/(tabs)');
+            router.replace('/(tabsProducers)');
         } catch (error: any) {
             console.error("Falha no login:", error.message);
             Alert.alert("Erro de Login", error.message || "Não foi possível fazer login. Verifique suas credenciais.");
@@ -47,8 +47,8 @@ export default function LoginScreen() {
 
     function handleGoToRegister() {
         console.log("Navegar para: Cadastro");
-        // router.push('/register');
-        router.replace('/welcome2');
+        router.push('/register');
+
     }
 
     if (!fontsLoaded && !fontError) {
