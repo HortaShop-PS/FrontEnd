@@ -30,7 +30,7 @@ export default function LoginScreen() {
             console.log("Tentativa de Login:", { email });
             await login({ email, password });
             Alert.alert("Sucesso", "Login realizado com sucesso!");
-            router.replace('/(tabsProducers)');
+            router.replace('/(tabs)');
         } catch (error: any) {
             console.error("Falha no login:", error.message);
             Alert.alert("Erro de Login", error.message || "Não foi possível fazer login. Verifique suas credenciais.");

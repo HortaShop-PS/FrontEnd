@@ -1,21 +1,29 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import { registerProduct } from '../utils/registerProductService';
 
 const categorias = [
   "Frutas",
   "Vegetais",
   "Orgânicos",
   "Laticínios",
+  "Embutidos",
+  "Grãos",
+  "Temperos",
   "Bebidas",
+  "Doces",
   "Outros"
 ];
 
 export default function RegisterProduct() {
+  const params = useLocalSearchParams();
+  const categoriaInicial = typeof params.categoria === "string" ? params.categoria : categorias[0];
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [organico, setOrganico] = useState(false);
-  const [categoria, setCategoria] = useState(categorias[0]);
+  const [categoria, setCategoria] = useState(categoriaInicial);
   const [valor, setValor] = useState(0);
   const [quantidade, setQuantidade] = useState(1);
   const [loading, setLoading] = useState(false);

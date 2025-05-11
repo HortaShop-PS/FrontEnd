@@ -73,7 +73,6 @@ export default function Index() {
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Registrar Produtos</Text>
-              // ...existing code...
               <TouchableOpacity
                 style={styles.viewAllButton}
                 onPress={() => router.push('/registerProductsCategories')}
@@ -81,7 +80,6 @@ export default function Index() {
                 <Text style={styles.viewAllText}>Ver tudo</Text>
                 <Ionicons name="chevron-forward" size={16} color="#6CC51D" />
               </TouchableOpacity>
-              // ...existing code...
             </View>
             
             <ScrollView 
@@ -90,7 +88,7 @@ export default function Index() {
               contentContainerStyle={styles.categoriasScrollContent}
             >
               {categorias.map((categoria) => (
-                <TouchableOpacity key={categoria.id} style={styles.categoriaItem}>
+                <TouchableOpacity key={categoria.id} style={styles.categoriaItem} onPress={() => setCategoriaSelecionada(categoria.nome)}>
                   <View style={styles.categoriaIcone}>
                     <Ionicons name={categoria.icone} size={22} color="#6CC51D" />
                   </View>
@@ -138,43 +136,45 @@ export default function Index() {
                 </View>
               ) : (
                 <View style={styles.produtosGrid}>
-                  {featuredProducts.map((produto) => (
-                    <TouchableOpacity 
-                      key={produto.id} 
-                      style={styles.produtoCard}
-                      onPress={() => router.push({
-                        pathname: '/productDetails',
-                        params: { id: produto.id }
-                      })}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.produtoImageContainer}>
-                        {produto.isNew && (
-                          <View style={styles.newBadge}>
-                            <Text style={styles.newBadgeText}>Novo</Text>
-                          </View>
-                        )}
-                        <Image 
-                          source={{ uri: produto.imageUrl }} 
-                          style={styles.produtoImagem} 
-                          resizeMode="cover" 
-                          defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}
-                        />
-                      </View>
-                      <View style={styles.produtoInfo}>
-                        <Text style={styles.produtoNome} numberOfLines={1}>{produto.name}</Text>
-                        <View style={styles.produtoPrecoContainer}>
-                          <Text style={styles.produtoPreco}>
-                            R$ {produto.price.toFixed(2).replace('.', ',')}
-                          </Text>
-                          <Text style={styles.produtoUnidade}>/{produto.unit}</Text>
+                  {featuredProducts
+                    .filter(produto => !categoriaSelecionada || produto.category === categoriaSelecionada)
+                    .map((produto) => (
+                      <TouchableOpacity 
+                        key={produto.id} 
+                        style={styles.produtoCard}
+                        onPress={() => router.push({
+                          pathname: '/productDetails',
+                          params: { id: produto.id }
+                        })}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.produtoImageContainer}>
+                          {produto.isNew && (
+                            <View style={styles.newBadge}>
+                              <Text style={styles.newBadgeText}>Novo</Text>
+                            </View>
+                          )}
+                          <Image 
+                            source={{ uri: produto.imageUrl }} 
+                            style={styles.produtoImagem} 
+                            resizeMode="cover" 
+                            defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}
+                          />
                         </View>
-                        <TouchableOpacity style={styles.addToCartButton}>
-                          <Ionicons name="add" size={18} color="#FFFFFF" />
-                        </TouchableOpacity>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+                        <View style={styles.produtoInfo}>
+                          <Text style={styles.produtoNome} numberOfLines={1}>{produto.name}</Text>
+                          <View style={styles.produtoPrecoContainer}>
+                            <Text style={styles.produtoPreco}>
+                              R$ {produto.price.toFixed(2).replace('.', ',')}
+                            </Text>
+                            <Text style={styles.produtoUnidade}>/{produto.unit}</Text>
+                          </View>
+                          <TouchableOpacity style={styles.addToCartButton}>
+                            <Ionicons name="add" size={18} color="#FFFFFF" />
+                          </TouchableOpacity>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
                 </View>
               )}
             </View>
