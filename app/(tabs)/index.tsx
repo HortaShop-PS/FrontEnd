@@ -18,7 +18,6 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Array de categorias
   const categorias = [
     { id: 1, nome: "Vegetais", icone: "leaf" },
     { id: 2, nome: "Frutos", icone: "nutrition" },
@@ -57,7 +56,10 @@ export default function Index() {
           </View>
 
           {/* Barra de pesquisa */}
-          <TouchableOpacity style={styles.searchBar}>
+          <TouchableOpacity 
+            style={styles.searchBar}
+            onPress={() => router.push('/search')}
+          >
             <Ionicons name="search" size={20} color="#9E9E9E" />
             <Text style={styles.searchText}>Pesquisar produtos</Text>
           </TouchableOpacity>
