@@ -47,8 +47,8 @@ export default function LoginScreen() {
 
     function handleGoToRegister() {
         console.log("Navegar para: Cadastro");
-        // router.push('/register');
-        router.replace('/welcome2');
+        router.push('/register');
+
     }
 
     if (!fontsLoaded && !fontError) {
