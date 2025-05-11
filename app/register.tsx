@@ -94,7 +94,7 @@ export default function Register() {
 
   const handleGoToSellerRegister = () => {
     console.log("Ir para criar conta de vendedor")
-    Alert.alert("Em breve", "Registro de vendedor em desenvolvimento")
+    router.push("/registerproducer")
   }
 
   const formatPhoneNumber = (text) => {
