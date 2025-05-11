@@ -37,7 +37,7 @@ export default function Categories() {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card}>
             <View style={[styles.iconCircle, { backgroundColor: item.bg }]}>
-              <Ionicons name={item.icone} size={32} color={item.cor} />
+              <Ionicons name={item.icone} size={32} color="#6CC51D" />
             </View>
             <Text style={styles.cardLabel}>{item.nome}</Text>
           </TouchableOpacity>
