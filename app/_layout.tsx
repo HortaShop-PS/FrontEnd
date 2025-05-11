@@ -23,6 +23,10 @@ export default function RootLayout() {
       <Stack.Screen name='productDetails' options={{ headerShown: false }} />
 
       <Stack.Screen name='favorites' options={{ headerShown: false }} />
+
+      <Stack.Screen name='registerProduct' options={{ headerShown: false }} />
+
+      <Stack.Screen name='registerProducersCategories' options={{ headerShown: false }} />
     </Stack>
   );
 }
