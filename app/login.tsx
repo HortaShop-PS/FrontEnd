@@ -3,6 +3,7 @@ import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, S
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as SecureStore from 'expo-secure-store';
 import LoadingIndicator from "./loadingIndicator";
 import { login } from "../utils/authServices";
 
@@ -28,9 +29,19 @@ export default function LoginScreen() {
         setIsLoading(true);
         try {
             console.log("Tentativa de Login:", { email });
+            await SecureStore.deleteItemAsync('userToken');
+            await SecureStore.deleteItemAsync('userType');
             await login({ email, password });
+            
+            const userType = await SecureStore.getItemAsync('userType');
+            
+            if (userType === 'producer') {
+                router.replace('/(tabsProducers)');
+            } else {
+                router.replace('/(tabs)');
+            }
+            
             Alert.alert("Sucesso", "Login realizado com sucesso!");
-            router.replace('/(tabs)');
         } catch (error: any) {
             console.error("Falha no login:", error.message);
             Alert.alert("Erro de Login", error.message || "Não foi possível fazer login. Verifique suas credenciais.");
@@ -47,8 +58,8 @@ export default function LoginScreen() {
 
     function handleGoToRegister() {
         console.log("Navegar para: Cadastro");
-        // router.push('/register');
-        router.replace('/welcome2');
+        router.push('/register');
+
     }
 
     if (!fontsLoaded && !fontError) {

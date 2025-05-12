@@ -1,27 +1,32 @@
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, StatusBar } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useFonts, Poppins_600SemiBold, Poppins_400Regular } from "@expo-google-fonts/poppins";
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { useEffect, useState } from "react";
-import { fetchFeaturedProducts } from "../../utils/homeService";
-import { Platform } from "react-native";
+import { fetchFeaturedProducts, fetchAllProducts, Product } from "../../utils/homeService";
+import { useRouter } from "expo-router";
 
 export default function Index() {
+  const router = useRouter();
   let [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_400Regular,
+    Poppins_700Bold,
   });
 
-  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loadingAll, setLoadingAll] = useState(true);
+  const [errorAll, setErrorAll] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Array de categorias
+  // Categorias atualizadas
   const categorias = [
-    { id: 1, nome: "Vegetais", icone: "leaf" },
-    { id: 2, nome: "Frutos", icone: "nutrition" },
-    { id: 3, nome: "Bebidas", icone: "beer" },
-    { id: 4, nome: "Mercado", icone: "basket" },
+    { id: 1, nome: "Vegetais", icone: "leaf-outline", categoria: "Vegetais" },
+    { id: 2, nome: "Frutas", icone: "nutrition-outline", categoria: "Frutas" },
+    { id: 3, nome: "Orgânicos", icone: "flower-outline", categoria: "Orgânicos" },
   ];
+  
 
   useEffect(() => {
     const loadFeaturedProducts = async () => {
@@ -37,225 +42,490 @@ export default function Index() {
       }
     };
 
+    const loadAllProducts = async () => {
+      try {
+        setLoadingAll(true);
+        const products = await fetchAllProducts();
+        setAllProducts(products);
+      } catch (error) {
+        console.error("Erro ao carregar todos os produtos:", error);
+        setErrorAll("Não foi possível carregar todos os produtos");
+      } finally {
+        setLoadingAll(false);
+      }
+    };
+
     loadFeaturedProducts();
+    loadAllProducts();
   }, []);
 
+  if (!fontsLoaded) {
+    return <ActivityIndicator size="large" color="#6CC51D" style={{ flex: 1 }} />;
+  }
+
   return (
-    <ScrollView style={styles.mainContainer}>
-      <View style={styles.container}>
-        <View style={styles.searchBar}>
-          <Ionicons style={styles.searchText}
-            name="search"
-            size={24}
-          />
-          <Text style={styles.searchText}>Pesquisar palavras chaves</Text>
-          <Ionicons style={styles.searchText}
-            name="menu"
-            size={24}
-          />
-        </View>
-        
-        <View style={styles.sectionContainer}>
-          <View style={styles.categoria}>
-            <Text style={styles.categoriaText}>Categorias</Text>
-            <Ionicons style={styles.searchText}
-              name="chevron-forward"
-              size={24}
-            />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <ScrollView style={styles.mainContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
+          {/* Cabeçalho */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>HortaShop</Text>
+            <TouchableOpacity style={styles.notificationButton}>
+              <Ionicons name="notifications-outline" size={24} color="#333333" />
+            </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriasContainer}>
-            {categorias.map((categoria) => (
-              <TouchableOpacity key={categoria.id} style={styles.categoriaItem}>
-                <View style={styles.categoriaIcone}>
-                  <Ionicons name={categoria.icone} size={24} color="#4CAF50" />
-                </View>
-                <Text style={styles.categoriaNome}>{categoria.nome}</Text>
+
+          {/* Barra de pesquisa */}
+          <TouchableOpacity 
+            style={styles.searchBar}
+            onPress={() => router.push('/search')}
+          >
+            <Ionicons name="search" size={20} color="#9E9E9E" />
+            <Text style={styles.searchText}>Pesquisar produtos</Text>
+          </TouchableOpacity>
+          
+          {/* Seção de categorias */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Categorias</Text>
+              {/* Botão "Ver tudo" das categorias pode levar para busca geral */}
+              <TouchableOpacity 
+                style={styles.viewAllButton}
+                onPress={() =>
+                  router.push({
+                    pathname: '/search',
+                    params: { category: categorias.categoria }
+                  })
+                }
+                
+              >
+                <Text style={styles.viewAllText}>Ver tudo</Text>
+                <Ionicons name="chevron-forward" size={16} color="#6CC51D" />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-        
-        <View style={styles.sectionContainer}>
-          <View style={styles.categoria}>
-            <Text style={styles.categoriaText}>Produtos em destaque</Text>
-            <Ionicons style={styles.searchText}
-              name="chevron-forward"
-              size={24}
-            />
+            </View>
+            
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={styles.categoriasScrollContent}
+            >
+              {categorias.map((categoria) => (
+                <TouchableOpacity 
+                  key={categoria.id} 
+                  style={styles.categoriaItem}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/search',
+                      params: { category: categoria.categoria }
+                    })
+                  }
+                >
+                  <View style={styles.categoriaIcone}>
+                    <Ionicons name={categoria.icone} size={28} color="#6CC51D" />
+                  </View>
+                  <Text style={styles.categoriaNome}>{categoria.nome}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
-          <View style={styles.produtosContainer}>
-            {loading ? (
-              <ActivityIndicator size="large" color="#6CC51D" />
-            ) : error ? (
-              <Text style={styles.errorText}>{error}</Text>
-            ) : (
-              <View style={styles.containerProdutos}>
-                {featuredProducts.map((produto) => (
-                  <TouchableOpacity key={produto.id} style={styles.produtoCard}>
-                    {produto.isNew && (
-                      <View style={styles.newBadge}>
-                        <Text style={styles.newBadgeText}>Novo</Text>
-                      </View>
-                    )}
-                    <Image 
-                      source={require('../../assets/images/logo/hortaShop_sem_fundo.png')} 
-                      style={styles.produtoImagem} 
-                      resizeMode="cover" 
-                    />
-                    <View style={styles.produtoInfo}>
-                      <Text style={styles.produtoNome}>{produto.name}</Text>
-                      <View style={styles.produtoPrecoContainer}>
-                        <Text style={styles.produtoPreco}>
-                          R$ {produto.price.toFixed(2).replace('.', ',')}
-                        </Text>
-                        <Text style={styles.produtoUnidade}>/{produto.unit}</Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+          
+          {/* Banner promocional */}
+          <View style={styles.bannerContainer}>
+            <View style={styles.banner}>
+              <View style={styles.bannerContent}>
+                <Text style={styles.bannerTitle}>Produtos Frescos</Text>
+                <Text style={styles.bannerSubtitle}>Diretamente do produtor</Text>
+                <TouchableOpacity style={styles.bannerButton}>
+                  <Text style={styles.bannerButtonText}>Comprar agora</Text>
+                </TouchableOpacity>
               </View>
-            )}
+              <View style={styles.bannerImageContainer}>
+                {/* Aqui poderia ser adicionada uma imagem */}
+              </View>
+            </View>
+          </View>
+          
+          {/* Seção de produtos em destaque */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Produtos em destaque</Text>
+              {/*<TouchableOpacity 
+                style={styles.viewAllButton}
+                
+              >
+               < <Text style={styles.viewAllText}>Ver tudo</Text>
+                Ionicons name="chevron-forward" size={16} color="#6CC51D" />
+              </TouchableOpacity>*/}
+            </View>
+            
+            <View style={styles.produtosContainer}>
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#6CC51D" />
+                </View>
+              ) : error ? (
+                <View style={styles.errorContainer}>
+                  <Ionicons name="alert-circle-outline" size={40} color="#FF6B6B" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : (
+                <View style={styles.produtosGrid}>
+                  {featuredProducts.map((produto) => (
+                    <TouchableOpacity 
+                      key={produto.id} 
+                      style={styles.produtoCard}
+                      onPress={() => router.push({
+                        pathname: '/productDetails',
+                        params: { id: produto.id }
+                      })}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.produtoImageContainer}>
+                        {produto.isNew && (
+                          <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>Novo</Text>
+                          </View>
+                        )}
+                        <Image 
+                          source={{ uri: produto.imageUrl }} 
+                          style={styles.produtoImagem} 
+                          resizeMode="cover" 
+                          defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}
+                        />
+                      </View>
+                      <View style={styles.produtoInfo}>
+                        <Text style={styles.produtoNome} numberOfLines={1}>{produto.name}</Text>
+                        <View style={styles.produtoPrecoContainer}>
+                          <Text style={styles.produtoPreco}>
+                            R$ {produto.price.toFixed(2).replace('.', ',')}
+                          </Text>
+                          <Text style={styles.produtoUnidade}>/{produto.unit}</Text>
+                        </View>
+                        <TouchableOpacity style={styles.addToCartButton}>
+                          <Ionicons name="add" size={18} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+          
+          {/* Seção de todos os produtos */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Todos os Produtos</Text>
+              {/* <TouchableOpacity 
+                style={styles.viewAllButton}
+                onPress={() => router.push('/search')}
+              >
+                <Text style={styles.viewAllText}>Ver tudo</Text>
+                <Ionicons name="chevron-forward" size={16} color="#6CC51D" />
+              </TouchableOpacity> */}
+            </View>
+            
+            <View style={styles.produtosContainer}>
+              {loadingAll ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#6CC51D" />
+                </View>
+              ) : errorAll ? (
+                <View style={styles.errorContainer}>
+                  <Ionicons name="alert-circle-outline" size={40} color="#FF6B6B" />
+                  <Text style={styles.errorText}>{errorAll}</Text>
+                </View>
+              ) : (
+                <View style={styles.produtosGrid}>
+                  {allProducts.map((produto) => (
+                    <TouchableOpacity 
+                      key={produto.id} 
+                      style={styles.produtoCard}
+                      onPress={() => router.push({
+                        pathname: '/productDetails',
+                        params: { id: produto.id }
+                      })}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.produtoImageContainer}>
+                        {produto.isNew && (
+                          <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>Novo</Text>
+                          </View>
+                        )}
+                        <Image 
+                          source={{ uri: produto.imageUrl }} 
+                          style={styles.produtoImagem} 
+                          resizeMode="cover" 
+                          defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}
+                        />
+                      </View>
+                      <View style={styles.produtoInfo}>
+                        <Text style={styles.produtoNome} numberOfLines={1}>{produto.name}</Text>
+                        <View style={styles.produtoPrecoContainer}>
+                          <Text style={styles.produtoPreco}>
+                            R$ {produto.price.toFixed(2).replace('.', ',')}
+                          </Text>
+                          <Text style={styles.produtoUnidade}>/{produto.unit}</Text>
+                        </View>
+                        <TouchableOpacity style={styles.addToCartButton}>
+                          <Ionicons name="add" size={18} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const SPACING = 13;
-const SPACING_TOP = Platform.OS === 'android' ? 3 : 13;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   mainContainer: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#FFFFFF",
   },
   container: {
+    flex: 1,
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    flexDirection: "column",
-    paddingVertical: SPACING,
+    paddingHorizontal: 20,
+    paddingTop: 1,
+    paddingBottom: 15,
+  },
+  headerTitle: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 22,
+    color: "#6CC51D",
+  },
+  notificationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
   },
   searchBar: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: SPACING_TOP * 4,
-    padding: SPACING,
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
     borderRadius: 5,
-    backgroundColor: "#F4F5F9",
-    width: "90%",
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
   },
   searchText: {
-    color: "gray",
     fontFamily: "Poppins_400Regular",
-    marginHorizontal: SPACING,
+    fontSize: 14,
+    color: "#9E9E9E",
+    marginLeft: 10,
   },
   sectionContainer: {
-    width: "100%",
-    alignItems: "center",
-    marginBottom: SPACING * 2,
+    marginBottom: 24,
   },
-  categoria: {
+  sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "90%",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginBottom: 12,
   },
-  categoriaText: {
-    fontSize: 16,
+  sectionTitle: {
     fontFamily: "Poppins_600SemiBold",
+    fontSize: 18,
+    color: "#333333",
   },
-  categoriasContainer: {
-    marginTop: SPACING,
-    paddingHorizontal: SPACING,
-    width: "100%",
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  viewAllText: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#6CC51D",
+    marginRight: 2,
+  },
+  categoriasScrollContent: {
+    paddingHorizontal: 15,
+    paddingVertical: 5,
   },
   categoriaItem: {
     alignItems: "center",
-    marginRight: SPACING * 2,
+    marginHorizontal: 10,
+    width: 70,
   },
   categoriaIcone: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "#F0F8F0",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: SPACING / 2,
+    marginBottom: 8,
+    
   },
   categoriaNome: {
     fontFamily: "Poppins_400Regular",
     fontSize: 12,
+    color: "#333333",
+    textAlign: "center",
   },
-  produtosContainer: {
-    width: "90%",
-    marginTop: SPACING,
+  bannerContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
-  produtoCard: {
-    width: 150,
-    marginRight: SPACING,
-    backgroundColor: '#FFFFFF',
+  banner: {
+    flexDirection: "row",
+    backgroundColor: "#E8F5E9",
     borderRadius: 10,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    position: 'relative',
+    padding: 16,
+    height: 140,
+    overflow: "hidden",
   },
-  produtoImagem: {
-    width: 100,
-    height: 100,
-    borderRadius: 5,
-
+  bannerContent: {
+    flex: 1,
+    justifyContent: "center",
   },
-  produtoInfo: {
-    padding: SPACING,
-  },
-  produtoNome: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 14,
+  bannerTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 18,
+    color: "#333333",
     marginBottom: 4,
   },
-  produtoPrecoContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+  bannerSubtitle: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 13,
+    color: "#666666",
+    marginBottom: 12,
   },
-  produtoPreco: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
-    color: '#6CC51D',
+  bannerButton: {
+    backgroundColor: "#6CC51D",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: "flex-start",
   },
-  produtoUnidade: {
-    fontFamily: 'Poppins_400Regular',
+  bannerButtonText: {
+    fontFamily: "Poppins_600SemiBold",
     fontSize: 12,
-    color: '#888',
-    marginLeft: 2,
+    color: "#FFFFFF",
   },
-  newBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: '#FF6B6B',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    zIndex: 1,
+  bannerImageContainer: {
+    width: 100,
   },
-  newBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontFamily: 'Poppins_600SemiBold',
+  produtosContainer: {
+    paddingHorizontal: 20,
+  },
+  loadingContainer: {
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorContainer: {
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorText: {
-    fontFamily: 'Poppins_400Regular',
-    color: '#FF6B6B',
-    textAlign: 'center',
-    padding: SPACING,
-  },containerProdutos: {
-    alignItems: "center",
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#FF6B6B",
+    textAlign: "center",
+    marginTop: 10,
+  },
+  produtosGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    paddingVertical: SPACING,
+  },
+  produtoCard: {
+    width: "48%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    marginBottom: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+  },
+  produtoImageContainer: {
+    position: "relative",
+    height: 140,
+    backgroundColor: "#e8f5e9",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+  },
+  produtoImagem: {
+    width: "80%",
+    height: "80%",
+    resizeMode: "contain",
+  },
+  newBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "#6CC51D",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    zIndex: 1,
+  },
+  newBadgeText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 10,
+    color: "#FFFFFF",
+  },
+  produtoInfo: {
+    padding: 12,
+    position: "relative",
+    backgroundColor: "#f5f5f5",
+  },
+  produtoNome: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+    color: "#333333",
+    marginBottom: 6,
+  },
+  produtoPrecoContainer: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  produtoPreco: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 16,
+    color: "#6CC51D",
+  },
+  produtoUnidade: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    color: "#999999",
+    marginLeft: 2,
+  },
+  addToCartButton: {
+    position: "absolute",
+    right: 12,
+    bottom: 12,
+    backgroundColor: "#6CC51D",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

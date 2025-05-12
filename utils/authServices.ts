@@ -8,6 +8,17 @@ interface LoginCredentials {
   password: string;
 }
 
+interface LoginData {
+  email: string;
+  password: string;
+}
+
+interface LoginResponse {
+  access_token: string;
+  userType: string;
+  user: UserProfile;
+}
+
 interface RegisterData {
   name: string;
   email: string;
@@ -26,11 +37,12 @@ interface UserProfile {
   phone?: string;
   createdAt: Date;
   updatedAt: Date;
+  producerUuid?: string; 
 }
 
 const API_BASE_URL = Platform.select({
-  android: process.env.EXPO_PUBLIC_API_BASE_URL, // Ex: 'http://192.168.1.10:3000'
-  ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS, // Ex: 'http://localhost:3000'
+  android: process.env.EXPO_PUBLIC_API_BASE_URL,
+  ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,
   default: process.env.EXPO_PUBLIC_API_BASE_URL,
 });
 
@@ -45,9 +57,10 @@ async function saveToken(token: string): Promise<void> {
   }
 }
 
-async function getToken(): Promise<string | null> {
+export async function getToken(): Promise<string | null> {
   try {
-    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    // A chave de armazenamento está inconsistente
+    const token = await SecureStore.getItemAsync('userToken'); // Alterar de AUTH_TOKEN_KEY para 'userToken'
     return token;
   } catch (error) {
     console.error('Erro ao recuperar o token:', error);
@@ -55,29 +68,24 @@ async function getToken(): Promise<string | null> {
   }
 }
 
-async function removeToken(): Promise<void> {
+export const login = async (credentials: LoginData): Promise<UserProfile> => {
   try {
-    await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
-    console.log('Token removido com sucesso.');
-  } catch (error) {
-    console.error('Erro ao remover o token:', error);
-  }
-}
-
-export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-  try {
-    console.log(`Tentando login em: ${API_BASE_URL}/auth/login`);
-    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/login`, credentials);
-
-    if (response.data.access_token) {
-      await saveToken(response.data.access_token);
-    } else {
-      throw new Error('Token não recebido na resposta de login.');
+    const response = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/login`, credentials);
+    
+    // Armazenamento inconsistente entre token e userType
+    await SecureStore.setItemAsync('userToken', response.data.access_token);
+    await SecureStore.setItemAsync('userType', response.data.userType || 'consumer');
+    
+    // Adicionar verificação de armazenamento
+    const storedUserType = await SecureStore.getItemAsync('userType');
+    if (!storedUserType) {
+      throw new Error('Falha ao armazenar tipo de usuário');
     }
-    return response.data;
+    
+    return response.data.user;
   } catch (error) {
-    console.error('Erro no login:', axios.isAxiosError(error) ? error.response?.data : error);
-    throw new Error(axios.isAxiosError(error) ? error.response?.data?.message || 'Erro de login' : 'Erro desconhecido');
+    console.error('Erro ao fazer login:', axios.isAxiosError(error) ? error.response?.data : error);
+    throw new Error(axios.isAxiosError(error) ? error.response?.data?.message || 'Credenciais inválidas' : 'Erro desconhecido');
   }
 };
 
@@ -92,19 +100,22 @@ export const register = async (userData: RegisterData): Promise<UserProfile> => 
   }
 };
 
+
 export const getProfile = async (): Promise<UserProfile> => {
   const token = await getToken();
   if (!token) {
+    console.error('Token não encontrado no armazenamento seguro');
     throw new Error('Usuário não autenticado.');
   }
 
   try {
-    console.log(`Buscando perfil em: ${API_BASE_URL}/auth/profile`);
+    console.log(`Buscando perfil em: ${API_BASE_URL}/auth/profile com token: ${token.substring(0, 10)}...`);
     const response = await axios.get<UserProfile>(`${API_BASE_URL}/auth/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+    console.log('Perfil recebido:', JSON.stringify(response.data));
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar perfil:', axios.isAxiosError(error) ? error.response?.data : error);
@@ -116,8 +127,15 @@ export const getProfile = async (): Promise<UserProfile> => {
   }
 };
 
+// Remover a duplicação da função logout
 export const logout = async (): Promise<void> => {
-  await removeToken();
+  try {
+    await SecureStore.deleteItemAsync('userToken');
+    await SecureStore.deleteItemAsync('userType');
+    console.log('Logout realizado com sucesso');
+  } catch (error) {
+    console.error('Erro ao fazer logout:', error);
+  }
 };
 
 export const isAuthenticated = async (): Promise<boolean> => {
@@ -132,18 +150,18 @@ export const authUtils = {
 };
 
 export const handleOAuthCallback = async (url: string): Promise<string | null> => {
-    const { queryParams } = Linking.parse(url);
-    const token = queryParams?.token as string | undefined;
+  const { queryParams } = Linking.parse(url);
+  const token = queryParams?.token as string | undefined;
 
-    if (token) {
-        console.log('Token recebido do callback OAuth:', token ? 'Sim' : 'Não');
-        await saveToken(token);
-        return token;
-    } else {
-        console.error('Nenhum token encontrado na URL de callback:', url);
-        await removeToken();
-        return null;
-    }
+  if (token) {
+    console.log('Token recebido do callback OAuth:', token ? 'Sim' : 'Não');
+    await saveToken(token);
+    return token;
+  } else {
+    console.error('Nenhum token encontrado na URL de callback:', url);
+    await removeToken();
+    return null;
+  }
 };
 
 export const updateProfile = async (userId: number, userData: Partial<UserProfile>): Promise<UserProfile> => {
@@ -194,3 +212,12 @@ export const updatePassword = async (userId: number, passwordData: { currentPass
     throw new Error(axios.isAxiosError(error) ? error.response?.data?.message || 'Erro ao atualizar senha' : 'Erro desconhecido');
   }
 };
+
+export async function removeToken(): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+    console.log('Token removido com sucesso.');
+  } catch (error) {
+    console.error('Erro ao remover o token:', error);
+  }
+}

@@ -54,7 +54,9 @@
             "node_modules/@expo-google-fonts/poppins/900Black_Italic/Poppins_900Black_Italic.ttf"
           ]
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -62,9 +64,6 @@
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "e2d79b9f-62f1-41b5-8a37-3feb4f6addc5"
       }
     }
   }
