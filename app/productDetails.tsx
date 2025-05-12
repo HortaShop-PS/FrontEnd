@@ -13,6 +13,7 @@ interface Product {
   imageUrl: string;
   isNew: boolean;
   isFeatured: boolean;
+  description: string; 
 }
 
 export default function ProductDetails() {
@@ -159,6 +160,10 @@ export default function ProductDetails() {
         <View style={styles.detailsContainer}>
           <Text style={styles.productName}>{product.name}</Text>
           
+          {product.description && (
+            <Text style={styles.productDescription}>{product.description}</Text>
+          )}
+          
           <View style={styles.priceContainer}>
             <Text style={styles.price}>R$ {product.price.toFixed(2).replace('.', ',')}</Text>
             <Text style={styles.unit}>/{product.unit}</Text>
@@ -194,6 +199,7 @@ export default function ProductDetails() {
   );
 }
 
+// Adicione este estilo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -211,6 +217,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#FFFFFF',
+  },
+  productDescription: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 20,
   },
   errorText: {
     fontFamily: 'Poppins_400Regular',

@@ -27,8 +27,16 @@ export default function ProfileScreen() {
     const loadUserProfile = async () => {
         try {
             setLoading(true);
-
+            
+            const userType = await SecureStore.getItemAsync('userType');
+            if (userType !== 'producer') {
+                console.error('Usuário não é produtor, redirecionando...');
+                router.replace('/(tabs)');
+                return;
+            }
+            
             const data = await getProfile();
+            console.log('Dados do perfil recebidos:', data);
             setUserData({
                 id: data.id.toString(),
                 name: data.name,
@@ -47,7 +55,7 @@ export default function ProfileScreen() {
         useCallback(() => {
             loadUserProfile();
             return () => {
-                // Cleanup function
+
             };
         }, [])
     );
@@ -82,7 +90,7 @@ export default function ProfileScreen() {
     };
 
     const handleFavorites = () => {
-            router.push('/favorites');
+            router.push('/registerProduct');
     };
 
     if (!fontsLoaded) {
@@ -134,22 +142,22 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    {/*<TouchableOpacity>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="cube-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
                             <Text style={styles.menuItemText}>Pedidos</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleFavorites()}>
+                        </View> 
+                    </TouchableOpacity>*/}
+                     <TouchableOpacity onPress={() => handleFavorites()}>
                         <View style={styles.menuItemRow}>
-                            <Ionicons name="heart-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                            <Ionicons name="albums-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
                             <Text style={styles.menuItemText}>Registro De Produtos</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                </View>
-
+                {/* </View>
+                       
                 <View style={styles.menuSection}>
                     <Text style={styles.menuSectionTitle}>Configurações</Text>
                     <TouchableOpacity>
@@ -179,7 +187,7 @@ export default function ProfileScreen() {
                             <Text style={styles.menuItemText}>Notificações</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
-                    </TouchableOpacity>
+                    </TouchableOpacity>*/}
                 </View>
 
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>

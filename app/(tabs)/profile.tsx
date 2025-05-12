@@ -134,13 +134,14 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
+                    {/*
                     <TouchableOpacity>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="cube-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
                             <Text style={styles.menuItemText}>Meus Pedidos</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
-                    </TouchableOpacity>
+                    </TouchableOpacity>*/}
                     <TouchableOpacity onPress={() => handleFavorites()}>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="heart-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
@@ -148,7 +149,7 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                </View>
+                {/*</View>
 
                 <View style={styles.menuSection}>
                     <Text style={styles.menuSectionTitle}>Configurações</Text>
@@ -180,7 +181,7 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                </View>
+                */}</View>
 
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={22} color="#FF6B6B" style={styles.logoutIcon} />

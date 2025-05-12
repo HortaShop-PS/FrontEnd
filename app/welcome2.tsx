@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, Alert } from "react-native";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { Ionicons, AntDesign } from '@expo/vector-icons';
 import LoadingIndicator from "./loadingIndicator";
@@ -8,12 +8,14 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as Linking from 'expo-linking';
 import { handleOAuthCallback } from "../utils/authServices";
+import * as SecureStore from 'expo-secure-store';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function AuthScreen() {
     const router = useRouter();
     const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
     const [fontsLoaded, fontError] = useFonts({
         Poppins_600SemiBold,
@@ -26,53 +28,67 @@ export default function AuthScreen() {
     });
 
     useEffect(() => {
-        const handleResponse = async () => {
-            if (response) {
-                setIsLoadingGoogle(false);
-                console.log("Resposta do AuthSession:", JSON.stringify(response, null, 2));
-
-                if (response.type === 'success') {
-                    const { url } = response.params;
-                    console.log("URL de redirecionamento recebida:", url);
-
-                    try {
-                        const token = await handleOAuthCallback(url);
-                        if (token) {
-                            Alert.alert("Sucesso", "Login com Google realizado!");
-                            router.replace('/(tabs)');
-                        } else {
-                            Alert.alert("Erro", "Não foi possível obter o token da resposta do servidor.");
-                        }
-                    } catch (error: any) {
-                         Alert.alert("Erro", `Falha ao processar callback: ${error.message}`);
+        const checkAuthentication = async () => {
+            try {
+                const token = await SecureStore.getItemAsync('userToken');
+                if (token) {
+                    const userType = await SecureStore.getItemAsync('userType');
+                    if (userType === 'producer') {
+                        router.replace('/(tabsProducers)');
+                    } else {
+                        router.replace('/(tabs)');
                     }
-
-                } else if (response.type === 'error') {
-                    console.error("Erro do AuthSession:", response.error);
-                    Alert.alert("Erro de Autenticação", `Não foi possível completar o login com Google: ${response.error?.message || response.type}`);
-                } else if (response.type === 'cancel' || response.type === 'dismiss') {
-                    console.log("Autenticação com Google cancelada ou dispensada.");
                 }
+            } catch (error) {
+                console.error('Erro ao verificar autenticação:', error);
+            } finally {
+                setIsCheckingAuth(false);
             }
         };
+        
+        checkAuthentication();
+    }, [router]);
 
-        handleResponse();
-    }, [response, router]);
-
-    async function handleGoogleLogin() {
-        console.log("Iniciando login com Google...");
-        setIsLoadingGoogle(true);
-
-        const backendGoogleAuthUrl = `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/google`;
-
-        try {
-            await promptAsync({ url: backendGoogleAuthUrl });
-        } catch (error: any) {
-            console.error("Erro ao iniciar promptAsync:", error);
-            Alert.alert("Erro", `Não foi possível iniciar o login com Google: ${error.message}`);
-            setIsLoadingGoogle(false);
+    useEffect(() => {
+        if (response) {
+            handleResponse();
         }
-    }
+    }, [response]);
+
+    const handleResponse = async () => {
+        if (response) {
+            setIsLoadingGoogle(false);
+            console.log("Resposta do AuthSession:", JSON.stringify(response, null, 2));
+
+            if (response.type === 'success') {
+                const { url } = response.params;
+                console.log("URL de redirecionamento recebida:", url);
+
+                try {
+                    const token = await handleOAuthCallback(url);
+                    if (token) {
+                        Alert.alert("Sucesso", "Login com Google realizado!");
+                        router.replace('/(tabs)');
+                    } else {
+                        Alert.alert("Erro", "Não foi possível obter o token da resposta do servidor.");
+                    }
+                } catch (error: any) {
+                     Alert.alert("Erro", `Falha ao processar callback: ${error.message}`);
+                }
+
+            } else if (response.type === 'error') {
+                console.error("Erro do AuthSession:", response.error);
+                Alert.alert("Erro de Autenticação", `Não foi possível completar o login com Google: ${response.error?.message || response.type}`);
+            } else if (response.type === 'cancel' || response.type === 'dismiss') {
+                console.log("Autenticação com Google cancelada ou dispensada.");
+            }
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        setIsLoadingGoogle(true);
+        await promptAsync();
+    };
 
     function handleCreateAccount() {
         console.log("Ir para criar conta");
@@ -85,6 +101,10 @@ export default function AuthScreen() {
     }
 
     if (!fontsLoaded && !fontError) {
+        return <LoadingIndicator />;
+    }
+
+    if (isCheckingAuth) {
         return <LoadingIndicator />;
     }
 

@@ -15,7 +15,6 @@ export interface ProductData {
   categoriaId: number;
   estoque?: number;
   imagemUrl?: string;
-  // Adicione outros campos conforme necessário
 }
 
 export interface ProductResponse {

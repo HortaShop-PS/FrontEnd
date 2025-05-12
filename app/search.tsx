@@ -5,6 +5,8 @@ import { useRouter } from 'expo-router';
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { searchProducts } from '../utils/homeService';
 import Slider from '@react-native-community/slider';
+import { useLocalSearchParams } from "expo-router";
+
 
 interface Product {
   id: string;
@@ -27,6 +29,11 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchPerformed, setSearchPerformed] = useState(false);
+  const params = useLocalSearchParams();
+  const initialCategory = typeof params.category === 'string' ? params.category : undefined;
+
+  const [category, setCategory] = useState<string | undefined>(initialCategory);
+
 
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
@@ -34,30 +41,66 @@ export default function SearchScreen() {
     Poppins_700Bold,
   });
 
-  const handleSearch = async () => {
+  const handleSearchWithCategory = async (cat: string) => {
     try {
       setLoading(true);
       setError(null);
       setSearchPerformed(true);
-      
+  
       const searchParams = {
-        name: searchQuery,
-        minPrice: minPrice,
-        maxPrice: maxPrice,
-        isOrganic: isOrganic,
+        category: cat,
+        minPrice,
+        maxPrice,
+        isOrganic,
         limit: 20
       };
-      
+  
       const results = await searchProducts(searchParams);
       setProducts(results);
     } catch (error) {
-      console.error('Erro na busca:', error);
       setError('Não foi possível realizar a busca. Tente novamente.');
       setProducts([]);
     } finally {
       setLoading(false);
     }
   };
+  
+
+  useEffect(() => {
+    if (initialCategory) {
+      setCategory(initialCategory);
+      setSearchQuery(''); // Limpa busca por nome se quiser
+      handleSearchWithCategory(initialCategory);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCategory]);
+  
+
+  const handleSearch = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setSearchPerformed(true);
+  
+      const searchParams = {
+        name: searchQuery,
+        category, // Inclua a categoria
+        minPrice,
+        maxPrice,
+        isOrganic,
+        limit: 20
+      };
+  
+      const results = await searchProducts(searchParams);
+      setProducts(results);
+    } catch (error) {
+      setError('Não foi possível realizar a busca. Tente novamente.');
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
@@ -84,11 +127,7 @@ export default function SearchScreen() {
             <Text style={styles.newBadgeText}>Novo</Text>
           </View>
         )}
-        {item.isOrganic && (
-          <View style={[styles.newBadge, styles.organicBadge]}>
-            <Text style={styles.newBadgeText}>Orgânico</Text>
-          </View>
-        )}
+        
         <Image 
           source={{ uri: item.imageUrl }} 
           style={styles.productImage} 
