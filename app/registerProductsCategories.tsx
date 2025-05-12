@@ -35,9 +35,9 @@ export default function Categories() {
         numColumns={3}
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onPress={() => router.push({ pathname: '/registerProduct', params: { categoria: item.nome } })}>
+          <TouchableOpacity style={styles.card} onPress={() => router.push({ pathname: 'registerProduct', params: { categoria: item.nome } })}>
             <View style={[styles.iconCircle, { backgroundColor: item.bg }]}> 
-              <Ionicons name={item.icone} size={32} color="#6CC51D" />
+              <Ionicons name={item.icone} size={32} color={"#6CC51D"} />
             </View>
             <Text style={styles.cardLabel}>{item.nome}</Text>
           </TouchableOpacity>

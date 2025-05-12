@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
     marginBottom: 16,
+    marginRight: 16,
     overflow: "hidden",
   },
   produtoImageContainer: {
