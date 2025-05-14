@@ -4,6 +4,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { getUserFavorites, removeFromFavorites } from '../utils/favoritesService';
+import Config from 'react-native-config';
 
 interface FavoriteProduct {
   id: string;
@@ -68,7 +69,7 @@ export default function FavoritesScreen() {
         setFavorites(prevFavorites => 
           prevFavorites.filter(item => item.id !== productId)
         );
-        Alert.alert('Sucesso', 'Produto removido dos favoritos!');
+        
       }
     } catch (error) {
       console.error('Erro ao remover favorito:', error);
@@ -97,7 +98,7 @@ export default function FavoritesScreen() {
           </View>
         )}
         <Image 
-          source={{ uri: item.imageUrl }} 
+          source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageUrl}` }}
           style={styles.produtoImagem} 
           resizeMode="cover" 
           defaultSource={require('../assets/images/logo/hortaShop_sem_fundo.png')}
@@ -220,11 +221,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#e8f5e9",
     alignItems: "center",
     justifyContent: "center",
-    padding: 10,
   },
   produtoImagem: {
-    width: "80%",
-    height: "80%",
+    width: "100%",
+    height: "100%",
     resizeMode: "contain",
   },
   newBadge: {

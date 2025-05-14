@@ -1,8 +1,12 @@
-import {Text, View,StyleSheet,TouchableOpacity,TextInput,ScrollView,SafeAreaView,StatusBar,Alert} from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { useEffect, useState } from "react"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, SafeAreaView, StyleSheet } from "react-native"
 import { Stack, useRouter } from "expo-router"
-import { useState, useEffect } from "react"
-import { getProfile, authUtils } from "../utils/authServices"
+import { Ionicons } from "@expo/vector-icons"
+import { getProfile } from "../utils/authServices"
+import * as authUtils from "../utils/authServices"
+import { showAlert, showSuccess, showError } from "../utils/alertService"
+import Config from 'react-native-config';
+
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -38,12 +42,12 @@ export default function AboutMe() {
           phone: userProfile.phone || "",
         }))
       } else {
-        Alert.alert("Erro", "Não foi possível obter os dados do usuário.")
+        showError("Erro", "Não foi possível obter os dados do usuário.")
         router.replace("/welcome2")
       }
     } catch (error) {
       console.error("Erro ao verificar autenticação:", error)
-      Alert.alert("Sessão expirada", "Por favor, faça login novamente.")
+      showError("Sessão expirada", "Por favor, faça login novamente.")
       router.replace("/welcome2")
     }
   }
@@ -54,39 +58,39 @@ export default function AboutMe() {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      Alert.alert("Erro", "O nome é obrigatório")
+      showError("Erro", "O nome é obrigatório")
       return false
     }
 
     if (!formData.email.trim()) {
-      Alert.alert("Erro", "O email é obrigatório")
+      showError("Erro", "O email é obrigatório")
       return false
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(formData.email)) {
-      Alert.alert("Erro", "Formato de email inválido")
+      showError("Erro", "Formato de email inválido")
       return false
     }
 
     if (formData.currentPassword || formData.newPassword || formData.confirmPassword) {
       if (!formData.currentPassword) {
-        Alert.alert("Erro", "A senha atual é obrigatória para alterar a senha")
+        showError("Erro", "A senha atual é obrigatória para alterar a senha")
         return false
       }
 
       if (!formData.newPassword) {
-        Alert.alert("Erro", "A nova senha é obrigatória")
+        showError("Erro", "A nova senha é obrigatória")
         return false
       }
 
       if (formData.newPassword !== formData.confirmPassword) {
-        Alert.alert("Erro", "As senhas não coincidem")
+        showError("Erro", "As senhas não coincidem")
         return false
       }
 
       if (formData.newPassword.length < 6) {
-        Alert.alert("Erro", "A nova senha deve ter pelo menos 6 caracteres")
+        showError("Erro", "A nova senha deve ter pelo menos 6 caracteres")
         return false
       }
     }
@@ -148,7 +152,7 @@ export default function AboutMe() {
         }
       }
 
-      Alert.alert("Sucesso", "Dados atualizados com sucesso!")
+      showSuccess("Sucesso", "Dados atualizados com sucesso!")
       setFormData((prev) => ({
         ...prev,
         currentPassword: "",
@@ -157,7 +161,7 @@ export default function AboutMe() {
       }))
       router.back()
     } catch (error: any) {
-      Alert.alert("Erro", error.message || "Ocorreu um erro ao salvar os dados")
+      showError("Erro", error.message || "Ocorreu um erro ao salvar os dados")
     } finally {
       setLoading(false)
     }

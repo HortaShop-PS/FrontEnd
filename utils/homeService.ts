@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import Config from 'react-native-config';
 
 export interface Product {
     id: string;

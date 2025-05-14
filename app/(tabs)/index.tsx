@@ -4,6 +4,7 @@ import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } fr
 import { useEffect, useState } from "react";
 import { fetchFeaturedProducts, fetchAllProducts, Product } from "../../utils/homeService";
 import { useRouter } from "expo-router";
+import Config from "react-native-config";
 
 export default function Index() {
   const router = useRouter();
@@ -27,7 +28,16 @@ export default function Index() {
     { id: 3, nome: "Orgânicos", icone: "flower-outline", categoria: "Orgânicos" },
   ];
   
-
+  const getFullImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+    return `${API_BASE_URL}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+  };
   useEffect(() => {
     const loadFeaturedProducts = async () => {
       try {
@@ -188,7 +198,7 @@ export default function Index() {
                           </View>
                         )}
                         <Image 
-                          source={{ uri: produto.imageUrl }} 
+                          source={{ uri: `${Config.PI_BASE_URL}${produto.imageUrl}` }}  
                           style={styles.produtoImagem} 
                           resizeMode="cover" 
                           defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}
@@ -255,7 +265,7 @@ export default function Index() {
                           </View>
                         )}
                         <Image 
-                          source={{ uri: produto.imageUrl }} 
+                          source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${produto.imageUrl}` }}  
                           style={styles.produtoImagem} 
                           resizeMode="cover" 
                           defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}
@@ -469,11 +479,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#e8f5e9",
     alignItems: "center",
     justifyContent: "center",
-    padding: 10,
   },
   produtoImagem: {
-    width: "80%",
-    height: "80%",
+    width: "100%",
+    height: "100%",
     resizeMode: "contain",
   },
   newBadge: {

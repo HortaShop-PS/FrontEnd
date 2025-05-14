@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
@@ -13,7 +13,10 @@ interface Product {
   imageUrl: string;
   isNew: boolean;
   isFeatured: boolean;
-  description: string; 
+  description: string;
+  rating?: number;
+  reviews?: number;
+  weight?: string;
 }
 
 export default function ProductDetails() {
@@ -82,18 +85,15 @@ export default function ProductDetails() {
         const success = await removeFromFavorites(product.id);
         if (success) {
           setIsFavorite(false);
-          
         }
       } else {
         const success = await addToFavorites(product.id);
         if (success) {
           setIsFavorite(true);
-          
         }
       }
     } catch (error) {
       console.error('Erro ao gerenciar favoritos:', error);
-      
     } finally {
       setFavoriteLoading(false);
     }
@@ -118,80 +118,108 @@ export default function ProductDetails() {
     );
   }
 
+  // Renderizar estrelas de avaliação
+  const renderStars = (rating = 4.5, total = 5) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.5;
+    
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <Ionicons key={`star-${i}`} name="star" size={16} color="#FFD700" />
+      );
+    }
+    
+    if (halfStar) {
+      stars.push(
+        <Ionicons key="star-half" name="star-half" size={16} color="#FFD700" />
+      );
+    }
+    
+    const emptyStars = total - fullStars - (halfStar ? 1 : 0);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <Ionicons key={`star-empty-${i}`} name="star-outline" size={16} color="#FFD700" />
+      );
+    }
+    
+    return stars;
+  };
+
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+      </View>
+      
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.favoriteButton} 
-            onPress={handleToggleFavorite}
-            disabled={favoriteLoading}
-          >
-            {favoriteLoading ? (
-              <ActivityIndicator size="small" color="#6CC51D" />
-            ) : (
-              <Ionicons 
-                name={isFavorite ? "heart" : "heart-outline"} 
-                size={24} 
-                color={isFavorite ? "#FF6B6B" : "#333"} 
-              />
-            )}
-          </TouchableOpacity>
-        </View>
-
         <View style={styles.imageContainer}>
           <Image 
-            source={{ uri: product.imageUrl }} 
+            source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${product.imageUrl}` }}  
             style={styles.productImage} 
-            resizeMode="contain"
+            resizeMode="cover"
             defaultSource={require('../assets/images/logo/hortaShop_sem_fundo.png')}
           />
         </View>
-
-        {product.isNew && (
-          <View style={styles.newBadge}>
-            <Text style={styles.newBadgeText}>Novo</Text>
-          </View>
-        )}
-
+        
         <View style={styles.detailsContainer}>
-          <Text style={styles.productName}>{product.name}</Text>
-          
-          {product.description && (
-            <Text style={styles.productDescription}>{product.description}</Text>
-          )}
-          
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>R$ {product.price.toFixed(2).replace('.', ',')}</Text>
-            <Text style={styles.unit}>/{product.unit}</Text>
+          <View style={styles.productHeader}>
+            <View>
+              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productWeight}>{product.weight || '700 g'}</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.favoriteButton} 
+              onPress={handleToggleFavorite}
+              disabled={favoriteLoading}
+            >
+              {favoriteLoading ? (
+                <ActivityIndicator size="small" color="#6CC51D" />
+              ) : (
+                <Ionicons 
+                  name={isFavorite ? "heart" : "heart-outline"} 
+                  size={24} 
+                  color={isFavorite ? "#FF6B6B" : "#999"} 
+                />
+              )}
+            </TouchableOpacity>
           </View>
-
+          
+          <View style={styles.ratingContainer}>
+            <View style={styles.starsContainer}>
+              {renderStars(product.rating || 4.5)}
+            </View>
+            <Text style={styles.reviewsText}>({product.reviews || 89} avaliações)</Text>
+          </View>
+          
+          <Text style={styles.productDescription}>
+            {product.description || 'Descrição não encontrada'}
+          </Text>
+          
           <View style={styles.quantityContainer}>
-            <Text style={styles.quantityLabel}>Quantidade:</Text>
+            <Text style={styles.quantityLabel}>Quantidade</Text>
             <View style={styles.quantityControls}>
-              <TouchableOpacity style={styles.quantityButton} onPress={handleDecreaseQuantity}>
+              <TouchableOpacity 
+                style={[styles.quantityButton, styles.quantityButtonMinus]} 
+                onPress={handleDecreaseQuantity}
+              >
                 <Ionicons name="remove" size={20} color="#6CC51D" />
               </TouchableOpacity>
               <Text style={styles.quantityValue}>{quantity}</Text>
-              <TouchableOpacity style={styles.quantityButton} onPress={handleIncreaseQuantity}>
-                <Ionicons name="add" size={20} color="#6CC51D" />
+              <TouchableOpacity 
+                style={[styles.quantityButton, styles.quantityButtonPlus]} 
+                onPress={handleIncreaseQuantity}
+              >
+                <Ionicons name="add" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
-
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalPrice}>
-              R$ {(product.price * quantity).toFixed(2).replace('.', ',')}
-            </Text>
-          </View>
-
+          
           <TouchableOpacity style={styles.addToCartButton}>
+            <Text style={styles.addToCartText}>Adicionar no carrinho</Text>
             <Ionicons name="cart-outline" size={20} color="#FFF" style={styles.cartIcon} />
-            <Text style={styles.addToCartText}>Adicionar ao Carrinho</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -199,11 +227,10 @@ export default function ProductDetails() {
   );
 }
 
-// Adicione este estilo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
   },
   loadingContainer: {
     flex: 1,
@@ -218,13 +245,6 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#FFFFFF',
   },
-  productDescription: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
   errorText: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 16,
@@ -233,65 +253,93 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 10,
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10,
   },
   backButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   backButtonText: {
     fontFamily: 'Poppins_600SemiBold',
     color: '#6CC51D',
     fontSize: 16,
   },
-  favoriteButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-  },
   imageContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 250,
-    marginVertical: 20,
+    width: '100%',
+    height: 350,
+    backgroundColor: '#FFFFFF',
   },
   productImage: {
-    width: '80%',
+    width: '100%',
     height: '100%',
-  },
-  newBadge: {
-    position: 'absolute',
-    top: 100,
-    right: 30,
-    backgroundColor: '#6CC51D',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-  },
-  newBadgeText: {
-    color: '#FFFFFF',
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 12,
+    resizeMode: 'contain',
   },
   detailsContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    paddingHorizontal: 25,
+    marginTop: -30,
+    paddingHorizontal: 20,
     paddingTop: 30,
-    paddingBottom: 50,
+    paddingBottom: 40,
+  },
+  productHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
   },
   productName: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 24,
     color: '#333333',
-    marginBottom: 10,
+  },
+  productWeight: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
+  },
+  favoriteButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    marginRight: 5,
+  },
+  reviewsText: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#888888',
+  },
+  productDescription: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
+    marginBottom: 20,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -313,7 +361,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 30,
   },
   quantityLabel: {
     fontFamily: 'Poppins_600SemiBold',
@@ -325,34 +373,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quantityButton: {
-    backgroundColor: '#F0F8F0',
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  quantityButtonMinus: {
+    backgroundColor: '#F0F0F0',
+  },
+  quantityButtonPlus: {
+    backgroundColor: '#6CC51D',
+  },
   quantityValue: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
     color: '#333333',
     marginHorizontal: 15,
-  },
-  totalContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
-  totalLabel: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 18,
-    color: '#333333',
-  },
-  totalPrice: {
-    fontFamily: 'Poppins_700Bold',
-    fontSize: 22,
-    color: '#6CC51D',
+    minWidth: 20,
+    textAlign: 'center',
   },
   addToCartButton: {
     backgroundColor: '#6CC51D',
@@ -363,7 +402,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   cartIcon: {
-    marginRight: 10,
+    marginLeft: 10,
   },
   addToCartText: {
     fontFamily: 'Poppins_600SemiBold',

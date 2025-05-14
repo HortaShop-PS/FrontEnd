@@ -6,6 +6,7 @@ import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } fr
 import { searchProducts } from '../utils/homeService';
 import Slider from '@react-native-community/slider';
 import { useLocalSearchParams } from "expo-router";
+import Config from 'react-native-config';
 
 
 interface Product {
@@ -129,7 +130,7 @@ export default function SearchScreen() {
         )}
         
         <Image 
-          source={{ uri: item.imageUrl }} 
+          source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageUrl}` }} 
           style={styles.productImage} 
           resizeMode="cover" 
           defaultSource={require('../assets/images/logo/hortaShop_sem_fundo.png')}
@@ -454,11 +455,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
     maxWidth: '48%',
   },
   productImageContainer: {
@@ -467,11 +463,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8f5e9',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
   },
   productImage: {
-    width: '80%',
-    height: '80%',
+    width: "100%",
+    height: "100%",
     resizeMode: 'contain',
   },
   newBadge: {
