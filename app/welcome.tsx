@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, ImageBackground, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import LoadingIndicator from "./loadingIndicator";
+import * as SecureStore from 'expo-secure-store';
 
 export default function WelcomeScreen() {
     const router = useRouter();
@@ -12,6 +13,15 @@ export default function WelcomeScreen() {
         Poppins_400Regular,
         Poppins_700Bold,
     });
+
+    useEffect(() => {
+
+        const markWelcomeScreenAsSeen = async () => {
+            await SecureStore.setItemAsync('hasSeenWelcome', 'true');
+        };
+        
+        markWelcomeScreenAsSeen();
+    }, []);
 
     function handleStart() {
         router.replace("/welcome2");

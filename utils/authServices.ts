@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import * as Linking from 'expo-linking'
+import Config from 'react-native-config';
 
 interface LoginCredentials {
   email: string;

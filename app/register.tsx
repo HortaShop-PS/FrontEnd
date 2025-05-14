@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import axios from "axios"
+import { showError } from '../utils/alertService';
+import Config from 'react-native-config';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:3000"
 
@@ -21,28 +23,28 @@ export default function Register() {
 
   const validateForm = () => {
     if (!name.trim()) {
-      Alert.alert("Erro", "O nome é obrigatório")
+      showError("Erro", "O nome é obrigatório")
       return false
     }
 
     if (!email.trim()) {
-      Alert.alert("Erro", "O email é obrigatório")
+      showError("Erro", "O email é obrigatório")
       return false
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      Alert.alert("Erro", "Formato de email inválido")
+      showError("Erro", "Formato de email inválido")
       return false
     }
 
     if (!password) {
-      Alert.alert("Erro", "A senha é obrigatória")
+      showError("Erro", "A senha é obrigatória")
       return false
     }
 
     if (password.length < 6) {
-      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres")
+      showError("Erro", "A senha deve ter pelo menos 6 caracteres")
       return false
     }
 

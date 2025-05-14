@@ -9,6 +9,8 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as Linking from 'expo-linking';
 import { handleOAuthCallback } from "../utils/authServices";
 import * as SecureStore from 'expo-secure-store';
+import { showAlert, showSuccess, showError } from '../utils/alertService';
+import Config from "react-native-config";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -67,18 +69,18 @@ export default function AuthScreen() {
                 try {
                     const token = await handleOAuthCallback(url);
                     if (token) {
-                        Alert.alert("Sucesso", "Login com Google realizado!");
+                        showSuccess("Sucesso", "Login com Google realizado!");
                         router.replace('/(tabs)');
                     } else {
-                        Alert.alert("Erro", "Não foi possível obter o token da resposta do servidor.");
+                        showError("Erro", "Não foi possível obter o token da resposta do servidor.");
                     }
                 } catch (error: any) {
-                     Alert.alert("Erro", `Falha ao processar callback: ${error.message}`);
+                    showError("Erro", `Falha ao processar callback: ${error.message}`);
                 }
 
             } else if (response.type === 'error') {
                 console.error("Erro do AuthSession:", response.error);
-                Alert.alert("Erro de Autenticação", `Não foi possível completar o login com Google: ${response.error?.message || response.type}`);
+                showError("Erro de Autenticação", `Não foi possível completar o login com Google: ${response.error?.message || response.type}`);
             } else if (response.type === 'cancel' || response.type === 'dismiss') {
                 console.log("Autenticação com Google cancelada ou dispensada.");
             }
