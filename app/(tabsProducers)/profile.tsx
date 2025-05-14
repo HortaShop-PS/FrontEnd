@@ -5,6 +5,7 @@ import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } fr
 import { useCallback, useState } from "react";
 import { getProfile, logout } from "../../utils/authServices";
 import * as SecureStore from 'expo-secure-store';
+import { showAlert } from '../../utils/alertService';
 
 interface UserProfile {
     id: string;
@@ -61,7 +62,7 @@ export default function ProfileScreen() {
     );
 
     const handleLogout = async () => {
-        Alert.alert(
+        showAlert(
             "Sair da conta",
             "Tem certeza que deseja sair?",
             [
@@ -77,7 +78,7 @@ export default function ProfileScreen() {
                             router.replace('/welcome2');
                         } catch (error) {
                             console.error("Erro ao fazer logout:", error);
-                            Alert.alert("Erro", "Não foi possível fazer logout. Tente novamente.");
+                            showError("Erro", "Não foi possível fazer logout. Tente novamente.");
                         }
                     }
                 }

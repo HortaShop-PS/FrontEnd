@@ -2,8 +2,10 @@ import { useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, StatusBar, ImageBackground, KeyboardAvoidingView, Platform } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { showError } from '../utils/alertService';
+import Config from "react-native-config"
 
-const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:3000"
+const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL 
 
 export default function RegisterProducer() {
   const [name, setName] = useState("")
@@ -20,40 +22,40 @@ export default function RegisterProducer() {
 
   const validateForm = () => {
     if (!name.trim()) {
-      Alert.alert("Erro", "O nome é obrigatório")
+      showError("Erro", "O nome é obrigatório")
       return false
     }
 
     if (email && !email.trim()) {
-      Alert.alert("Erro", "O email não pode estar vazio")
+      showError("Erro", "O email não pode estar vazio")
       return false
     }
 
     if (email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(email)) {
-        Alert.alert("Erro", "Formato de email inválido")
+        showError("Erro", "Formato de email inválido")
         return false
       }
     }
 
     if (phone && !phone.trim()) {
-      Alert.alert("Erro", "O telefone não pode estar vazio")
+      showError("Erro", "O telefone não pode estar vazio")
       return false
     }
 
     if (!password) {
-      Alert.alert("Erro", "A senha é obrigatória")
+      showError("Erro", "A senha é obrigatória")
       return false
     }
 
     if (password.length < 6) {
-      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres")
+      showError("Erro", "A senha deve ter pelo menos 6 caracteres")
       return false
     }
 
     if (!email && !phone) {
-      Alert.alert("Erro", "Informe pelo menos um email ou telefone")
+      showError("Erro", "Informe pelo menos um email ou telefone")
       return false
     }
 

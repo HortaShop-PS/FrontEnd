@@ -1,7 +1,7 @@
-import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
-import { useRouter, useSegments } from "expo-router";
+import { useEffect, useState } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import AlertProvider from '../components/AlertProvider';
 
 export default function RootLayout() {
   const [isUserProducer, setIsUserProducer] = useState<boolean | null>(null);
@@ -12,6 +12,13 @@ export default function RootLayout() {
     const checkUserType = async () => {
       try {
         const token = await SecureStore.getItemAsync('userToken');
+        const hasSeenWelcome = await SecureStore.getItemAsync('hasSeenWelcome');
+        
+        if (!hasSeenWelcome && segments[0] !== 'welcome') {
+          console.log('Redirecionando para tela de boas-vindas');
+          router.replace('/welcome');
+          return;
+        }
         
         if (!token) {
           console.log('Nenhum token encontrado, usuário não autenticado');
@@ -53,21 +60,23 @@ export default function RootLayout() {
   }, [segments]);
 
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} /> 
-      <Stack.Screen name="welcome" options={{ headerShown: false }} />
-      <Stack.Screen name="welcome2" options={{ headerShown: false }} /> 
-      <Stack.Screen name="login" options={{ headerShown: false }} /> 
-      <Stack.Screen name="register" options={{ headerShown: false }} /> 
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabsProducers)" options={{ headerShown: false }} />
-      <Stack.Screen name="registerproducer" options={{ headerShown: false }} /> 
-      <Stack.Screen name='about' options={{headerShown: true, headerTitle: "Sobre mim", headerTitleAlign: "center", headerTitleStyle: {fontFamily: "Poppins_400Medium", fontSize: 18}}}/>
-      <Stack.Screen name='productDetails' options={{ headerShown: false }} />
-      <Stack.Screen name='favorites' options={{ headerShown: false }} />
-      <Stack.Screen name='registerProduct' options={{ headerShown: false }} />
-      <Stack.Screen name='registerProductsCategories' options={{ headerShown: false }} />
-      <Stack.Screen name='search' options={{ headerShown: false }} />
-    </Stack>
+    <AlertProvider>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} /> 
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome2" options={{ headerShown: false }} /> 
+        <Stack.Screen name="login" options={{ headerShown: false }} /> 
+        <Stack.Screen name="register" options={{ headerShown: false }} /> 
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabsProducers)" options={{ headerShown: false }} />
+        <Stack.Screen name="registerproducer" options={{ headerShown: false }} /> 
+        <Stack.Screen name='about' options={{headerShown: true, headerTitle: "Sobre mim", headerTitleAlign: "center", headerTitleStyle: {fontFamily: "Poppins_400Medium", fontSize: 18}}}/>
+        <Stack.Screen name='productDetails' options={{ headerShown: false }} />
+        <Stack.Screen name='favorites' options={{ headerShown: false }} />
+        <Stack.Screen name='registerProduct' options={{ headerShown: false }} />
+        <Stack.Screen name='registerProductsCategories' options={{ headerShown: false }} />
+        <Stack.Screen name='search' options={{ headerShown: false }} />
+      </Stack>
+    </AlertProvider>
   );
 }

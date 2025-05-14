@@ -6,6 +6,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import LoadingIndicator from "./loadingIndicator";
 import { login } from "../utils/authServices";
+import { showAlert, showSuccess, showError, showInfo } from '../utils/alertService';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -23,7 +24,7 @@ export default function LoginScreen() {
 
     async function handleLogin() {
         if (!email || !password) {
-            Alert.alert("Erro", "Por favor, preencha o email e a senha.");
+            showError("Erro", "Por favor, preencha o email e a senha.");
             return;
         }
         setIsLoading(true);
@@ -41,10 +42,10 @@ export default function LoginScreen() {
                 router.replace('/(tabs)');
             }
             
-            Alert.alert("Sucesso", "Login realizado com sucesso!");
+            showSuccess("Sucesso", "Login realizado com sucesso!");
         } catch (error: any) {
             console.error("Falha no login:", error.message);
-            Alert.alert("Erro de Login", error.message || "Não foi possível fazer login. Verifique suas credenciais.");
+            showError("Erro de Login", error.message || "Não foi possível fazer login. Verifique suas credenciais.");
         } finally {
             setIsLoading(false);
         }
@@ -52,7 +53,7 @@ export default function LoginScreen() {
 
     function handleForgotPassword() {
         console.log("Navegar para: Esqueci minha senha");
-        Alert.alert("Indisponível", "Funcionalidade ainda não implementada.");
+        showInfo("Indisponível", "Funcionalidade ainda não implementada.");
         // router.push('/forgot-password');
     }
 
