@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, StatusBar, ImageBackground, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, StatusBar, ImageBackground, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import axios from "axios"
-import { showError } from '../utils/alertService';
+import { showError, showSuccess } from '../utils/alertService';
 import Config from 'react-native-config';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:3000"
@@ -72,7 +72,7 @@ export default function Register() {
 
       console.log("Resposta do servidor:", response.data)
 
-      Alert.alert("Sucesso", "Conta criada com sucesso! Faça login para continuar.", [
+      showSuccess("Sucesso", "Conta criada com sucesso! Faça login para continuar.", [
         { text: "OK", onPress: () => router.push("/login") },
       ])
     } catch (error) {
@@ -84,7 +84,7 @@ export default function Register() {
         errorMessage = error.response.data.message || errorMessage
       }
 
-      Alert.alert("Erro", errorMessage)
+      showError("Erro", errorMessage)
     } finally {
       setLoading(false)
     }
@@ -99,7 +99,7 @@ export default function Register() {
     router.push("/registerproducer")
   }
 
-  const formatPhoneNumber = (text) => {
+  const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, "")
 
     let formatted = cleaned
@@ -116,7 +116,7 @@ export default function Register() {
     return formatted
   }
 
-  const handlePhoneChange = (text) => {
+  const handlePhoneChange = (text: string) => {
     setPhone(formatPhoneNumber(text))
   }
 

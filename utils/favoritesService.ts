@@ -1,6 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
 import { getToken } from './authServices';
-import Config from 'react-native-config';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 

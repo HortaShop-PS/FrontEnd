@@ -1,5 +1,3 @@
-import Config from "react-native-config";
-
 interface UserProfile {
   id: string;
   name: string;

@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { getToken } from './authServices';
 import { Platform } from 'react-native';
-import Config from 'react-native-config';
 
 const API_BASE_URL = Platform.select({
   android: process.env.EXPO_PUBLIC_API_BASE_URL,

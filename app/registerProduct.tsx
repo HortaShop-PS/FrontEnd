@@ -44,8 +44,8 @@ export default function RegisterProduct() {
   const [quantidade, setQuantidade] = useState(1);
   const [unidade, setUnidade] = useState(unidades[0]);
   const [loading, setLoading] = useState(false);
-  const [imagem, setImagem] = useState(null);
-  const [imagemPreview, setImagemPreview] = useState(null);
+  const [imagem, setImagem] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [imagemPreview, setImagemPreview] = useState<string | null>(null);
 
   // Estados para controlar os modais
   const [categoriasModalVisible, setCategoriasModalVisible] = useState(false);
@@ -53,12 +53,12 @@ export default function RegisterProduct() {
   const [imagemModalVisible, setImagemModalVisible] = useState(false);
   const [opcoesImagemVisible, setOpcoesImagemVisible] = useState(false);
 
-  const handleIncrement = (setter, value) => setter(value + 1);
-  const handleDecrement = (setter, value) => {
+  const handleIncrement = (setter: React.Dispatch<React.SetStateAction<number>>, value: number) => setter(value + 1);
+  const handleDecrement = (setter: React.Dispatch<React.SetStateAction<number>>, value: number) => {
     if (value > 1) setter(value - 1);
   };
 
-  const handleValorChange = (text) => {
+  const handleValorChange = (text: string) => {
     // Remove caracteres não numéricos, exceto vírgula
     const cleanText = text.replace(/[^\d,]/g, "");
 
@@ -118,15 +118,18 @@ export default function RegisterProduct() {
         ? imagem.uri.replace('file://', '')
         : imagem.uri;
 
-      const filename = fileUri.split('/').pop();
+      const filename = fileUri.split('/').pop() || 'upload.jpg'; // Provide a default filename
       const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image';
+      const type = match ? `image/${match[1]}` : 'image/jpeg'; // Provide a default type
 
-      formData.append('image', {
+      // Use a more robust way to create the file object for FormData
+      const file: any = {
         uri: fileUri,
         name: filename,
         type,
-      });
+      };
+
+      formData.append('image', file);
 
       const response = await fetch(`${API_BASE_URL}/upload/image`, {
         method: 'POST',
@@ -145,7 +148,7 @@ export default function RegisterProduct() {
       return data.url;
     } catch (error) {
       console.error("Erro ao fazer upload da imagem:", error);
-      Alert.alert("Erro", "Não foi possível fazer upload da imagem");
+      showError("Erro", "Não foi possível fazer upload da imagem");
       return null;
     }
   };
@@ -349,8 +352,6 @@ export default function RegisterProduct() {
               style={styles.buttonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              angle={34}
-              useAngle={true}
             />
             <Text style={styles.buttonText}>{loading ? "Salvando..." : "Adicionar aos Produtos"}</Text>
           </TouchableOpacity>
