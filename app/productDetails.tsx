@@ -51,7 +51,20 @@ export default function ProductDetails() {
         }
 
         const data = await response.json();
-        setProduct(data);
+        
+        // Garantir que todos os campos estejam corretamente mapeados
+        const mappedProduct = {
+          ...data,
+          // Garantir que os campos essenciais estejam presentes
+          description: data.description || data.descricao || 'Descrição não disponível',
+          weight: data.weight || data.peso || 'Peso não informado',
+          rating: typeof data.rating === 'number' ? data.rating : 
+                 (typeof data.avaliacao === 'number' ? data.avaliacao : 0),
+          reviews: typeof data.reviews === 'number' ? data.reviews : 
+                  (typeof data.avaliacoes === 'number' ? data.avaliacoes : 0)
+        };
+        
+        setProduct(mappedProduct);
 
         // Verificar se o produto está nos favoritos
         const favoriteStatus = await checkIsFavorite(data.id);
@@ -148,10 +161,12 @@ export default function ProductDetails() {
   }
 
   // Renderizar estrelas de avaliação
-  const renderStars = (rating = 4.5, total = 5) => {
+  const renderStars = (rating = 0, total = 5) => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
+    // Garantir que rating seja um número válido
+    const validRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
+    const fullStars = Math.floor(validRating);
+    const halfStar = validRating % 1 >= 0.5;
 
     for (let i = 0; i < fullStars; i++) {
       stars.push(
@@ -230,7 +245,7 @@ export default function ProductDetails() {
 
           <View style={styles.ratingContainer}>
             <View style={styles.starsContainer}>
-              {renderStars(product.rating || 4.5)}
+              {renderStars(product.rating)}
             </View>
             <Text style={styles.reviewsText}>({product.reviews || 0} avaliações)</Text>
           </View>
@@ -243,7 +258,7 @@ export default function ProductDetails() {
           </View>
 
           <Text style={styles.productDescription}>
-            {product.description || 'Descrição não disponível.'}
+            {product.description}
           </Text>
 
           <View style={styles.quantityContainer}>

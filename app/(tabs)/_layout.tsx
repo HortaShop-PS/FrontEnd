@@ -24,9 +24,6 @@ export default function TabsLayout() {
         <Tabs.Screen name = "profile" options={{headerTitle: "", tabBarIcon: ({ color, focused }) => (
            <Ionicons name={focused ? 'person' : 'person-outline'} color={"#6dc51c"} size={24} />
         ), headerShown: false, title: 'Perfil'}}/>
-        <Tabs.Screen name = "cart" options={{headerTitle: "", tabBarIcon: ({ color, focused }) => (
-          <Ionicons name={focused ? 'cart' : 'cart-outline'} color={"#6dc51c"} size={24} />
-       ), headerShown: false, title: 'Carrinho'}}/>
       </Tabs>
     );
   }
