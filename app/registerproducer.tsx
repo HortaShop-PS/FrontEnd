@@ -1,8 +1,8 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, StatusBar, ImageBackground, KeyboardAvoidingView, Platform } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, StatusBar, ImageBackground, KeyboardAvoidingView, Platform } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
-import { showError } from '../utils/alertService';
+import { showError, showSuccess } from '../utils/alertService';
 import Config from "react-native-config"
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL 
@@ -95,12 +95,12 @@ export default function RegisterProducer() {
       const data = await response.json();
       console.log("Resposta do servidor:", data);
 
-      Alert.alert("Sucesso", "Conta de produtor criada com sucesso! Faça login para continuar.", [
+      showSuccess("Sucesso", "Conta de produtor criada com sucesso! Faça login para continuar.", [
         { text: "OK", onPress: () => router.push("/login") },
       ]);
     } catch (error) {
       console.error("Erro ao registrar produtor:", error);
-      Alert.alert("Erro", error instanceof Error ? error.message : "Ocorreu um erro ao criar sua conta. Tente novamente.");
+      showError("Erro", error instanceof Error ? error.message : "Ocorreu um erro ao criar sua conta. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,7 @@ export default function RegisterProducer() {
     router.push("/login")
   }
 
-  const formatPhoneNumber = (text) => {
+  const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, "")
 
     let formatted = cleaned
@@ -127,7 +127,7 @@ export default function RegisterProducer() {
     return formatted
   }
 
-  const handlePhoneChange = (text) => {
+  const handlePhoneChange = (text: string) => {
     setPhone(formatPhoneNumber(text))
   }
 

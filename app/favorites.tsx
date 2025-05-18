@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { showError } from '../utils/alertService';
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { getUserFavorites, removeFromFavorites } from '../utils/favoritesService';
 import Config from 'react-native-config';
@@ -73,7 +74,7 @@ export default function FavoritesScreen() {
       }
     } catch (error) {
       console.error('Erro ao remover favorito:', error);
-      Alert.alert('Erro', 'Não foi possível remover o produto dos favoritos');
+      showError('Erro', 'Não foi possível remover o produto dos favoritos');
     }
   };
 

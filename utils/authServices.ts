@@ -1,8 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import * as Linking from 'expo-linking'
-import Config from 'react-native-config';
+import * as Linking from 'expo-linking';
 
 interface LoginCredentials {
   email: string;
@@ -47,7 +46,7 @@ const API_BASE_URL = Platform.select({
   default: process.env.EXPO_PUBLIC_API_BASE_URL,
 });
 
-const AUTH_TOKEN_KEY = 'authToken';
+const AUTH_TOKEN_KEY = 'userToken';
 
 async function saveToken(token: string): Promise<void> {
   try {
@@ -60,8 +59,8 @@ async function saveToken(token: string): Promise<void> {
 
 export async function getToken(): Promise<string | null> {
   try {
-    // A chave de armazenamento está inconsistente
-    const token = await SecureStore.getItemAsync('userToken'); // Alterar de AUTH_TOKEN_KEY para 'userToken'
+    // Usando a chave consistente para armazenamento do token
+    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
     return token;
   } catch (error) {
     console.error('Erro ao recuperar o token:', error);
