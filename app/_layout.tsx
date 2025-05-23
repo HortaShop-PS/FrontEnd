@@ -91,6 +91,10 @@ export default function RootLayout() {
         <Stack.Screen name='registerProductsCategories' options={{ headerShown: false }} />
         <Stack.Screen name='search' options={{ headerShown: false }} />
         <Stack.Screen name='cart' options={{ headerShown: false }} />
+        <Stack.Screen name='orderDetails/[id]' options={{ headerShown: false }} />
+        <Stack.Screen name='profile/orderHistory' options={{ headerShown: false }} />
+        <Stack.Screen name='profile/producerOrderHistory' options={{ headerShown: false }} />
+        <Stack.Screen name='profile' options={{ headerShown: false }} />
       </Stack>
       {shouldShowCartButton() && <FloatingCartButton />}
     </AlertProvider>
