@@ -31,11 +31,18 @@ const CARDS_API_PATH = '/payments/cards'; // <<<< AJUSTE ESTE CAMINHO CONFORME S
 
 export interface ApiCard {
     id: string;
-    name: string; // Changed from holderName
-    last4: string;
-    cardType: string; // Changed from brand
-    expiry: string;
+    cardholderName: string; // Changed from name
+    number: string; // This is the full number, backend sends last4Digits
+    last4Digits?: string; // Added to match backend response more closely
+    expiry: string; // Format "MM/YY" from backend "expiryMonth"/"expiryYear"
+    expiryMonth?: string; // Added
+    expiryYear?: string; // Added
+    cvv?: string; // CVV should not be part of ApiCard from backend
     isPrincipal: boolean;
+    cardType: string; // e.g., "Visa", "Mastercard" (maps to 'brand' from backend)
+    brand?: string; // Raw 'brand' from backend if needed
+    nickname?: string;
+    paymentMethodType: string;
 }
 
 export interface CreateCardPayload {
@@ -45,13 +52,19 @@ export interface CreateCardPayload {
     expiry: string;     // Anteriormente expiryDate, formato "MM/YY"
     cvv: string;
     cardType: string;   // Novo campo exigido pelo backend
-    // isPrincipal foi removido, pois o backend indicou "property isPrincipal should not exist"
+    nickname?: string;  // Adicionado para o apelido do cartão
+    paymentMethodType: string; // Adicionado para o tipo de método de pagamento (crédito/débito)
 }
 
 export interface UpdateCardPayload {
-    name?: string; // Changed from holderName
-    expiry?: string; // Changed from expiryDate
+    cardholderName?: string; // Changed from name
+    number?: string;
+    expiry?: string;
+    cvv?: string;
     isPrincipal?: boolean; // 'isPrincipal' pode ser aceito na atualização
+    cardType?: string;
+    nickname?: string; // Adicionado para o apelido do cartão
+    paymentMethodType?: string; // Adicionado para o tipo de método de pagamento
 }
 
 const getAuthHeaders = async (): Promise<Record<string, string>> => {
