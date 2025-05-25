@@ -5,12 +5,13 @@ interface ButtonProps {
   title: string;
   onPress: () => void;
   disabled?: boolean;
+  backgroundColor?: string; // Add a prop for custom background color
 }
 
-const Button: React.FC<ButtonProps> = ({ title, onPress, disabled }) => {
+const Button: React.FC<ButtonProps> = ({ title, onPress, disabled, backgroundColor }) => {
   return (
     <TouchableOpacity 
-      style={[styles.button, disabled && styles.buttonDisabled]} 
+      style={[styles.button, { backgroundColor: backgroundColor || '#8bc34a' }, disabled && styles.buttonDisabled]} 
       onPress={onPress}
       disabled={disabled}
     >
@@ -21,7 +22,6 @@ const Button: React.FC<ButtonProps> = ({ title, onPress, disabled }) => {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#8bc34a',
     padding: 12,
     borderRadius: 5,
     width: '100%',

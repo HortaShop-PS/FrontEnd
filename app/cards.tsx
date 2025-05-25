@@ -59,15 +59,20 @@ export default function MyCardsScreen() {
                 // Construct expiry from month and year
                 const expiry = apiCard.expiryMonth && apiCard.expiryYear 
                                ? `${apiCard.expiryMonth}/${apiCard.expiryYear.slice(-2)}` 
-                               : apiCard.expiry || 'N/A'; // Fallback if direct expiry is provided or data is missing
+                               : apiCard.expiry || 'N/A';
+                
+                // Ensure last4Digits is valid, defaulting to 'XXXX'
+                let last4 = apiCard.last4Digits || apiCard.number?.slice(-4);
+                if (!last4 || last4 === 'undefined') { // Check for undefined string or falsy
+                    last4 = 'XXXX';
+                }
                 
                 return {
                     ...apiCard,
                     cardholderName: apiCard.cardholderName || 'N/A',
-                    last4Digits: apiCard.last4Digits || apiCard.number?.slice(-4) || 'XXXX',
+                    last4Digits: last4, // Use the cleaned-up version
                     expiry: expiry,
                     brand: apiCard.brand || 'N/A', // Use brand consistently
-                    // cardType is no longer used here as it's derived from brand or not needed
                     cvv: '', // CVV is for input only, not from API
                 };
             });
@@ -185,7 +190,7 @@ export default function MyCardsScreen() {
                         }
                         try {
                             await cardService.deleteCard(cardId);
-                            showSuccess("Excluído", "Cartão excluído com sucesso.");
+                            // showSuccess("Excluído", "Cartão excluído com sucesso.");
                             fetchCardsData(); // Recarrega a lista após a exclusão bem-sucedida
                         } catch (e: any) {
                             const errorMessage = e.message || "Erro ao excluir cartão.";
@@ -301,13 +306,8 @@ export default function MyCardsScreen() {
                                         icon={<Ionicons name="person-outline" size={22} color="#6C757D" />}
                                         keyboardType="default"
                                     />
+                                    {/* InputField for nickname REMOVED */}
                                     <InputField
-                                        value={card.nickname || ''}
-                                        onChangeText={(text) => handleInputChange(card.id, 'nickname', text)}
-                                        placeholder="Apelido do Cartão (Opcional)"
-                                        icon={<Ionicons name="pricetag-outline" size={22} color="#6C757D" />}
-                                        keyboardType="default"
-                                    />                                    <InputField
                                         value={`•••• •••• •••• ${card.last4Digits}`}
                                         onChangeText={() => {}}
                                         placeholder="Número do Cartão"
@@ -336,23 +336,7 @@ export default function MyCardsScreen() {
                                             />
                                         </View>
                                     </View>
-                                    <View style={styles.inputContainerPadronizado}>
-                                        <Ionicons name="options-outline" size={22} color="#6C757D" style={styles.inputIcon} />
-                                        <View style={styles.paymentTypeContainerPadronizado}>
-                                            <TouchableOpacity
-                                                style={[styles.paymentTypeButton, card.paymentMethodType === 'credit' && styles.paymentTypeButtonSelected]}
-                                                onPress={() => handleInputChange(card.id, 'paymentMethodType', 'credit')}
-                                            >
-                                                <Text style={[styles.paymentTypeText, card.paymentMethodType === 'credit' && styles.paymentTypeTextSelected]}>Crédito</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[styles.paymentTypeButton, card.paymentMethodType === 'debit' && styles.paymentTypeButtonSelected]}
-                                                onPress={() => handleInputChange(card.id, 'paymentMethodType', 'debit')}
-                                            >
-                                                <Text style={[styles.paymentTypeText, card.paymentMethodType === 'debit' && styles.paymentTypeTextSelected]}>Débito</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
+                                    {/* Payment type selection REMOVED */}
                                     <View style={styles.switchContainer}>
                                         <Text style={styles.switchLabel}>Tornar principal</Text>
                                         <View style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -385,13 +369,13 @@ export default function MyCardsScreen() {
                         </View>
                     ))}
                     {cards.length > 0 && (
-                        <TouchableOpacity 
-                            onPress={() => router.push('/addCard')} 
+                        <TouchableOpacity
+                            onPress={() => router.push('/addCard')}
                             style={[styles.addNewCardButtonEmpty, isLoading && styles.buttonDisabled]}
                             disabled={isLoading}
                         >
-                            <Ionicons name="add-circle-outline" size={22} color="#6CC51D" />
-                            <Text style={styles.emptyText}>Adicionar novo cartão</Text>
+                            <Ionicons name="add-circle-outline" size={22} color="#6CC51D" style={styles.addNewCardIcon} />
+                            <Text style={styles.addNewCardButtonText}>Adicionar novo cartão</Text>
                         </TouchableOpacity>
                     )}
                 </ScrollView>
@@ -437,6 +421,20 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#6CC51D',
         backgroundColor: '#F1FFF0',
+        marginTop: 20, // Added margin for spacing from the list
+    },
+    addNewCardIcon: {
+        // marginRight: 8, // Icon already has some natural spacing, adjust if needed
+    },
+    addNewCardButtonText: {
+        fontSize: 18,
+        color: '#6C757D',
+        // marginBottom: 20, // Removed, not suitable for button
+        textAlign: 'center',
+        textAlignVertical: 'center', // For Android vertical alignment
+        includeFontPadding: false, // For Android to remove extra padding
+        marginLeft: 8, // Space between icon and text
+        fontFamily: 'Poppins_400Regular', // Ensure font family is consistent
     },
     disabledInput: {
         backgroundColor: '#F0F0F0', // Cor de fundo para input desabilitado

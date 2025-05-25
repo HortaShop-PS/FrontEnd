@@ -24,9 +24,10 @@ const InputField: React.FC<InputFieldProps> = ({
 }) => {
   return (
     <View style={styles.inputContainer}>
-      {icon && <View style={styles.iconContainer}>{icon}</View>}      <TextInput
+      {icon && <View style={styles.iconContainer}>{icon}</View>}
+      <TextInput
         style={styles.input}
-        value={value}
+        value={String(value)} // Explicitly cast value to string
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor="#aaa"

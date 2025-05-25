@@ -7,7 +7,7 @@ import Button from '../components/Button';
 import { cardService, ApiCard } from '../utils/cardService';
 import { paymentService } from '../utils/paymentService';
 import { showError, showSuccess } from '../utils/alertService';
-import { getCart } from '../utils/cartService'; // Importar getCart
+import { getCart, clearCart } from '../utils/cartService'; // Importar getCart e clearCart
 
 const CARD_LOGOS = {
   'mastercard': require('../assets/images/mastercard_logo.png'),
@@ -216,7 +216,7 @@ export default function PaymentScreen() {
                 // Quando voltar, a tela será recarregada normalmente pelo useEffect
               }}
             >
-              <Ionicons name="add-circle-outline" size={22} color="#6CC51D" style={{ marginRight: 6 }} />
+              <Ionicons name="add-circle-outline" size={22} color="#6CC51D" style={styles.addCardIcon} />
               <Text style={styles.addCardButtonText}>Adicionar outro cartão</Text>
             </TouchableOpacity>
           </>
@@ -234,8 +234,13 @@ export default function PaymentScreen() {
               onPress={async () => {
                 setIsProcessing(true);
                 try {
-                  showSuccess('PIX', 'Pagamento via PIX realizado.');
-                  router.push('/');
+                  // Simulação de pagamento PIX
+                  // Em um cenário real, você chamaria o paymentService.processPixPayment aqui
+                  await new Promise(resolve => setTimeout(resolve, 1000)); // Simula delay da API
+                  
+                  showSuccess('PIX', 'Pagamento via PIX realizado com sucesso!');
+                  await clearCart(); // Limpa o carrinho
+                  router.replace('/'); // Navega para a home, impedindo voltar para pagamento
                 } catch (e: any) {
                   showError('Erro', e.message || 'Erro ao processar PIX');
                 } finally {
@@ -253,8 +258,14 @@ export default function PaymentScreen() {
             onPress={async () => {
               setIsProcessing(true);
               try {
-                showSuccess('Pagamento', 'Pagamento via Cartão realizado.');
-                router.push('/');
+                // Simulação de pagamento com Cartão
+                // Em um cenário real, você chamaria o paymentService.processCardPayment aqui
+                // com os dados do principalCard ou um novo cartão se fosse o caso.
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simula delay da API
+
+                showSuccess('Pagamento', 'Pagamento via Cartão realizado com sucesso!');
+                await clearCart(); // Limpa o carrinho
+                router.replace('/'); // Navega para a home, impedindo voltar para pagamento
               } catch (e: any) {
                 showError('Erro', e.message || 'Erro ao processar pagamento');
               } finally {
@@ -587,5 +598,10 @@ const styles = StyleSheet.create({
         color: '#6CC51D',
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 15,
+        textAlignVertical: 'center', // Added for better vertical alignment of text
+        includeFontPadding: false, // Added for Android text padding consistency
+    },
+    addCardIcon: { // New style for the icon
+        marginRight: 6, // Existing spacing
     },
 });
