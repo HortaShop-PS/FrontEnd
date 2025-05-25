@@ -44,10 +44,16 @@ export default function OrderDetailsScreen() {
     
     try {
       setLoading(true);
-      const data = await orderService.getOrderDetails(id);
+      let data;
+      if (isProducer) {
+        data = await orderService.getProducerOrderDetails(id);
+      } else {
+        data = await orderService.getOrderDetails(id);
+      }
       setOrder(data);
       setError(null);
     } catch (err) {
+      console.error('Erro ao buscar detalhes do pedido:', err);
       setError('Erro ao carregar detalhes do pedido. Tente novamente.');
     } finally {
       setLoading(false);

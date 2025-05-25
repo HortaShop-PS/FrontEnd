@@ -148,7 +148,7 @@ export default function OrderHistory() {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-        {renderStackScreen()}
+        
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#6CC51D" />
         </View>
@@ -160,7 +160,7 @@ export default function OrderHistory() {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-        {renderStackScreen()}
+        
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => loadOrders()}>
@@ -175,7 +175,7 @@ export default function OrderHistory() {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-        {renderStackScreen()}
+        
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconContainer}>
             <Ionicons name="receipt-outline" size={64} color="#BDC3C7" />
@@ -193,7 +193,7 @@ export default function OrderHistory() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-      {renderStackScreen()}
+      
 
       <FlatList
         data={orders}
