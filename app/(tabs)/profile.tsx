@@ -159,6 +159,18 @@ export default function ProfileScreen() {
                     </TouchableOpacity>
 
                 </View>
+                    
+                    <TouchableOpacity onPress={() => router.push('/orderDetails/[id]')}>
+                    {/* Alterar para: */}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/profile/orderHistory')}>
+                        <View style={styles.menuItemRow}>
+                            <Ionicons name="time-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                            <Text style={styles.menuItemText}>Histórico de Pedidos</Text>
+                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                        </View>
+                    </TouchableOpacity>
+                {/*</View>
 
                 <View style={styles.menuSection}>
                     <Text style={styles.menuSectionTitle}>Configurações</Text>
