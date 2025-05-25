@@ -21,6 +21,7 @@ export interface OrderItem {
   producerId: number;
   producerName: string;
   notes?: string;
+  reviewed?: boolean;
 }
 
 export interface OrderSummary {
@@ -30,6 +31,7 @@ export interface OrderSummary {
   createdAt: string;
   updatedAt: string;
   itemCount: number;
+  items?: OrderItem[];
 }
 
 export interface OrderDetail {
@@ -82,7 +84,7 @@ const orderService = {
     }
   },
 
-  // Obter detalhes de um pedido específico
+  // Obter detalhes de um pedido específico (para clientes)
   getOrderDetails: async (orderId: string): Promise<OrderDetail> => {
     try {
       const token = await getAuthToken();
@@ -92,6 +94,20 @@ const orderService = {
       return response.data;
     } catch (error) {
       console.error(`Erro ao buscar detalhes do pedido ${orderId}:`, error);
+      throw error;
+    }
+  },
+
+  // Obter detalhes de um pedido específico (para produtores)
+  getProducerOrderDetails: async (orderId: string): Promise<OrderDetail> => {
+    try {
+      const token = await getAuthToken();
+      const response = await axios.get(`${API_BASE_URL}/producers/me/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Erro ao buscar detalhes do pedido do produtor ${orderId}:`, error);
       throw error;
     }
   },

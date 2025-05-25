@@ -8,46 +8,63 @@ import {
   ActivityIndicator,
   StatusBar,
   SafeAreaView,
+  RefreshControl,
 } from "react-native"
-import { useRouter } from "expo-router"
+import { Stack, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import orderService, { type OrderSummary } from "../../utils/orderService"
-import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins"
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_500Medium } from "@expo-google-fonts/poppins"
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState<OrderSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
 
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_400Regular,
-    Poppins_700Bold,
+    Poppins_500Medium,
   })
 
   useEffect(() => {
     loadOrders()
   }, [])
 
-  const loadOrders = async () => {
+  const onRefresh = () => {
+    loadOrders(true)
+  }
+
+  const loadOrders = async (isRefresh = false) => {
     try {
-      setLoading(true)
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
+      
       const data = await orderService.getMyOrders()
       setOrders(data)
 
       // Expandir o primeiro pedido por padrão se houver pedidos
-      if (data.length > 0 && data[0].status !== "DELIVERED") {
+      if (data.length > 0 && data[0].status.toLowerCase() !== "delivered") {
         setExpandedOrderId(data[0].id)
       }
 
       setError(null)
     } catch (err) {
-      setError("Erro ao carregar pedidos. Tente novamente.")
+      if (!isRefresh) {
+        setError("Erro ao carregar pedidos. Tente novamente.")
+      }
       console.error(err)
     } finally {
-      setLoading(false)
+      if (isRefresh) {
+        setRefreshing(false)
+      } else {
+        setLoading(false)
+      }
     }
   }
 
@@ -103,119 +120,165 @@ export default function OrderHistory() {
       </View>
     </View>
   )
+  // Renderizar Stack.Screen sempre, independente do estado
+  const renderStackScreen = () => (
+    <Stack.Screen
+      options={{
+        headerTitle: "Meus Pedidos",
+        headerTitleAlign: "center",
+        headerStyle: {
+          backgroundColor: "#ffffff",
+        },
+        headerShadowVisible: false,
+        headerTintColor: "#000000",
+        headerTitleStyle: {
+          fontWeight: "500",
+          fontSize: 18,
+        },
+        headerLeft: () => (
+          <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
+            <Ionicons name="arrow-back" size={24} color="#000000" />
+          </TouchableOpacity>
+        ),
+      }}
+    />
+  );
 
   if (!fontsLoaded || loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6CC51D" />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
+        
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6CC51D" />
+        </View>
+      </SafeAreaView>
     )
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadOrders}>
-          <Text style={styles.retryButtonText}>Tentar Novamente</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
+        
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => loadOrders()}>
+            <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     )
   }
 
   if (orders.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="receipt-outline" size={60} color="#CCCCCC" />
-        <Text style={styles.emptyText}>Você ainda não tem pedidos</Text>
-        <TouchableOpacity style={styles.browseButton} onPress={() => router.push("/(tabs)")}>
-          <Text style={styles.browseButtonText}>Explorar produtos</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
+        
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="receipt-outline" size={64} color="#BDC3C7" />
+          </View>
+          <Text style={styles.emptyTitle}>Nenhum pedido encontrado</Text>
+          <Text style={styles.emptySubtitle}>Você ainda não realizou nenhum pedido</Text>
+          <TouchableOpacity style={styles.browseButton} onPress={() => router.push("/(tabs)")}>
+            <Text style={styles.browseButtonText}>Explorar Produtos</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     )
   }
-
+  
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#000000" />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Meu Pedido</Text>
-
-        <TouchableOpacity style={styles.filterButton}>
-          <Ionicons name="options-outline" size={24} color="#000000" />
-        </TouchableOpacity>
-      </View>
+      <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
+      
 
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#6CC51D']}
+            tintColor="#6CC51D"
+          />
+        }
         renderItem={({ item }) => (
           <View style={styles.orderCard}>
             <TouchableOpacity
               style={styles.orderHeader}
               onPress={() => toggleOrderExpansion(item.id)}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
               <View style={styles.orderIconContainer}>
-                <Ionicons name="cube-outline" size={28} color="#6CC51D" />
+                <Ionicons name="cube" size={24} color="#FFFFFF" />
               </View>
 
               <View style={styles.orderInfo}>
-                <Text style={styles.orderNumber}>Pedido #{item.id.substring(0, 5)}</Text>
-                <Text style={styles.orderDate}>Realizado em {formatDate(item.createdAt)}</Text>
-                <View style={styles.orderDetails}>
-                  <Text style={styles.orderItems}>Itens: {item.itemCount}</Text>
+                <Text style={styles.orderNumber}>#{item.id.substring(0, 8).toUpperCase()}</Text>
+                <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text><View style={styles.orderDetails}>
+                  <Text style={styles.orderItems}>{item.itemCount} itens</Text>
                   <Text style={styles.orderTotal}>
-                    Itens: R$
-                    {item.totalPrice && typeof item.totalPrice === "number"
+                    Total: R$ {typeof item.totalPrice === "number" && !isNaN(item.totalPrice)
                       ? item.totalPrice.toFixed(2).replace(".", ",")
                       : "0,00"}
                   </Text>
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.expandButton} onPress={() => toggleOrderExpansion(item.id)}>
+              <View style={styles.expandIconContainer}>
                 <Ionicons
-                  name={expandedOrderId === item.id ? "chevron-up-circle" : "chevron-down-circle"}
-                  size={24}
-                  color="#6CC51D"
+                  name={expandedOrderId === item.id ? "chevron-up" : "chevron-down"}
+                  size={20}
+                  color="#7F8C8D"
                 />
-              </TouchableOpacity>
+              </View>
             </TouchableOpacity>
 
-            {expandedOrderId === item.id && item.status !== "DELIVERED" && (
+            {expandedOrderId === item.id && item.status.toLowerCase() !== "delivered" && (
               <View style={styles.orderStatusContainer}>
-                {renderStatusItem("PENDING", "Efetuado", formatDate(item.createdAt), true, false)}
+                <View style={styles.statusDivider} />
+                {renderStatusItem("PENDING", "Pedido Efetuado", formatDate(item.createdAt), true, false)}
                 {renderStatusItem(
                   "PROCESSING",
-                  "Confirmado",
+                  "Pedido Confirmado",
                   formatDate(item.createdAt),
-                  ["PROCESSING", "SHIPPED"].includes(item.status),
+                  ["processing", "shipped"].includes(item.status.toLowerCase()),
                   false,
                 )}
                 {renderStatusItem(
                   "SHIPPED",
-                  "Em rota de entrega",
-                  item.status === "SHIPPED" ? formatDate(item.createdAt) : "pendente",
-                  item.status === "SHIPPED",
+                  "Em Rota de Entrega",
+                  item.status.toLowerCase() === "shipped" ? formatDate(item.createdAt) : "Aguardando",
+                  item.status.toLowerCase() === "shipped",
                   false,
                 )}
-                {renderStatusItem("DELIVERED", "Entregue", "pendente", false, true)}
+                {renderStatusItem("delivered", "Pedido Entregue", "Aguardando", false, true)}
               </View>
             )}
 
-            {item.status === "DELIVERED" && (
+            {item.status.toLowerCase() === "delivered" && (
               <View style={styles.deliveredContainer}>
-                <View style={styles.deliveredStatus}>
-                  <View style={styles.statusDotPending} />
-                  <Text style={styles.deliveredText}>Pedido entregue</Text>
+                <View style={styles.statusDivider} />
+                <View style={styles.deliveredContent}>
+                  <View style={styles.deliveredStatus}>
+                    <View style={styles.deliveredDot} />
+                    <View>
+                      <Text style={styles.deliveredText}>Pedido Entregue</Text>
+                      <Text style={styles.deliveredDate}>{formatDateDayMonth(item.createdAt)}</Text>
+                    </View>
+                  </View>
+                    <TouchableOpacity 
+                    style={styles.viewDetailsButton}
+                    onPress={() => handleOrderPress(item.id)}
+                  >
+                    <Text style={styles.viewDetailsText}>Detalhes</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#2ECC71" />
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.deliveredDate}>{formatDateDayMonth(item.createdAt)}</Text>
               </View>
             )}
           </View>
@@ -230,7 +293,7 @@ export default function OrderHistory() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F8",
+    backgroundColor: "#f4f5f9",
   },
   loadingContainer: {
     flex: 1,
@@ -242,7 +305,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 32,
     backgroundColor: "#F5F5F8",
   },
   errorText: {
@@ -250,94 +313,118 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#E74C3C",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 24,
+    lineHeight: 24,
   },
   retryButton: {
-    backgroundColor: "#6CC51D",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    backgroundColor: "#E74C3C",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     borderRadius: 8,
   },
   retryButtonText: {
-    fontFamily: "Poppins_600SemiBold",
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
     color: "#FFFFFF",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 32,
     backgroundColor: "#F5F5F8",
   },
-  emptyText: {
-    fontFamily: "Poppins_400Regular",
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginTop: 16,
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 24,
+  },
+  emptyTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 20,
+    color: "#2C3E50",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 20,
   },
   browseButton: {
     backgroundColor: "#6CC51D",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     borderRadius: 8,
   },
   browseButtonText: {
-    fontFamily: "Poppins_600SemiBold",
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
     color: "#FFFFFF",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EEEEEE",
+    borderBottomWidth: 2,
+    borderBottomColor: "#F5F5F8",
   },
   backButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 18,
-    fontWeight: "600",
-    color: "#000000",
+    color: "#2C3E50",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   filterButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   ordersList: {
     padding: 16,
+    paddingBottom: 32,
   },
   orderCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 8,
     marginBottom: 16,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
   },
   orderHeader: {
     flexDirection: "row",
-    padding: 16,
+    padding: 20,
     alignItems: "center",
   },
   orderIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#E8F5E0",
+    width: 48,
+    height: 48,
+    backgroundColor: "#6CC51D",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 16,
+    borderRadius: 4,
   },
   orderInfo: {
     flex: 1,
@@ -345,70 +432,78 @@ const styles = StyleSheet.create({
   orderNumber: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
+    color: "#2C3E50",
     marginBottom: 4,
+    letterSpacing: 0.5,
   },
   orderDate: {
     fontFamily: "Poppins_400Regular",
     fontSize: 12,
-    color: "#888888",
-    marginBottom: 6,
+    color: "#7F8C8D",
+    marginBottom: 8,
   },
   orderDetails: {
     flexDirection: "row",
+    justifyContent: "space-between",
   },
   orderItems: {
     fontFamily: "Poppins_400Regular",
     fontSize: 13,
-    color: "#333333",
-    marginRight: 16,
+    color: "#34495E",
   },
   orderTotal: {
-    fontFamily: "Poppins_400Regular",
+    fontFamily: "Poppins_500Medium",
     fontSize: 13,
-    color: "#333333",
+    color: "#2C3E50",
   },
-  expandButton: {
-    padding: 8,
+  expandIconContainer: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
   },
   orderStatusContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  statusDivider: {
+    height: 2,
+    backgroundColor: "#F5F5F8",
+    marginBottom: 20,
   },
   statusItem: {
     flexDirection: "row",
-    marginBottom: 8,
+    marginBottom: 16,
   },
   statusLeftContainer: {
     width: 24,
     alignItems: "center",
+    marginRight: 16,
   },
   statusDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginRight: 12,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     zIndex: 1,
   },
   statusDotCompleted: {
     backgroundColor: "#6CC51D",
   },
   statusDotPending: {
-    backgroundColor: "#DDDDDD",
+    backgroundColor: "#BDC3C7",
   },
   statusLine: {
     position: "absolute",
     width: 2,
-    top: 16,
-    bottom: -8,
-    left: 7,
+    top: 12,
+    bottom: -16,
+    left: 5,
   },
   statusLineCompleted: {
     backgroundColor: "#6CC51D",
   },
   statusLinePending: {
-    backgroundColor: "#DDDDDD",
+    backgroundColor: "#BDC3C7",
   },
   statusContent: {
     flex: 1,
@@ -417,41 +512,66 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statusLabel: {
-    fontFamily: "Poppins_400Regular",
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
-    fontWeight: "500",
   },
   statusLabelCompleted: {
-    color: "#000000",
+    color: "#2C3E50",
   },
   statusLabelPending: {
-    color: "#888888",
+    color: "#7F8C8D",
   },
   statusDate: {
     fontFamily: "Poppins_400Regular",
-    fontSize: 13,
-    color: "#888888",
+    fontSize: 12,
+    color: "#7F8C8D",
   },
   deliveredContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  deliveredContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
   deliveredStatus: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
+  },
+  deliveredDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#6CC51D",
+    marginRight: 16,
   },
   deliveredText: {
-    fontFamily: "Poppins_400Regular",
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
-    color: "#888888",
-    marginLeft: 12,
+    color: "#2C3E50",
+    marginBottom: 2,
   },
   deliveredDate: {
     fontFamily: "Poppins_400Regular",
-    fontSize: 13,
-    color: "#888888",
+    fontSize: 12,
+    color: "#7F8C8D",
+  },
+  viewDetailsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F8",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 4,
+  },
+  viewDetailsText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+    color: "#6CC51D",
+    marginRight: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
 })
