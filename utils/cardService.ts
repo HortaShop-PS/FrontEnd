@@ -31,40 +31,38 @@ const CARDS_API_PATH = '/payments/cards'; // <<<< AJUSTE ESTE CAMINHO CONFORME S
 
 export interface ApiCard {
     id: string;
-    cardholderName: string; // Changed from name
-    number: string; // This is the full number, backend sends last4Digits
-    last4Digits?: string; // Added to match backend response more closely
-    expiry: string; // Format "MM/YY" from backend "expiryMonth"/"expiryYear"
-    expiryMonth?: string; // Added
-    expiryYear?: string; // Added
-    cvv?: string; // CVV should not be part of ApiCard from backend
+    cardholderName: string;
+    number: string; // Este campo pode não vir do backend, mas é útil para a UI às vezes
+    last4Digits: string; // O backend envia este
+    expiry: string; // Formatado como "MM/YY" no frontend
+    expiryMonth: string; // Vem do backend
+    expiryYear: string; // Vem do backend
+    // cvv?: string; // CVV não deve vir do backend
     isPrincipal: boolean;
-    cardType: string; // e.g., "Visa", "Mastercard" (maps to 'brand' from backend)
-    brand?: string; // Raw 'brand' from backend if needed
+    brand: string; // e.g., "Visa", "Mastercard"
     nickname?: string;
     paymentMethodType: string;
 }
 
 export interface CreateCardPayload {
-    // Campos conforme esperado pelo backend (baseado no erro)
-    name: string;       // Anteriormente holderName
-    number: string;     // Anteriormente cardNumber
-    expiry: string;     // Anteriormente expiryDate, formato "MM/YY"
+    cardholderName: string;
+    number: string;
+    expiry: string; // Formato "MM/YY"
     cvv: string;
-    cardType: string;   // Novo campo exigido pelo backend
-    nickname?: string;  // Adicionado para o apelido do cartão
-    paymentMethodType: string; // Adicionado para o tipo de método de pagamento (crédito/débito)
+    brand: string; // Bandeira do cartão, ex: "visa", "mastercard"
+    nickname?: string;
+    paymentMethodType: string; // 'credit' ou 'debit'
 }
 
 export interface UpdateCardPayload {
-    cardholderName?: string; // Changed from name
-    number?: string;
-    expiry?: string;
-    cvv?: string;
-    isPrincipal?: boolean; // 'isPrincipal' pode ser aceito na atualização
-    cardType?: string;
-    nickname?: string; // Adicionado para o apelido do cartão
-    paymentMethodType?: string; // Adicionado para o tipo de método de pagamento
+    cardholderName?: string;
+    number?: string; // Geralmente não se atualiza o número do cartão, mas sim adiciona um novo
+    expiry?: string; // Formato "MM/YY"
+    // cvv?: string; // CVV não deve ser enviado para atualização
+    isPrincipal?: boolean;
+    brand?: string; // Bandeira do cartão
+    nickname?: string;
+    paymentMethodType?: string;
 }
 
 const getAuthHeaders = async (): Promise<Record<string, string>> => {
@@ -85,9 +83,8 @@ const getAuthHeaders = async (): Promise<Record<string, string>> => {
 export const cardService = {
     async getCards(): Promise<ApiCard[]> {
         const headers = await getAuthHeaders();
-        if (!headers.Authorization && resolvedApiBaseUrl) { // Verifica se o token era esperado mas não foi encontrado
-             console.warn("Tentando buscar cartões sem token de autorização.");
-             // Dependendo da sua API, isso pode falhar ou retornar uma lista vazia.
+        if (!headers.Authorization && resolvedApiBaseUrl) {
+            console.warn("Tentando buscar cartões sem token de autorização.");
         }
         const response = await fetch(`${resolvedApiBaseUrl}${CARDS_API_PATH}`, {
             method: 'GET',
@@ -95,68 +92,46 @@ export const cardService = {
         });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-            console.error("Erro ao buscar cartões:", errorData);
             throw new Error(errorData.message || 'Falha ao buscar cartões');
         }
         return response.json();
     },
-
     async createCard(payload: CreateCardPayload): Promise<ApiCard> {
         const headers = await getAuthHeaders();
         if (!headers.Authorization && resolvedApiBaseUrl) {
             console.warn("Tentando criar cartão sem token de autorização.");
         }
-
-        // O payload já deve estar no formato esperado pela interface CreateCardPayload ajustada
-        // Não é mais necessário transformar os nomes dos campos aqui se a interface estiver correta.
-
         const response = await fetch(`${resolvedApiBaseUrl}${CARDS_API_PATH}`, {
             method: 'POST',
-            headers,
-            body: JSON.stringify(payload), 
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-            console.error("Erro ao adicionar cartão:", errorData);
-            // A mensagem de erro já é um array de strings ou um objeto com uma propriedade message que é um array.
-            // Para lançar um erro mais legível no frontend:
-            let errorMessage = 'Falha ao adicionar cartão';
-            if (errorData && errorData.message && Array.isArray(errorData.message)) {
-                errorMessage = errorData.message.join(', ');
-            } else if (errorData && errorData.message && typeof errorData.message === 'string') {
-                errorMessage = errorData.message;
-            } else if (typeof errorData === 'string') {
-                errorMessage = errorData;
-            }
-            throw new Error(errorMessage);
-        }
-        return response.json();
-    },
-
-    async updateCard(cardId: string, payload: UpdateCardPayload): Promise<ApiCard> {
-        const headers = await getAuthHeaders();
-        if (!headers.Authorization && resolvedApiBaseUrl) {
-            console.warn("Tentando atualizar cartão sem token de autorização.");
-        }
-        // Similar à criação, pode ser necessário transformar payload.expiryDate aqui também.
-
-        const response = await fetch(`${resolvedApiBaseUrl}${CARDS_API_PATH}/${cardId}`, {
-            method: 'PATCH', // Ou PUT, dependendo da sua API (geralmente PATCH para atualizações parciais)
             headers,
             body: JSON.stringify(payload),
         });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-            console.error("Erro ao atualizar cartão:", errorData);
+            throw new Error(errorData.message || 'Falha ao adicionar cartão');
+        }
+        return response.json();
+    },
+    async updateCard(cardId: string, payload: UpdateCardPayload): Promise<ApiCard> {
+        const headers = await getAuthHeaders();
+        if (!headers.Authorization && resolvedApiBaseUrl) {
+            console.warn("Tentando atualizar cartão sem token de autorização.");
+        }
+        const response = await fetch(`${resolvedApiBaseUrl}${CARDS_API_PATH}/${cardId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
             throw new Error(errorData.message || 'Falha ao atualizar cartão');
         }
         return response.json();
     },
-
     async deleteCard(cardId: string): Promise<void> {
         const headers = await getAuthHeaders();
         if (!headers.Authorization && resolvedApiBaseUrl) {
-            console.warn("Tentando excluir cartão sem token de autorização.");
+            console.warn("Tentando deletar cartão sem token de autorização.");
         }
         const response = await fetch(`${resolvedApiBaseUrl}${CARDS_API_PATH}/${cardId}`, {
             method: 'DELETE',
@@ -164,9 +139,7 @@ export const cardService = {
         });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-            console.error("Erro ao excluir cartão:", errorData);
-            throw new Error(errorData.message || 'Falha ao excluir cartão');
+            throw new Error(errorData.message || 'Falha ao deletar cartão');
         }
-        // DELETE geralmente retorna 204 No Content, então não há .json() para parsear
     },
 };

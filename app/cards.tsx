@@ -17,15 +17,15 @@ const CARD_LOGOS = {
 };
 
 interface CardData extends ApiCard {
-    // cvv já é opcional aqui, o que é adequado para o estado local de input
+    cvv?: string; // Campo para input local, não vem do backend
     // outros campos como last4 (agora last4Digits), name (agora cardholderName), expiry (precisa de formatação)
     // serão tratados ao mapear de ApiCard
 }
 
 // MOCKED_CARDS pode precisar de ajuste se usado como fallback, para refletir a estrutura de CardData
 const MOCKED_CARDS: CardData[] = [
-    { id: '1', cardType: 'Mastercard', last4Digits: '1234', expiry: '12/25', cvv: '123', cardholderName: 'JOHN DOE', isPrincipal: true, paymentMethodType: 'credit', nickname: 'Meu Master', number: '************1234' },
-    { id: '2', cardType: 'Visa', last4Digits: '5678', expiry: '11/24', cvv: '456', cardholderName: 'JANE DOE', isPrincipal: false, paymentMethodType: 'debit', nickname: 'Visa Principal', number: '************5678' },
+    { id: '1', brand: 'Mastercard', last4Digits: '1234', expiry: '12/25', cvv: '123', cardholderName: 'JOHN DOE', isPrincipal: true, paymentMethodType: 'credit', nickname: 'Meu Master', number: '************1234', expiryMonth: '12', expiryYear: '2025' },
+    { id: '2', brand: 'Visa', last4Digits: '5678', expiry: '11/24', cvv: '456', cardholderName: 'JANE DOE', isPrincipal: false, paymentMethodType: 'debit', nickname: 'Visa Principal', number: '************5678', expiryMonth: '11', expiryYear: '2024' },
 ];
 
 
@@ -63,17 +63,15 @@ export default function MyCardsScreen() {
                 
                 return {
                     ...apiCard,
-                    cardholderName: apiCard.cardholderName || 'N/A', // Ensure cardholderName is used
-                    last4Digits: apiCard.last4Digits || apiCard.number?.slice(-4) || 'XXXX', // Use last4Digits, fallback to slicing number
+                    cardholderName: apiCard.cardholderName || 'N/A',
+                    last4Digits: apiCard.last4Digits || apiCard.number?.slice(-4) || 'XXXX',
                     expiry: expiry,
-                    cardType: apiCard.cardType || apiCard.brand || 'N/A', // Prefer cardType, fallback to brand
+                    brand: apiCard.brand || 'N/A', // Use brand consistently
+                    // cardType is no longer used here as it's derived from brand or not needed
                     cvv: '', // CVV is for input only, not from API
                 };
             });
             setCards(formattedCards);
-            // Não expandir nenhum cartão automaticamente
-            // setExpandedCardId(principal ? principal.id : (formattedCards.length > 0 ? formattedCards[0].id : null));
-            // Agora, nenhum cartão será expandido por padrão
             console.log("Cards fetched and formatted successfully:", formattedCards);
         } catch (e: any) {
             console.error("Failed to fetch cards:", e);
@@ -129,13 +127,24 @@ export default function MyCardsScreen() {
         if (!cardToSave) return;
 
         const payload: UpdateCardPayload = {
-            cardholderName: cardToSave.cardholderName, // Changed from name to cardholderName
-            expiry: cardToSave.expiry,
+            cardholderName: cardToSave.cardholderName,
+            // expiry: cardToSave.expiry, // Expiry is not typically updated directly, but split into month/year if needed by backend
             isPrincipal: cardToSave.isPrincipal,
             nickname: cardToSave.nickname,
             paymentMethodType: cardToSave.paymentMethodType,
-            cardType: cardToSave.cardType, // Include cardType if it's meant to be updatable
+            brand: cardToSave.brand, // Use brand instead of cardType
         };
+
+        // Se a expiração precisar ser atualizada, ela deve ser dividida em mês e ano.
+        // Por ora, vamos assumir que a expiração não é editável ou é tratada de outra forma.
+        // Se for editável, você precisaria adicionar lógica para parsear 'MM/AA' de cardToSave.expiry
+        // e enviar expiryMonth e expiryYear separadamente, se for o que o backend espera.
+        // Exemplo: 
+        // if (cardToSave.expiry && cardToSave.expiry.includes('/')) {
+        //   const [month, yearSuffix] = cardToSave.expiry.split('/');
+        //   payload.expiryMonth = month;
+        //   payload.expiryYear = `20${yearSuffix}`;
+        // }
         
         // Remove undefined fields from payload to prevent issues with backend validation
         Object.keys(payload).forEach(key => {
@@ -205,27 +214,25 @@ export default function MyCardsScreen() {
 
     // Lógica de renderização condicional APÓS todos os Hooks
     if (!fontsLoaded || (isLoading && cards.length === 0 && !error)) {
-        // Mostra loading se as fontes não carregaram OU se os dados estão carregando e não há cartões ainda (e não há erro)
         return (
             <View style={styles.centered}>
                 <ActivityIndicator size="large" color="#6CC51D" />
-                <Text>{!fontsLoaded ? "Carregando fontes..." : "Carregando cartões..."}</Text>
+                <Text style={styles.emptyText}>{!fontsLoaded ? "Carregando fontes..." : "Carregando cartões..."}</Text>
             </View>
         );
     }
 
     if (fontError) {
-        // Garante que a mensagem de erro esteja dentro de um componente Text
         return <View style={styles.centered}><Text style={styles.errorText}>Erro ao carregar fontes: {fontError.message || 'Erro desconhecido'}</Text></View>;
     }
 
-    if (error && cards.length === 0) { // Mostra erro apenas se não conseguiu carregar nenhum cartão
+    if (error && cards.length === 0) {
         return (
             <View style={styles.centered}>
-                {/* Garante que a mensagem de erro esteja dentro de um componente Text */}
                 <Text style={styles.errorText}>{error || 'Ocorreu um erro.'}</Text>
-                <TouchableOpacity onPress={fetchCardsData}>
-                    <Text style={styles.retryText}>Tentar Novamente</Text>
+                <TouchableOpacity onPress={fetchCardsData} style={styles.addNewCardButtonEmpty}>
+                    <Ionicons name="refresh" size={22} color="#6CC51D" />
+                    <Text style={styles.emptyText}>Tentar Novamente</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -267,10 +274,10 @@ export default function MyCardsScreen() {
                             <TouchableOpacity onPress={() => toggleCardExpansion(card.id)} style={styles.cardHeader}>
                                 <View style={styles.cardInfo}>
                                     <View style={styles.cardLogoContainer}>
-                                       {getCardLogo(card.cardType)}
+                                       {getCardLogo(card.brand)}
                                     </View>
                                     <View style={styles.cardTextContainer}>
-                                        <Text style={styles.cardBrand}>{card.nickname || card.cardType || 'N/A'}</Text>
+                                        <Text style={styles.cardBrand}>{card.nickname || card.brand.toUpperCase()}</Text>
                                         <Text style={styles.cardNumber}>•••• •••• •••• {card.last4Digits}</Text>
                                         <Text style={styles.cardDetails}>
                                             Validade: {card.expiry || 'N/A'} - {card.paymentMethodType === 'debit' ? 'Débito' : 'Crédito'}
@@ -300,13 +307,13 @@ export default function MyCardsScreen() {
                                         placeholder="Apelido do Cartão (Opcional)"
                                         icon={<Ionicons name="pricetag-outline" size={22} color="#6C757D" />}
                                         keyboardType="default"
-                                    />
-                                    <InputField
+                                    />                                    <InputField
                                         value={`•••• •••• •••• ${card.last4Digits}`}
                                         onChangeText={() => {}}
                                         placeholder="Número do Cartão"
                                         icon={<Ionicons name="card-outline" size={22} color="#6C757D" />}
                                         keyboardType="numeric"
+                                        editable={false}
                                     />
                                     <View style={styles.rowInputContainerPadronizado}>
                                         <View style={[{ flex: 1, marginRight: 7 }]}> {/* metade esquerda */}

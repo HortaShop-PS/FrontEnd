@@ -9,6 +9,7 @@ interface InputFieldProps {
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   icon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  editable?: boolean;
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -18,12 +19,12 @@ const InputField: React.FC<InputFieldProps> = ({
   secureTextEntry,
   keyboardType = 'default',
   icon,
-  rightIcon
+  rightIcon,
+  editable = true
 }) => {
   return (
     <View style={styles.inputContainer}>
-      {icon && <View style={styles.iconContainer}>{icon}</View>}
-      <TextInput
+      {icon && <View style={styles.iconContainer}>{icon}</View>}      <TextInput
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
@@ -31,6 +32,7 @@ const InputField: React.FC<InputFieldProps> = ({
         placeholderTextColor="#aaa"
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
+        editable={editable}
       />
       {rightIcon && <View style={styles.rightIconContainer}>{rightIcon}</View>}
     </View>

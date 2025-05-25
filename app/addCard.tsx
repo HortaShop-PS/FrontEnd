@@ -23,13 +23,13 @@ const mastercardLogo = require('../assets/images/mastercard_logo.png');
 
 export default function AddCardScreen() {
     const router = useRouter();
-    const [name, setName] = useState('');
+    const [cardholderName, setCardholderName] = useState('');
     const [number, setNumber] = useState('');
     const [expiry, setExpiry] = useState('');
     const [cvv, setCvv] = useState('');
-    const [cardType, setCardType] = useState(''); // Bandeira: Visa, Mastercard
+    const [brand, setBrand] = useState(''); // Bandeira: Visa, Mastercard, etc.
     const [nickname, setNickname] = useState('');
-    const [paymentMethodType, setPaymentMethodType] = useState('credit');
+    const [paymentMethodType, setPaymentMethodType] = useState('credit'); // 'credit' or 'debit'
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     let [fontsLoaded] = useFonts({
@@ -58,53 +58,50 @@ export default function AddCardScreen() {
         return cleaned;
     };
     
-    const detectCardType = (cardNumber: string): string => {
+    const detectBrand = (cardNumber: string): string => {
         const cleanedNumber = cardNumber.replace(/\s/g, '');
-        if (/^4/.test(cleanedNumber)) return 'Visa';
-        if (/^5[1-5]/.test(cleanedNumber)) return 'Mastercard';
-        if (/^3[47]/.test(cleanedNumber)) return 'Amex';
+        if (/^4/.test(cleanedNumber)) return 'visa'; // Lowercase para consistência
+        if (/^5[1-5]/.test(cleanedNumber)) return 'mastercard'; // Lowercase
+        if (/^3[47]/.test(cleanedNumber)) return 'amex'; // Lowercase
+        // Adicionar outras bandeiras conforme necessário
         return ''; 
     };
 
     const handleAddCard = async () => {
-        const currentCardType = cardType.trim() || detectCardType(number);
-        if (!name.trim() || !number.trim() || !expiry.trim() || !cvv.trim() || !currentCardType) {
-            showError("Campos Incompletos", "Por favor, preencha todos os campos do cartão, incluindo o tipo (bandeira).");
+        const detectedBrandValue = brand.trim().toLowerCase() || detectBrand(number);
+        if (!cardholderName.trim() || !number.trim() || !expiry.trim() || !cvv.trim() || !detectedBrandValue) {
+            showError("Campos Incompletos", "Preencha todos os campos do cartão. A bandeira será detectada automaticamente.");
             return;
         }
-        if (expiry.length !== 5 || !expiry.includes('/')) {
+        if (!/^\d{2}\/\d{2}$/.test(expiry)) {
             showError("Dados Inválidos", "Data de validade inválida. Use o formato MM/AA.");
             return;
         }
-        if (cvv.length < 3) {
+        if (cvv.length < 3 || cvv.length > 4) {
             showError("Dados Inválidos", "CVV inválido. Deve ter 3 ou 4 dígitos.");
             return;
         }
         const cardNumberCleaned = number.replace(/\s/g, '');
         if (cardNumberCleaned.length < 13 || cardNumberCleaned.length > 19) {
-             showError("Dados Inválidos", "Número do cartão inválido. Deve ter entre 13 e 19 dígitos.");
+            showError("Dados Inválidos", "Número do cartão inválido. Deve ter entre 13 e 19 dígitos.");
             return;
         }
-
         const payload: CreateCardPayload = {
-            name: name.trim(),
+            cardholderName: cardholderName.trim(),
             number: cardNumberCleaned,
             expiry: expiry,
             cvv: cvv,
-            cardType: currentCardType,
+            brand: detectedBrandValue,
             nickname: nickname.trim() || undefined,
             paymentMethodType: paymentMethodType,
         };
-
         setIsSubmitting(true);
         try {
             await cardService.createCard(payload);
-            showSuccess("Cartão Adicionado", "Seu novo cartão foi adicionado com sucesso!", [
-                { text: "OK", onPress: () => router.back() }
-            ]);
-        } catch (error: any) {
-            console.error("Falha ao adicionar cartão:", error);
-            showError("Erro ao Adicionar", error.message || "Não foi possível adicionar o cartão. Verifique os dados e tente novamente.");
+            showSuccess("Sucesso", "Cartão adicionado com sucesso!");
+            router.replace('/cards');
+        } catch (e: any) {
+            showError("Erro", e.message || "Erro ao adicionar cartão.");
         } finally {
             setIsSubmitting(false);
         }
@@ -135,7 +132,7 @@ export default function AddCardScreen() {
                     <View style={styles.cardDetailsPreview}>
                         <View>
                             <Text style={styles.cardLabelPreview}>TITULAR DO CARTÃO</Text>
-                            <Text style={styles.cardValuePreview}>{name.toUpperCase() || 'NOME DO TITULAR'}</Text>
+                            <Text style={styles.cardValuePreview}>{cardholderName.toUpperCase() || 'NOME DO TITULAR'}</Text>
                         </View>
                         <View style={{alignItems: 'flex-end'}}>
                             <Text style={styles.cardLabelPreview}>VALIDADE</Text>
@@ -149,8 +146,8 @@ export default function AddCardScreen() {
 
                 <View style={styles.formContainer}>
                     <InputField
-                        value={name}
-                        onChangeText={setName}
+                        value={cardholderName}
+                        onChangeText={setCardholderName}
                         placeholder="Nome no Cartão"
                         icon={<Ionicons name="person-outline" size={22} color="#6C757D" />}
                         keyboardType="default"
@@ -167,10 +164,8 @@ export default function AddCardScreen() {
                         onChangeText={(text) => {
                             const formatted = formatCardNumber(text);
                             setNumber(formatted);
-                            if (!cardType.trim()) {
-                                const detectedType = detectCardType(formatted);
-                                if (detectedType) setCardType(detectedType);
-                            }
+                            const detected = detectBrand(formatted);
+                            if (detected) setBrand(detected); // Atualiza a brand detectada
                         }}
                         placeholder="Número do Cartão"
                         icon={<Ionicons name="card-outline" size={22} color="#6C757D" />}
@@ -214,13 +209,12 @@ export default function AddCardScreen() {
                             </TouchableOpacity>
                         </View>
                     </View>
-                    <InputField
-                        value={cardType}
-                        onChangeText={setCardType}
-                        placeholder="Bandeira (ex: Visa, Mastercard)"
-                        icon={<Ionicons name="flag-outline" size={22} color="#6C757D" />}
-                        keyboardType="default"
-                    />
+                    {/* O campo de input da bandeira foi removido. A detecção é automática. */}
+                    {brand ? (
+                        <View style={styles.detectedBrandContainer}>
+                            <Text style={styles.detectedBrandText}>Bandeira Detectada: {brand.toUpperCase()}</Text>
+                        </View>
+                    ) : null}
                     <Button
                         title={isSubmitting ? 'Adicionando...' : 'Adicionar Cartão'}
                         onPress={handleAddCard}
@@ -233,6 +227,19 @@ export default function AddCardScreen() {
 }
 
 const styles = StyleSheet.create({
+    detectedBrandContainer: {
+        backgroundColor: '#E9ECEF',
+        borderRadius: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        marginBottom: 18,
+        alignItems: 'center',
+    },
+    detectedBrandText: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 14,
+        color: '#495057',
+    },
     screen: {
         flex: 1,
         backgroundColor: '#F8F9FA',

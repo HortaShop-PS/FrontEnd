@@ -93,6 +93,7 @@ export default function RootLayout() {
         <Stack.Screen name='cart' options={{ headerShown: false }} />
         <Stack.Screen name='cards' options={{ headerShown: false }} />
         <Stack.Screen name='addCard' options={{ headerShown: false }} />
+        <Stack.Screen name='payment' options={{ headerShown: false }} />
       </Stack>
       {shouldShowCartButton() && <FloatingCartButton />}
     </AlertProvider>
