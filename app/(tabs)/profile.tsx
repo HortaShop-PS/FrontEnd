@@ -87,6 +87,12 @@ export default function ProfileScreen() {
             router.push('/favorites');
     };
 
+    const handle = () => {
+            router.push('/favorites');
+    };
+
+    
+
     if (!fontsLoaded) {
         return (
             <View style={[styles.container, styles.centered]}>
@@ -151,6 +157,8 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
+
+                </View>
                     
                     <TouchableOpacity onPress={() => router.push('/profile/orderHistory')}>
                         <View style={styles.menuItemRow}>
@@ -171,21 +179,21 @@ export default function ProfileScreen() {
                 {/*
                 <View style={styles.menuSection}>
                     <Text style={styles.menuSectionTitle}>Configurações</Text>
-                    <TouchableOpacity>
+                    {/*<TouchableOpacity>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="location-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
                             <Text style={styles.menuItemText}>Meus Endereços</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity>
+                    </TouchableOpacity>*/}
+                    <TouchableOpacity onPress={() => router.push("/cards")}>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="card-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Cartões De Crédito</Text>
+                            <Text style={styles.menuItemText}>Meus Cartões</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    {/*<TouchableOpacity>
                         <View style={styles.menuItemRow}>
                             <MaterialCommunityIcons name="history" size={22} color="#6CC51D" style={styles.menuIcon} />
                             <Text style={styles.menuItemText}>Histórico de Transações</Text>
@@ -200,8 +208,9 @@ export default function ProfileScreen() {
                         </View>
                     </TouchableOpacity>
                 </View>
-                */}
 
+                    </TouchableOpacity>*/}
+                </View>
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={22} color="#FF6B6B" style={styles.logoutIcon} />
                     <Text style={styles.logoutText}>Sair da Conta</Text>

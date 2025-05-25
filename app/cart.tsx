@@ -230,7 +230,11 @@ export default function CartScreen() {
           <Text style={styles.totalAmount}>R$ {cart.total.toFixed(2).replace('.', ',')}</Text>
         </View>
         <View style={styles.buttonsContainer}>
-          <TouchableOpacity style={styles.checkoutButton} onPress={() => showInfo('Finalizar Compra', 'Funcionalidade de checkout ainda não implementada.')}>
+          <TouchableOpacity style={styles.checkoutButton} onPress={() => {
+              if (cart) {
+                router.push({ pathname: '/payment', params: { orderId: cart.id, amount: cart.total, orderTotal: `R$ ${(cart.total / 100).toFixed(2)}` } });
+              }
+            }}>
             <Text style={styles.checkoutButtonText}>Finalizar Compra</Text>
           </TouchableOpacity>
           <TouchableOpacity 

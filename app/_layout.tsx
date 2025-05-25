@@ -91,6 +91,9 @@ export default function RootLayout() {
         <Stack.Screen name='registerProductsCategories' options={{ headerShown: false }} />
         <Stack.Screen name='search' options={{ headerShown: false }} />
         <Stack.Screen name='cart' options={{ headerShown: false }} />
+        <Stack.Screen name='cards' options={{ headerShown: false }} />
+        <Stack.Screen name='addCard' options={{ headerShown: false }} />
+        <Stack.Screen name='payment' options={{ headerShown: false }} />
         <Stack.Screen name='orderDetails/[id]' options={{ headerShown: false }} />
         <Stack.Screen name='profile/orderHistory' options={{ headerShown: true, headerTitle: "Histórico de Pedidos" }} />
         <Stack.Screen name='profile/producerOrderHistory' options={{ headerShown: true, headerTitle: "Histórico de Pedidos" }} />
