@@ -68,72 +68,59 @@ const getAuthHeaders = async (): Promise<Record<string, string>> => {
   return headers;
 };
 
-export const paymentService = {
-  async processPixPayment(payload: ProcessPixPaymentDto): Promise<PixPaymentResponseDto> {
-    const headers = await getAuthHeaders();
-    if (!headers.Authorization && resolvedApiBaseUrl) {
-      console.warn("Tentando processar pagamento PIX sem token de autorização.");
-    }
+// Função para processar pagamento via PIX
+export async function processPixPayment(paymentData: ProcessPixPaymentDto) {
+  const token = await getToken();
+  const response = await fetch(`${resolvedApiBaseUrl}/payments/pix`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(paymentData),
+  });
 
-    const response = await fetch(`${resolvedApiBaseUrl}${PAYMENTS_API_PATH}/pix`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
+  if (!response.ok) {
+    throw new Error('Erro ao processar pagamento PIX');
+  }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-      console.error("Erro ao processar pagamento PIX:", errorData);
-      throw new Error(errorData.message || 'Falha ao processar pagamento PIX');
-    }
+  return response.json();
+}
 
-    const data = await response.json();
-    // Converter a string de data para Date object
-    return {
-      ...data,
-      expiresAt: new Date(data.expiresAt),
-    };
-  },
+// Função para processar pagamento via cartão
+export async function processCardPayment(paymentData: ProcessCardPaymentDto) {
+  const token = await getToken();
+  const response = await fetch(`${resolvedApiBaseUrl}/payments/card`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(paymentData),
+  });
 
-  async processCardPayment(payload: ProcessCardPaymentDto): Promise<CardPaymentResponseDto> {
-    const headers = await getAuthHeaders();
-    if (!headers.Authorization && resolvedApiBaseUrl) {
-      console.warn("Tentando processar pagamento com cartão sem token de autorização.");
-    }
+  if (!response.ok) {
+    throw new Error('Erro ao processar pagamento com cartão');
+  }
 
-    const response = await fetch(`${resolvedApiBaseUrl}${PAYMENTS_API_PATH}/card`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
+  return response.json();
+}
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-      console.error("Erro ao processar pagamento com cartão:", errorData);
-      throw new Error(errorData.message || 'Falha ao processar pagamento com cartão');
-    }
+// Função para atualizar status do pagamento
+export async function updatePaymentStatus(statusData: UpdatePaymentStatusDto) {
+  const token = await getToken();
+  const response = await fetch(`${resolvedApiBaseUrl}/payments/status`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(statusData),
+  });
 
-    return response.json();
-  },
+  if (!response.ok) {
+    throw new Error('Erro ao atualizar status do pagamento');
+  }
 
-  async updatePaymentStatus(payload: UpdatePaymentStatusDto): Promise<{ message: string; status: string }> {
-    const headers = await getAuthHeaders();
-    if (!headers.Authorization && resolvedApiBaseUrl) {
-      console.warn("Tentando atualizar status do pagamento sem token de autorização.");
-    }
-
-    const response = await fetch(`${resolvedApiBaseUrl}${PAYMENTS_API_PATH}/status`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-      console.error("Erro ao atualizar status do pagamento:", errorData);
-      throw new Error(errorData.message || 'Falha ao atualizar status do pagamento');
-    }
-
-    return response.json();
-  },
-};
+  return response.json();
+}

@@ -66,14 +66,17 @@ export default function PaymentScreen() {
       }
     }
 
+    // Carregar total do carrinho
     async function fetchCartTotal() {
-      setLoadingCart(true);
       try {
         const cart = await getCart();
         setCartTotal(cart.total);
-      } catch (e: any) {
-        showError('Erro', 'Não foi possível carregar o total do carrinho.');
-        setCartTotal(0);
+      } catch (error) {
+        if (error instanceof Error) {
+          showError('Erro ao carregar o carrinho', error.message);
+        } else {
+          showError('Erro ao carregar o carrinho', 'Erro desconhecido');
+        }
       } finally {
         setLoadingCart(false);
       }
@@ -82,6 +85,48 @@ export default function PaymentScreen() {
     fetchPrincipalCard();
     fetchCartTotal();
   }, []);
+
+  const handlePixPayment = async () => {
+    setIsProcessing(true);
+    try {
+      const pixResponse = await paymentService.processPixPayment({
+        orderId: 123, // Substituir pelo ID real do pedido
+        amount: cartTotal,
+      });
+      setPixData(pixResponse);
+      showSuccess('Pagamento PIX iniciado com sucesso!', 'Aguarde a confirmação.');
+    } catch (error) {
+      if (error instanceof Error) {
+        showError('Erro ao processar pagamento PIX', error.message);
+      } else {
+        showError('Erro ao processar pagamento PIX', 'Erro desconhecido');
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCardPayment = async () => {
+    setIsProcessing(true);
+    try {
+      const cardResponse = await paymentService.processCardPayment({
+        cardDetails: cardForm,
+        orderId: 123, // Substituir pelo ID real do pedido
+        amount: cartTotal,
+      });
+      showSuccess('Pagamento com cartão realizado com sucesso!', 'Seu pedido foi confirmado.');
+      clearCart();
+      router.push('/cart');
+    } catch (error) {
+      if (error instanceof Error) {
+        showError('Erro ao processar pagamento com cartão', error.message);
+      } else {
+        showError('Erro ao processar pagamento com cartão', 'Erro desconhecido');
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   if (!fontsLoaded || loadingCard || loadingCart) { // Adicionar loadingCart à condição
     return (
