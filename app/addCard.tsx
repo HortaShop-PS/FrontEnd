@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15, // Ajuste para alinhar com inputContainer
         marginBottom: 18,
         height: 52,
-        borderWidth: 1,
+        borderWidth: 0,
         borderColor: '#DEE2E6',
     },
     picker: {

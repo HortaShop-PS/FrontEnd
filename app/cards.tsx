@@ -177,7 +177,7 @@ export default function MyCardsScreen() {
                         try {
                             await cardService.deleteCard(cardId);
                             showSuccess("Excluído", "Cartão excluído com sucesso.");
-                            // Opcional: fetchCardsData(); para recarregar a lista
+                            fetchCardsData(); // Recarrega a lista após a exclusão bem-sucedida
                         } catch (e: any) {
                             const errorMessage = e.message || "Erro ao excluir cartão.";
                             setError(errorMessage);
@@ -392,6 +392,7 @@ export default function MyCardsScreen() {
         </View>
     );
 }
+
 
 const styles = StyleSheet.create({
     // ... (seus estilos existentes) ...
