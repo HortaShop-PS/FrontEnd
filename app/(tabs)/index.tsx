@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, StatusBar } from "react-native";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, StatusBar, RefreshControl } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { useEffect, useState } from "react";
@@ -20,6 +20,7 @@ export default function Index() {
   const [errorAll, setErrorAll] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Categorias atualizadas
   const categorias = [
@@ -28,7 +29,7 @@ export default function Index() {
     { id: 3, nome: "Orgânicos", icone: "flower-outline", categoria: "Orgânicos" },
   ];
   
-  const getFullImageUrl = (imageUrl) => {
+  const getFullImageUrl = (imageUrl: string) => {
     if (!imageUrl) return null;
     
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
@@ -38,35 +39,63 @@ export default function Index() {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
     return `${API_BASE_URL}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
   };
-  useEffect(() => {
-    const loadFeaturedProducts = async () => {
-      try {
+  const loadFeaturedProducts = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
         setLoading(true);
-        const products = await fetchFeaturedProducts();
-        setFeaturedProducts(products);
-      } catch (error) {
-        console.error("Erro ao carregar produtos em destaque:", error);
+      }
+      const products = await fetchFeaturedProducts();
+      setFeaturedProducts(products);
+      setError(null);
+    } catch (error) {
+      console.error("Erro ao carregar produtos em destaque:", error);
+      if (!isRefresh) {
         setError("Não foi possível carregar os produtos em destaque");
-      } finally {
+      }
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    const loadAllProducts = async () => {
-      try {
+  const loadAllProducts = async (isRefresh = false) => {
+    try {
+      if (!isRefresh) {
         setLoadingAll(true);
-        const products = await fetchAllProducts();
-        setAllProducts(products);
-      } catch (error) {
-        console.error("Erro ao carregar todos os produtos:", error);
-        setErrorAll("Não foi possível carregar todos os produtos");
-      } finally {
+      }
+      const products = await fetchAllProducts();
+      setAllProducts(products);
+      setErrorAll(null);
+    } catch (error) {
+      console.error("Erro ao carregar todos os produtos:", error);
+      if (!isRefresh) {
+        setErrorAll("Não foi possível carregar os produtos");
+      }
+    } finally {
+      if (!isRefresh) {
         setLoadingAll(false);
       }
-    };
+    }
+  };
 
-    loadFeaturedProducts();
-    loadAllProducts();
+  const onRefresh = () => {
+    loadFeaturedProducts(true);
+    loadAllProducts(true);
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([
+        loadFeaturedProducts(),
+        loadAllProducts()
+      ]);
+    };
+    loadData();
   }, []);
 
   if (!fontsLoaded) {
@@ -76,7 +105,18 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <ScrollView style={styles.mainContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.mainContainer} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#6CC51D']}
+            tintColor="#6CC51D"
+          />
+        }
+      >
         <View style={styles.container}>
           {/* Cabeçalho */}
           <View style={styles.header}>
@@ -105,7 +145,7 @@ export default function Index() {
                 onPress={() =>
                   router.push({
                     pathname: '/search',
-                    params: { category: categorias.categoria }
+                    params: { category: 'todas' }
                   })
                 }
                 
@@ -132,7 +172,7 @@ export default function Index() {
                   }
                 >
                   <View style={styles.categoriaIcone}>
-                    <Ionicons name={categoria.icone} size={28} color="#6CC51D" />
+                    <Ionicons name={categoria.icone as any} size={28} color="#6CC51D" />
                   </View>
                   <Text style={styles.categoriaNome}>{categoria.nome}</Text>
                 </TouchableOpacity>

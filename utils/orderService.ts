@@ -21,6 +21,7 @@ export interface OrderItem {
   producerId: number;
   producerName: string;
   notes?: string;
+  reviewed?: boolean;
 }
 
 export interface OrderSummary {
@@ -30,6 +31,7 @@ export interface OrderSummary {
   createdAt: string;
   updatedAt: string;
   itemCount: number;
+  items?: OrderItem[];
 }
 
 export interface OrderDetail {
