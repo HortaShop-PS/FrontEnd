@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { showSuccess, showError } from '../utils/alertService';
@@ -32,6 +32,7 @@ export default function ProductDetails() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
@@ -39,48 +40,67 @@ export default function ProductDetails() {
     Poppins_700Bold,
   });
 
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      try {
+  const fetchProductDetails = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
         setLoading(true);
-        const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-        const response = await fetch(`${API_BASE_URL}/products/${id}`);
+      }
+      
+      const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+      const response = await fetch(`${API_BASE_URL}/products/${id}?timestamp=${Date.now()}`);
 
-        if (!response.ok) {
-          throw new Error(`Erro ao buscar detalhes do produto: ${response.status}`);
-        }
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar detalhes do produto: ${response.status}`);
+      }
 
-        const data = await response.json();
-        
-        // Garantir que todos os campos estejam corretamente mapeados
-        const mappedProduct = {
-          ...data,
-          // Garantir que os campos essenciais estejam presentes
-          description: data.description || data.descricao || 'Descrição não disponível',
-          weight: data.weight || data.peso || 'Peso não informado',
-          rating: typeof data.rating === 'number' ? data.rating : 
-                 (typeof data.avaliacao === 'number' ? data.avaliacao : 0),
-          reviews: typeof data.reviews === 'number' ? data.reviews : 
-                  (typeof data.avaliacoes === 'number' ? data.avaliacoes : 0)
-        };
-        
-        setProduct(mappedProduct);
+      const data = await response.json();
+      
+      // Garantir que todos os campos estejam corretamente mapeados
+      const mappedProduct = {
+        ...data,
+        // Garantir que os campos essenciais estejam presentes
+        description: data.description || data.descricao || 'Descrição não disponível',
+        weight: data.weight || data.peso || 'Peso não informado',
+        rating: typeof data.averageRating === 'number' ? data.averageRating : 
+               (typeof data.rating === 'number' ? data.rating : 
+                (typeof data.avaliacao === 'number' ? data.avaliacao : 0)),
+        reviews: typeof data.totalReviews === 'number' ? data.totalReviews :
+                (typeof data.reviews === 'number' ? data.reviews : 
+                 (typeof data.avaliacoes === 'number' ? data.avaliacoes : 0))
+      };
+      
+      console.log('DEBUG - Product data received:', mappedProduct);
+      setProduct(mappedProduct);
 
-        // Verificar se o produto está nos favoritos
-        const favoriteStatus = await checkIsFavorite(data.id);
-        setIsFavorite(favoriteStatus);
-      } catch (error) {
-        console.error('Erro ao carregar detalhes do produto:', error);
+      // Verificar se o produto está nos favoritos
+      const favoriteStatus = await checkIsFavorite(data.id);
+      setIsFavorite(favoriteStatus);
+      setError(null);
+    } catch (error) {
+      console.error('Erro ao carregar detalhes do produto:', error);
+      if (!isRefresh) {
         setError('Não foi possível carregar os detalhes do produto');
-      } finally {
+      }
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
         setLoading(false);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     if (id) {
       fetchProductDetails();
     }
   }, [id]);
+
+  const onRefresh = () => {
+    fetchProductDetails(true);
+  };
 
   const handleIncreaseQuantity = () => {
     setQuantity(prev => prev + 1);
@@ -198,7 +218,17 @@ export default function ProductDetails() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#6CC51D']}
+            tintColor="#6CC51D"
+          />
+        }
+      >
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${product.imageUrl}` }}
@@ -243,12 +273,16 @@ export default function ProductDetails() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.ratingContainer}>
+          <TouchableOpacity 
+            style={styles.ratingContainer}
+            onPress={() => router.push(`/productReviews/${product.id}`)}
+          >
             <View style={styles.starsContainer}>
               {renderStars(product.rating)}
             </View>
             <Text style={styles.reviewsText}>({product.reviews || 0} avaliações)</Text>
-          </View>
+            <Ionicons name="chevron-forward" size={16} color="#888888" style={{marginLeft: 'auto'}} />
+          </TouchableOpacity>
 
           <View style={styles.priceSection}>
             <Text style={styles.productPrice}>
@@ -410,6 +444,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
+    backgroundColor: '#F8F8F8',
+    padding: 10,
+    borderRadius: 8,
   },
   starsContainer: {
     flexDirection: 'row',

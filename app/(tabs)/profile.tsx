@@ -5,7 +5,7 @@ import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } fr
 import { useCallback, useState } from "react";
 import { getProfile, logout } from "../../utils/authServices";
 import * as SecureStore from 'expo-secure-store';
-import { showAlert } from '../../utils/alertService';
+import { showAlert, showError } from '../../utils/alertService';
 
 interface UserProfile {
     id: string;
@@ -160,9 +160,6 @@ export default function ProfileScreen() {
 
                 </View>
                     
-                    <TouchableOpacity onPress={() => router.push('/orderDetails/[id]')}>
-                    {/* Alterar para: */}
-                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => router.push('/profile/orderHistory')}>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="time-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
@@ -170,8 +167,16 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                {/*</View>
+                    <TouchableOpacity onPress={() => router.push('/profile/myReviews')}>
+                        <View style={styles.menuItemRow}>
+                            <Ionicons name="star-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                            <Text style={styles.menuItemText}>Minhas Avaliações</Text>
+                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                        </View>
+                    </TouchableOpacity>
+                </View>
 
+                {/*
                 <View style={styles.menuSection}>
                     <Text style={styles.menuSectionTitle}>Configurações</Text>
                     {/*<TouchableOpacity>
@@ -201,9 +206,11 @@ export default function ProfileScreen() {
                             <Text style={styles.menuItemText}>Notificações</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
-                    </TouchableOpacity>*/}
+                    </TouchableOpacity>
                 </View>
 
+                    </TouchableOpacity>*/}
+                </View>
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={22} color="#FF6B6B" style={styles.logoutIcon} />
                     <Text style={styles.logoutText}>Sair da Conta</Text>
