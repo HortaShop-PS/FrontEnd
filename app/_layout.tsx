@@ -99,6 +99,7 @@ export default function RootLayout() {
         <Stack.Screen name='profile/producerOrderHistory' options={{ headerShown: true, headerTitle: "Histórico de Pedidos" }} />
         <Stack.Screen name='profile/myReviews' options={{ headerShown: false }} />
         <Stack.Screen name='productReviews/[productId]' options={{ headerShown: false }} />
+        <Stack.Screen name='checkout' options={{ headerShown: false}} />
       </Stack>
       {shouldShowCartButton() && <FloatingCartButton />}
     </AlertProvider>
