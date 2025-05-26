@@ -35,6 +35,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="manageProducts"
+        options={{headerShown: false,
+          headerTitle: "Gerenciar Produtos",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "book" : "book-outline"}
+              color={"#6dc51c"}
+              size={24}
+            />
+          ),
+          title: "Meu Catálogo",
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{headerShown: false,
           headerTitle: "",
