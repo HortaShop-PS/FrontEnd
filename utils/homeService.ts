@@ -83,7 +83,7 @@ export const searchProducts = async (params: {
     try {
       const queryParams = new URLSearchParams();
       if (params.name) queryParams.append('name', params.name);
-      if (params.category) queryParams.append('category', params.category); // <- ADICIONADO
+      if (params.category) queryParams.append('category', params.category);
       if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
       if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
       if (params.isOrganic !== undefined) queryParams.append('isOrganic', params.isOrganic.toString());

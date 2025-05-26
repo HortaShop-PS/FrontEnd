@@ -2,7 +2,6 @@ import axios from 'axios';
 import { getToken, getProfile } from './authServices';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import Config from 'react-native-config';
 
 const API_BASE_URL = Platform.select({
   android: process.env.EXPO_PUBLIC_API_BASE_URL,

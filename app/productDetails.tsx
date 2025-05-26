@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { showSuccess, showError } from '../utils/alertService';
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { checkIsFavorite, addToFavorites, removeFromFavorites } from '../utils/favoritesService';
+import { getToken } from '../utils/authServices';
+import { addToCart } from '../utils/cartService';
 
 interface Product {
   id: string;
@@ -28,6 +31,8 @@ export default function ProductDetails() {
   const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
@@ -35,35 +40,67 @@ export default function ProductDetails() {
     Poppins_700Bold,
   });
 
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      try {
+  const fetchProductDetails = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
         setLoading(true);
-        const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-        const response = await fetch(`${API_BASE_URL}/products/${id}`);
-        
-        if (!response.ok) {
-          throw new Error(`Erro ao buscar detalhes do produto: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setProduct(data);
-        
-        // Verificar se o produto está nos favoritos
-        const favoriteStatus = await checkIsFavorite(data.id);
-        setIsFavorite(favoriteStatus);
-      } catch (error) {
-        console.error('Erro ao carregar detalhes do produto:', error);
+      }
+      
+      const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+      const response = await fetch(`${API_BASE_URL}/products/${id}?timestamp=${Date.now()}`);
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar detalhes do produto: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Garantir que todos os campos estejam corretamente mapeados
+      const mappedProduct = {
+        ...data,
+        // Garantir que os campos essenciais estejam presentes
+        description: data.description || data.descricao || 'Descrição não disponível',
+        weight: data.weight || data.peso || 'Peso não informado',
+        rating: typeof data.averageRating === 'number' ? data.averageRating : 
+               (typeof data.rating === 'number' ? data.rating : 
+                (typeof data.avaliacao === 'number' ? data.avaliacao : 0)),
+        reviews: typeof data.totalReviews === 'number' ? data.totalReviews :
+                (typeof data.reviews === 'number' ? data.reviews : 
+                 (typeof data.avaliacoes === 'number' ? data.avaliacoes : 0))
+      };
+      
+      console.log('DEBUG - Product data received:', mappedProduct);
+      setProduct(mappedProduct);
+
+      // Verificar se o produto está nos favoritos
+      const favoriteStatus = await checkIsFavorite(data.id);
+      setIsFavorite(favoriteStatus);
+      setError(null);
+    } catch (error) {
+      console.error('Erro ao carregar detalhes do produto:', error);
+      if (!isRefresh) {
         setError('Não foi possível carregar os detalhes do produto');
-      } finally {
+      }
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
         setLoading(false);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     if (id) {
       fetchProductDetails();
     }
   }, [id]);
+
+  const onRefresh = () => {
+    fetchProductDetails(true);
+  };
 
   const handleIncreaseQuantity = () => {
     setQuantity(prev => prev + 1);
@@ -77,10 +114,10 @@ export default function ProductDetails() {
 
   const handleToggleFavorite = async () => {
     if (!product) return;
-    
+
     try {
       setFavoriteLoading(true);
-      
+
       if (isFavorite) {
         const success = await removeFromFavorites(product.id);
         if (success) {
@@ -98,6 +135,31 @@ export default function ProductDetails() {
       setFavoriteLoading(false);
     }
   };
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+
+    try {
+      setCartLoading(true);
+      
+      // Usar o serviço centralizado de carrinho
+      await addToCart(product.id, quantity);
+      showSuccess('Sucesso!', `${product.name} foi adicionado ao carrinho.`);
+    } catch (error: any) {
+      console.error('Erro ao adicionar ao carrinho:', error);
+      showError('Erro', error.message || 'Não foi possível adicionar o produto ao carrinho.');
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6CC51D" />
+      </View>
+    );
+  }
 
   if (loading) {
     return (
@@ -119,30 +181,32 @@ export default function ProductDetails() {
   }
 
   // Renderizar estrelas de avaliação
-  const renderStars = (rating = 4.5, total = 5) => {
+  const renderStars = (rating = 0, total = 5) => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
-    
+    // Garantir que rating seja um número válido
+    const validRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
+    const fullStars = Math.floor(validRating);
+    const halfStar = validRating % 1 >= 0.5;
+
     for (let i = 0; i < fullStars; i++) {
       stars.push(
         <Ionicons key={`star-${i}`} name="star" size={16} color="#FFD700" />
       );
     }
-    
+
     if (halfStar) {
       stars.push(
         <Ionicons key="star-half" name="star-half" size={16} color="#FFD700" />
       );
     }
-    
+
     const emptyStars = total - fullStars - (halfStar ? 1 : 0);
     for (let i = 0; i < emptyStars; i++) {
       stars.push(
         <Ionicons key={`star-empty-${i}`} name="star-outline" size={16} color="#FFD700" />
       );
     }
-    
+
     return stars;
   };
 
@@ -153,73 +217,107 @@ export default function ProductDetails() {
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
       </View>
-      
-      <ScrollView showsVerticalScrollIndicator={false}>
+
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#6CC51D']}
+            tintColor="#6CC51D"
+          />
+        }
+      >
         <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${product.imageUrl}` }}  
-            style={styles.productImage} 
+          <Image
+            source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${product.imageUrl}` }}
+            style={styles.productImage}
             resizeMode="cover"
             defaultSource={require('../assets/images/logo/hortaShop_sem_fundo.png')}
           />
         </View>
-        
+
         <View style={styles.detailsContainer}>
           <View style={styles.productHeader}>
-            <View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.nameAndBadgesContainer}>
+                {product.isNew && (
+                  <View style={[styles.badge, styles.newBadge]}>
+                    <Text style={styles.badgeText}>NOVO</Text>
+                  </View>
+                )}
+                {product.isFeatured && (
+                  <View style={[styles.badge, styles.featuredBadge]}>
+                    <Text style={styles.badgeText}>DESTAQUE</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productWeight}>{product.weight || '700 g'}</Text>
+              <Text style={styles.productWeight}>{product.weight || 'Peso não informado'}</Text>
             </View>
-            <TouchableOpacity 
-              style={styles.favoriteButton} 
+            <TouchableOpacity
+              style={styles.favoriteButton}
               onPress={handleToggleFavorite}
               disabled={favoriteLoading}
             >
               {favoriteLoading ? (
                 <ActivityIndicator size="small" color="#6CC51D" />
               ) : (
-                <Ionicons 
-                  name={isFavorite ? "heart" : "heart-outline"} 
-                  size={24} 
-                  color={isFavorite ? "#FF6B6B" : "#999"} 
+                <Ionicons
+                  name={isFavorite ? "heart" : "heart-outline"}
+                  size={24}
+                  color={isFavorite ? "#FF6B6B" : "#999"}
                 />
               )}
             </TouchableOpacity>
           </View>
-          
-          <View style={styles.ratingContainer}>
+
+          <TouchableOpacity 
+            style={styles.ratingContainer}
+            onPress={() => router.push(`/productReviews/${product.id}`)}
+          >
             <View style={styles.starsContainer}>
-              {renderStars(product.rating || 4.5)}
+              {renderStars(product.rating)}
             </View>
-            <Text style={styles.reviewsText}>({product.reviews || 89} avaliações)</Text>
+            <Text style={styles.reviewsText}>({product.reviews || 0} avaliações)</Text>
+            <Ionicons name="chevron-forward" size={16} color="#888888" style={{marginLeft: 'auto'}} />
+          </TouchableOpacity>
+
+          <View style={styles.priceSection}>
+            <Text style={styles.productPrice}>
+              R$ {product.price ? product.price.toFixed(2).replace('.', ',') : '0,00'}
+            </Text>
+            {product.unit && <Text style={styles.productUnit}> / {product.unit}</Text>}
           </View>
-          
+
           <Text style={styles.productDescription}>
-            {product.description || 'Descrição não encontrada'}
+            {product.description}
           </Text>
-          
+
           <View style={styles.quantityContainer}>
-            <Text style={styles.quantityLabel}>Quantidade</Text>
-            <View style={styles.quantityControls}>
-              <TouchableOpacity 
-                style={[styles.quantityButton, styles.quantityButtonMinus]} 
-                onPress={handleDecreaseQuantity}
-              >
-                <Ionicons name="remove" size={20} color="#6CC51D" />
+            <Text style={styles.quantityLabel}>Quantidade:</Text>
+            <View style={styles.quantitySelector}>
+              <TouchableOpacity style={styles.quantityButton} onPress={handleDecreaseQuantity}>
+                <Ionicons name="remove-circle-outline" size={28} color="#6CC51D" />
               </TouchableOpacity>
               <Text style={styles.quantityValue}>{quantity}</Text>
-              <TouchableOpacity 
-                style={[styles.quantityButton, styles.quantityButtonPlus]} 
-                onPress={handleIncreaseQuantity}
-              >
-                <Ionicons name="add" size={20} color="#FFFFFF" />
+              <TouchableOpacity style={styles.quantityButton} onPress={handleIncreaseQuantity}>
+                <Ionicons name="add-circle-outline" size={28} color="#6CC51D" />
               </TouchableOpacity>
             </View>
           </View>
-          
-          <TouchableOpacity style={styles.addToCartButton}>
-            <Text style={styles.addToCartText}>Adicionar no carrinho</Text>
-            <Ionicons name="cart-outline" size={20} color="#FFF" style={styles.cartIcon} />
+
+          <TouchableOpacity
+            style={[styles.addToCartButton, cartLoading && styles.addToCartButtonDisabled]}
+            onPress={handleAddToCart}
+            disabled={cartLoading}
+          >
+            {cartLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.addToCartButtonText}>Adicionar ao Carrinho</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -301,6 +399,28 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 10,
   },
+  nameAndBadgesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  newBadge: {
+    backgroundColor: '#6CC51D',
+  },
+  featuredBadge: {
+    backgroundColor: '#FFC107',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: 'Poppins_600SemiBold',
+  },
   productName: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 24,
@@ -324,6 +444,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
+    backgroundColor: '#F8F8F8',
+    padding: 10,
+    borderRadius: 8,
   },
   starsContainer: {
     flexDirection: 'row',
@@ -334,6 +457,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888888',
   },
+  priceSection: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  productPrice: {
+    fontSize: 24,
+    fontFamily: 'Poppins_700Bold',
+    color: '#333',
+  },
+  productUnit: {
+    fontSize: 16,
+    fontFamily: 'Poppins_400Regular',
+    color: '#666',
+    marginLeft: 4,
+  },
   productDescription: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 14,
@@ -341,72 +481,49 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 20,
   },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+  quantityContainer: {
+    marginTop: 20,
     marginBottom: 20,
   },
-  price: {
-    fontFamily: 'Poppins_700Bold',
-    fontSize: 22,
-    color: '#6CC51D',
-  },
-  unit: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 14,
-    color: '#888888',
-    marginLeft: 5,
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
   quantityLabel: {
-    fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
-    color: '#333333',
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#333',
+    marginBottom: 8,
   },
-  quantityControls: {
+  quantitySelector: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   quantityButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quantityButtonMinus: {
-    backgroundColor: '#F0F0F0',
-  },
-  quantityButtonPlus: {
-    backgroundColor: '#6CC51D',
+    padding: 12,
   },
   quantityValue: {
+    fontSize: 18,
     fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
-    color: '#333333',
-    marginHorizontal: 15,
-    minWidth: 20,
+    color: '#333',
+    paddingHorizontal: 16,
+    minWidth: 50,
     textAlign: 'center',
   },
   addToCartButton: {
     backgroundColor: '#6CC51D',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingVertical: 15,
-    borderRadius: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
   },
-  cartIcon: {
-    marginLeft: 10,
+  addToCartButtonDisabled: {
+    backgroundColor: '#A5D6A7',
   },
-  addToCartText: {
+  addToCartButtonText: {
+    color: '#fff',
+    fontSize: 18,
     fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
-    color: '#FFFFFF',
   },
 });

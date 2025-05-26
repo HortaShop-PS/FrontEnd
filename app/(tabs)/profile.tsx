@@ -5,7 +5,7 @@ import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } fr
 import { useCallback, useState } from "react";
 import { getProfile, logout } from "../../utils/authServices";
 import * as SecureStore from 'expo-secure-store';
-import { showAlert } from '../../utils/alertService';
+import { showAlert, showError } from '../../utils/alertService';
 
 interface UserProfile {
     id: string;
@@ -87,6 +87,12 @@ export default function ProfileScreen() {
             router.push('/favorites');
     };
 
+    const handle = () => {
+            router.push('/favorites');
+    };
+
+    
+
     if (!fontsLoaded) {
         return (
             <View style={[styles.container, styles.centered]}>
@@ -151,25 +157,41 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                {/*</View>
+                </View>
 
+                <TouchableOpacity onPress={() => router.push('/profile/orderHistory')}>
+                    <View style={styles.menuItemRow}>
+                        <Ionicons name="time-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                        <Text style={styles.menuItemText}>Histórico de Pedidos</Text>
+                        <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                    </View>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/profile/myReviews')}>
+                    <View style={styles.menuItemRow}>
+                        <Ionicons name="star-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                        <Text style={styles.menuItemText}>Minhas Avaliações</Text>
+                        <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                    </View>
+                </TouchableOpacity>
+
+                {/*
                 <View style={styles.menuSection}>
                     <Text style={styles.menuSectionTitle}>Configurações</Text>
-                    <TouchableOpacity>
+                    {/*<TouchableOpacity>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="location-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
                             <Text style={styles.menuItemText}>Meus Endereços</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity>
+                    </TouchableOpacity>*/}
+                    <TouchableOpacity onPress={() => router.push("/cards")}>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="card-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Cartões De Crédito</Text>
+                            <Text style={styles.menuItemText}>Meus Cartões</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    {/*<TouchableOpacity>
                         <View style={styles.menuItemRow}>
                             <MaterialCommunityIcons name="history" size={22} color="#6CC51D" style={styles.menuIcon} />
                             <Text style={styles.menuItemText}>Histórico de Transações</Text>
@@ -183,13 +205,15 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                */}</View>
+                </View>
+
+                    </TouchableOpacity>*/}
+                {/* End of commented Configurações section */}
 
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={22} color="#FF6B6B" style={styles.logoutIcon} />
                     <Text style={styles.logoutText}>Sair da Conta</Text>
                 </TouchableOpacity>
-
             </ScrollView>
         </View>
     );
