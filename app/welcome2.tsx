@@ -10,7 +10,6 @@ import * as Linking from 'expo-linking';
 import { handleOAuthCallback } from "../utils/authServices";
 import * as SecureStore from 'expo-secure-store';
 import { showAlert, showSuccess, showError } from '../utils/alertService';
-import Config from "react-native-config";
 
 WebBrowser.maybeCompleteAuthSession();
 

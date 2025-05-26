@@ -23,7 +23,7 @@ export default function TabsLayout() {
         ), headerShown: false, title: 'Ínicio'}}/>
         <Tabs.Screen name = "profile" options={{headerTitle: "", tabBarIcon: ({ color, focused }) => (
            <Ionicons name={focused ? 'person' : 'person-outline'} color={"#6dc51c"} size={24} />
-        ), headerShown: false, title: 'Perfil'}}/>
+        ), title: 'Perfil', headerShown: false}}/>
       </Tabs>
     );
   }

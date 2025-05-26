@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import AlertProvider from '../components/AlertProvider';
+import FloatingCartButton from '../components/FloatingCartButton';
 
 export default function RootLayout() {
   const [isUserProducer, setIsUserProducer] = useState<boolean | null>(null);
@@ -59,6 +60,19 @@ export default function RootLayout() {
     checkUserType();
   }, [segments]);
 
+  // Determinar se deve mostrar o botão flutuante do carrinho
+  const shouldShowCartButton = () => {
+    // Mostrar o botão apenas na tela inicial para usuários comuns
+    // Verificar se estamos na tela inicial (tabs/index)
+    const isHomeScreen = segments[0] === '(tabs)' && segments.length <= 1;
+    
+    // Não mostrar para produtores
+    if (isUserProducer) return false;
+    
+    // Mostrar apenas na tela inicial
+    return isHomeScreen;
+  };
+
   return (
     <AlertProvider>
       <Stack>
@@ -76,7 +90,18 @@ export default function RootLayout() {
         <Stack.Screen name='registerProduct' options={{ headerShown: false }} />
         <Stack.Screen name='registerProductsCategories' options={{ headerShown: false }} />
         <Stack.Screen name='search' options={{ headerShown: false }} />
+        <Stack.Screen name='cart' options={{ headerShown: false }} />
+        <Stack.Screen name='cards' options={{ headerShown: false }} />
+        <Stack.Screen name='addCard' options={{ headerShown: false }} />
+        <Stack.Screen name='payment' options={{ headerShown: false }} />
+        <Stack.Screen name='orderDetails/[id]' options={{ headerShown: false }} />
+        <Stack.Screen name='profile/orderHistory' options={{ headerShown: true, headerTitle: "Histórico de Pedidos" }} />
+        <Stack.Screen name='profile/producerOrderHistory' options={{ headerShown: true, headerTitle: "Histórico de Pedidos" }} />
+        <Stack.Screen name='profile/myReviews' options={{ headerShown: false }} />
+        <Stack.Screen name='productReviews/[productId]' options={{ headerShown: false }} />
+        <Stack.Screen name='checkout' options={{ headerShown: false}} />
       </Stack>
+      {shouldShowCartButton() && <FloatingCartButton />}
     </AlertProvider>
   );
 }
