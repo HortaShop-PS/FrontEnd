@@ -81,10 +81,13 @@ export default function Index() {
           <View style={styles.bannerContainer}>
             <View style={styles.banner}>
               <View style={styles.bannerContent}>
-                <Text style={styles.bannerTitle}>Registrar Promoções</Text>
-                <Text style={styles.bannerSubtitle}>Quer cadastrar produtos em promoção?</Text>
-                <TouchableOpacity style={styles.bannerButton}>
-                  <Text style={styles.bannerButtonText}>Aqui</Text>
+                <Text style={styles.bannerTitle}>Gerenciar Produtos</Text>
+                <Text style={styles.bannerSubtitle}>Visualize e edite seus produtos cadastrados</Text>
+                <TouchableOpacity 
+                  style={styles.bannerButton}
+                  onPress={() => router.push('/manageProducts')}
+                >
+                  <Text style={styles.bannerButtonText}>Acessar</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.bannerImageContainer}>

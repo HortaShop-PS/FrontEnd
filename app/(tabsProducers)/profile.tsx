@@ -5,7 +5,7 @@ import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } fr
 import { useCallback, useState } from "react";
 import { getProfile, logout } from "../../utils/authServices";
 import * as SecureStore from 'expo-secure-store';
-import { showAlert } from '../../utils/alertService';
+import { showAlert, showError } from '../../utils/alertService';
 
 interface UserProfile {
     id: string;
@@ -154,6 +154,13 @@ export default function ProfileScreen() {
                         <View style={styles.menuItemRow}>
                             <Ionicons name="albums-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
                             <Text style={styles.menuItemText}>Registro De Produtos</Text>
+                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                        </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/manageProducts')}>
+                        <View style={styles.menuItemRow}>
+                            <Ionicons name="grid-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                            <Text style={styles.menuItemText}>Gerenciar Produtos</Text>
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
