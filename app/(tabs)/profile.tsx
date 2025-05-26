@@ -157,24 +157,22 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
+                </View>
 
-                </View>
-                    
-                    <TouchableOpacity onPress={() => router.push('/profile/orderHistory')}>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="time-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Histórico de Pedidos</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => router.push('/profile/myReviews')}>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="star-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Minhas Avaliações</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-                </View>
+                <TouchableOpacity onPress={() => router.push('/profile/orderHistory')}>
+                    <View style={styles.menuItemRow}>
+                        <Ionicons name="time-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                        <Text style={styles.menuItemText}>Histórico de Pedidos</Text>
+                        <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                    </View>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/profile/myReviews')}>
+                    <View style={styles.menuItemRow}>
+                        <Ionicons name="star-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                        <Text style={styles.menuItemText}>Minhas Avaliações</Text>
+                        <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                    </View>
+                </TouchableOpacity>
 
                 {/*
                 <View style={styles.menuSection}>
@@ -210,12 +208,12 @@ export default function ProfileScreen() {
                 </View>
 
                     </TouchableOpacity>*/}
-                </View>
+                {/* End of commented Configurações section */}
+
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={22} color="#FF6B6B" style={styles.logoutIcon} />
                     <Text style={styles.logoutText}>Sair da Conta</Text>
                 </TouchableOpacity>
-
             </ScrollView>
         </View>
     );

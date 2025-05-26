@@ -48,6 +48,19 @@ export default function TabsLayout() {
           title: "Perfil",
         }}
       />
+      <Tabs.Screen
+        name="manageProducts"
+        options={{headerShown: true,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              color={"#6dc51c"}
+              size={24}
+            />
+          ),
+        }}
+      />
     </Tabs>
+    
   );
 }
