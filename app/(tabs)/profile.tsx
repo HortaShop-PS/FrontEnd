@@ -157,7 +157,7 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                
+                </View>
 
                 <TouchableOpacity onPress={() => router.push('/profile/orderHistory')}>
                     <View style={styles.menuItemRow}>
@@ -191,7 +191,6 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                    </View>
                     {/*<TouchableOpacity>
                         <View style={styles.menuItemRow}>
                             <MaterialCommunityIcons name="history" size={22} color="#6CC51D" style={styles.menuIcon} />
@@ -321,7 +320,7 @@ const styles = StyleSheet.create({
     menuItemRow: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 12
+        paddingVertical: 12,
     },
     menuIcon: {
         marginRight: 15,
