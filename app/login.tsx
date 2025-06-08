@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, StatusBar, Switch, Alert, ActivityIndicator } from "react-native";
+import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, StatusBar, Switch, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import LoadingIndicator from "./loadingIndicator";
 import { login } from "../utils/authServices";
-import { showAlert, showSuccess, showError, showInfo } from '../utils/alertService';
+import { showSuccess, showError, showInfo } from '../utils/alertService';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -60,7 +60,11 @@ export default function LoginScreen() {
     function handleGoToRegister() {
         console.log("Navegar para: Cadastro");
         router.push('/register');
+    }
 
+    function handleGoToDeliveryLogin() {
+        console.log("Navegar para: Login Entregador");
+        router.push('/loginDelivery');
     }
 
     if (!fontsLoaded && !fontError) {
@@ -153,6 +157,13 @@ export default function LoginScreen() {
                     <Text style={styles.footerLinkText}>Não tem uma conta? </Text>
                     <TouchableOpacity onPress={handleGoToRegister} disabled={isLoading}>
                         <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Cadastrar</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.footerLinkContainer}>
+                    <Text style={styles.footerLinkText}>É entregador? </Text>
+                    <TouchableOpacity onPress={handleGoToDeliveryLogin} disabled={isLoading}>
+                        <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Login de entregador</Text>
                     </TouchableOpacity>
                 </View>
             </View>
