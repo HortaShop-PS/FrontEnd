@@ -1,14 +1,18 @@
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, StatusBar } from "react-native";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, StatusBar, Button } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Platform } from "react-native";
-import { useRouter } from "expo-router";
+import { Link, useRouter, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import { isProfileComplete, ProducerProfile } from './utils/profileValidationService'; 
+import React from "react";
 
 export default function Index() {
   const router = useRouter();
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
+  const [profile, setProfile] = useState<ProducerProfile | null>(null);
+  const [profileIsIncomplete, setProfileIsIncomplete] = useState(false);
   let [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_400Regular,
@@ -28,6 +32,84 @@ export default function Index() {
     { id: 9, nome: "Doces", icone: "ice-cream" },
     { id: 10, nome: "Outros", icone: "ellipsis-horizontal" },
   ];
+
+  // Usar useFocusEffect para carregar o perfil quando a tela estiver em foco
+  useFocusEffect(
+    useCallback(() => {
+      const fetchProfile = async () => {
+        console.log("Fetching profile data as screen is focused...");
+        // Substitua esta lógica pela forma como você carrega os dados do perfil do produtor
+        // Exemplo:
+        // const userProfileData = await getProducerProfileFromAPI();
+        // ou buscar do SecureStore se você salvou lá após completar o perfil
+        let userProfileData: ProducerProfile | null = null;
+
+        // Tente carregar do SecureStore (exemplo, ajuste conforme sua lógica de persistência)
+        try {
+          const storedProfileString = await SecureStore.getItemAsync('producerProfile');
+          if (storedProfileString) {
+            userProfileData = JSON.parse(storedProfileString);
+          }
+        } catch (e) {
+          console.error("Failed to load profile from secure store", e);
+        }
+
+        // Se não houver dados no SecureStore, use o mock ou sua lógica de API
+        if (!userProfileData) {
+          userProfileData = {
+            name: 'João Produtor',
+            farmName: 'Fazenda Feliz',
+            city: '', // Mantenha um estado inicial que possa ser incompleto
+            phoneNumber: '123456789',
+          };
+          // Opcional: Salvar o perfil mock no SecureStore se for a primeira vez
+          // await SecureStore.setItemAsync('producerProfile', JSON.stringify(userProfileData));
+        }
+
+        setProfile(userProfileData);
+        if (userProfileData) {
+          setProfileIsIncomplete(!isProfileComplete(userProfileData));
+        } else {
+          setProfileIsIncomplete(true); // Se não há perfil, considera-se incompleto
+        }
+      };
+
+      fetchProfile();
+
+      return () => {
+        // Opcional: Ações de limpeza se a tela perder o foco, se necessário
+        // console.log("Screen is unfocused. Profile fetch cleanup (if any).");
+      };
+    }, []) // As dependências do useCallback podem incluir funções ou valores que fetchProfile usa de fora
+  );
+
+  const handleCompleteProfile = () => {
+    router.push('/(tabsProducers)/complete-profile');
+  };
+
+  if (!profile && !fontsLoaded) { // Ajuste a condição de carregamento se necessário
+    return (
+      <View style={styles.container}>
+        <Text>Carregando...</Text>
+      </View>
+    );
+  }
+  
+  if (!fontsLoaded) { // Se as fontes ainda não carregaram mas o perfil sim
+    return (
+      <View style={styles.container}>
+        <Text>Carregando fontes...</Text>
+      </View>
+    );
+  }
+
+  if (!profile) { // Se o perfil ainda não carregou mas as fontes sim
+    return (
+      <View style={styles.container}>
+        <Text>Carregando perfil...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -104,6 +186,22 @@ export default function Index() {
             {/* Conteúdo de pedidos em andamento pode ser adicionado aqui */}
           </View>
 
+          <Text style={styles.title}>Perfil do Produtor</Text>
+          {/* Exiba os dados do perfil aqui */}
+          <Text>Nome: {profile.name}</Text>
+          <Text>Fazenda: {profile.farmName}</Text>
+          <Text>Cidade: {profile.city || 'Não informado'}</Text>
+          <Text>Telefone: {profile.phoneNumber || 'Não informado'}</Text>
+
+          {profileIsIncomplete && (
+            <View style={styles.warningContainer}>
+              <Text style={styles.warningText}>Seu perfil está incompleto!</Text>
+              <Button title="Completar Perfil" onPress={handleCompleteProfile} />
+            </View>
+          )}
+
+          {/* ... restante do conteúdo da tela de perfil ... */}
+          <Link href={"/settings" as any} style={styles.link}>Ir para Configurações (Exemplo)</Link>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -251,5 +349,29 @@ const styles = StyleSheet.create({
   },
   bannerImageContainer: {
     width: 100,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  warningContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#fff3cd',
+    borderColor: '#ffeeba',
+    borderWidth: 1,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  warningText: {
+    color: '#856404',
+    marginBottom: 10,
+    fontSize: 16,
+  },
+  link: {
+    marginTop: 15,
+    paddingVertical: 15,
+    color: 'blue',
   },
 });
