@@ -4,7 +4,6 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import axios from "axios"
 import { showError, showSuccess } from '../utils/alertService';
-import Config from 'react-native-config';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:3000"
 
@@ -97,6 +96,11 @@ export default function Register() {
   const handleGoToSellerRegister = () => {
     console.log("Ir para criar conta de vendedor")
     router.push("/registerproducer")
+  }
+
+  const handleGoToDeliveryRegister = () => {
+    console.log("Ir para criar conta de entregador")
+    router.push("/registerDelivery")
   }
 
   const formatPhoneNumber = (text: string) => {
@@ -226,6 +230,13 @@ export default function Register() {
             <Text style={styles.footerLinkText}>É produtor? </Text>
             <TouchableOpacity onPress={handleGoToSellerRegister} disabled={loading}>
               <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Criar conta de vendedor</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footerLinkContainer}>
+            <Text style={styles.footerLinkText}>É entregador? </Text>
+            <TouchableOpacity onPress={handleGoToDeliveryRegister} disabled={loading}>
+              <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Criar conta de entregador</Text>
             </TouchableOpacity>
           </View>
         </View>

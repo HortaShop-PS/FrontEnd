@@ -11,6 +11,13 @@ export interface Product {
     description?: string;
 }
 
+export interface Category {
+    id: number;
+    nome: string;
+    categoria: string;
+    icone: string;
+}
+
 const getApiBaseUrl = () => {
     if (Platform.OS === 'android') {
         return process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -105,10 +112,34 @@ export const searchProducts = async (params: {
         throw new Error(`Falha ao buscar produtos: ${response.status}`);
       }
   
-      const products: Product[] = await response.json();
-      return products;
+      const products: Product[] = await response.json();      return products;
     } catch (error) {
       throw error;
     }
   };
+
+export const fetchCategories = async (): Promise<Category[]> => {
+    const API_BASE_URL = getApiBaseUrl();
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/categories`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Server response: ${errorText}`);
+            throw new Error(`Failed to fetch categories: ${response.status}`);
+        }
+
+        const categories: Category[] = await response.json();
+        return categories;
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+    }
+};
   

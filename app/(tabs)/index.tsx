@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIn
 import { Ionicons } from "@expo/vector-icons";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { useEffect, useState } from "react";
-import { fetchFeaturedProducts, fetchAllProducts, Product } from "../../utils/homeService";
+import { fetchFeaturedProducts, fetchAllProducts, fetchCategories, Product, Category } from "../../utils/homeService";
 import { useRouter } from "expo-router";
 import Config from "react-native-config";
 
@@ -13,21 +13,15 @@ export default function Index() {
     Poppins_400Regular,
     Poppins_700Bold,
   });
-
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadingAll, setLoadingAll] = useState(true);
   const [errorAll, setErrorAll] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  // Categorias atualizadas
-  const categorias = [
-    { id: 1, nome: "Vegetais", icone: "leaf-outline", categoria: "Vegetais" },
-    { id: 2, nome: "Frutas", icone: "nutrition-outline", categoria: "Frutas" },
-    { id: 3, nome: "Orgânicos", icone: "flower-outline", categoria: "Orgânicos" },
-  ];
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [errorCategories, setErrorCategories] = useState<string | null>(null);  const [refreshing, setRefreshing] = useState(false);
   
   const getFullImageUrl = (imageUrl: string) => {
     if (!imageUrl) return null;
@@ -62,7 +56,6 @@ export default function Index() {
       }
     }
   };
-
   const loadAllProducts = async (isRefresh = false) => {
     try {
       if (!isRefresh) {
@@ -83,16 +76,36 @@ export default function Index() {
     }
   };
 
+  const loadCategories = async (isRefresh = false) => {
+    try {
+      if (!isRefresh) {
+        setLoadingCategories(true);
+      }
+      const categoriesData = await fetchCategories();
+      setCategories(categoriesData);
+      setErrorCategories(null);
+    } catch (error) {
+      console.error("Erro ao carregar categorias:", error);
+      if (!isRefresh) {
+        setErrorCategories("Não foi possível carregar as categorias");
+      }
+    } finally {
+      if (!isRefresh) {
+        setLoadingCategories(false);
+      }
+    }
+  };
   const onRefresh = () => {
     loadFeaturedProducts(true);
     loadAllProducts(true);
+    loadCategories(true);
   };
-
   useEffect(() => {
     const loadData = async () => {
       await Promise.all([
         loadFeaturedProducts(),
-        loadAllProducts()
+        loadAllProducts(),
+        loadCategories()
       ]);
     };
     loadData();
@@ -153,30 +166,39 @@ export default function Index() {
                 <Text style={styles.viewAllText}>Ver tudo</Text>
                 <Ionicons name="chevron-forward" size={16} color="#6CC51D" />
               </TouchableOpacity>
-            </View>
-            
-            <ScrollView 
+            </View>            <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false} 
               contentContainerStyle={styles.categoriasScrollContent}
             >
-              {categorias.map((categoria) => (
-                <TouchableOpacity 
-                  key={categoria.id} 
-                  style={styles.categoriaItem}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/search',
-                      params: { category: categoria.categoria }
-                    })
-                  }
-                >
-                  <View style={styles.categoriaIcone}>
-                    <Ionicons name={categoria.icone as any} size={28} color="#6CC51D" />
-                  </View>
-                  <Text style={styles.categoriaNome}>{categoria.nome}</Text>
-                </TouchableOpacity>
-              ))}
+              {loadingCategories ? (
+                <View style={styles.categoriesLoadingContainer}>
+                  <ActivityIndicator size="small" color="#6CC51D" />
+                </View>
+              ) : errorCategories ? (
+                <View style={styles.categoriesErrorContainer}>
+                  <Ionicons name="alert-circle-outline" size={20} color="#FF6B6B" />
+                  <Text style={styles.categoriesErrorText}>Erro ao carregar</Text>
+                </View>
+              ) : (
+                categories.map((categoria) => (
+                  <TouchableOpacity 
+                    key={categoria.id} 
+                    style={styles.categoriaItem}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/search',
+                        params: { category: categoria.categoria }
+                      })
+                    }
+                  >
+                    <View style={styles.categoriaIcone}>
+                      <Ionicons name={categoria.icone as any} size={28} color="#6CC51D" />
+                    </View>
+                    <Text style={styles.categoriaNome}>{categoria.nome}</Text>
+                  </TouchableOpacity>
+                ))
+              )}
             </ScrollView>
           </View>
           
@@ -429,12 +451,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
     
-  },
-  categoriaNome: {
+  },  categoriaNome: {
     fontFamily: "Poppins_400Regular",
     fontSize: 12,
     color: "#333333",
     textAlign: "center",
+  },
+  categoriesLoadingContainer: {
+    height: 80,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  categoriesErrorContainer: {
+    height: 80,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    flexDirection: "row",
+  },
+  categoriesErrorText: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    color: "#FF6B6B",
+    marginLeft: 5,
   },
   bannerContainer: {
     paddingHorizontal: 20,

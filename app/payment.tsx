@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import Button from '../components/Button';
 import { cardService, ApiCard } from '../utils/cardService';
-import { paymentService } from '../utils/paymentService';
+import paymentService from '../utils/paymentService';
 import { showError, showSuccess } from '../utils/alertService';
 import { getCart, clearCart } from '../utils/cartService'; // Importar getCart e clearCart
 
