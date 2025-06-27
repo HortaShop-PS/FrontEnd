@@ -10,11 +10,11 @@ import {
   SafeAreaView,
   RefreshControl,
 } from "react-native"
-import { Stack, useRouter } from "expo-router"
+import { Stack, useRouter, useFocusEffect } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_500Medium, Poppins_700Bold } from '@expo-google-fonts/poppins'
 import orderService, { type OrderSummary } from "../../utils/orderService"
-import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_500Medium, Poppins_700Bold } from "@expo-google-fonts/poppins"
-import { useFocusEffect } from 'expo-router';
+import StatusUpdater from "../../components/StatusUpdater"
 
 export default function ProducerOrderHistory() {
   const [orders, setOrders] = useState<OrderSummary[]>([])
@@ -45,7 +45,7 @@ export default function ProducerOrderHistory() {
         setLoading(true)
       }
       
-      const data = await orderService.getProducerOrders() // Use getProducerOrders
+      const data = await orderService.getProducerOrders()
       setOrders(data)
 
       // Expandir o primeiro pedido por padrão se houver pedidos
@@ -103,14 +103,8 @@ export default function ProducerOrderHistory() {
     router.push(`/orderDetails/${orderId}`)
   }
 
-  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-    try {
-      await orderService.updateOrderStatus(orderId, newStatus);
-      loadOrders(true); // Refresh orders after status update
-    } catch (err) {
-      console.error('Erro ao atualizar status:', err);
-      setError('Erro ao atualizar status. Tente novamente.');
-    }
+  const handleStatusUpdated = () => {
+    loadOrders(true); // Refresh orders after status update
   };
 
   // Renderiza um item de status
@@ -131,35 +125,30 @@ export default function ProducerOrderHistory() {
     </View>
   )
 
-  // Renderizar Stack.Screen sempre, independente do estado
-  const renderStackScreen = () => (
-    <Stack.Screen
-      options={{
-        headerTitle: "Pedidos Recebidos", // Changed title for producer
-        headerTitleAlign: "center",
-        headerStyle: {
-          backgroundColor: "#ffffff",
-        },
-        headerShadowVisible: false,
-        headerTintColor: "#000000",
-        headerTitleStyle: {
-          fontWeight: "500",
-          fontSize: 18,
-        },
-        headerLeft: () => (
-          <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
-            <Ionicons name="arrow-back" size={24} color="#000000" />
-          </TouchableOpacity>
-        ),
-      }}
-    />
-  );
-
   if (!fontsLoaded || loading) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-        
+        <Stack.Screen
+          options={{
+            headerTitle: "Pedidos Recebidos",
+            headerTitleAlign: "center",
+            headerStyle: {
+              backgroundColor: "#ffffff",
+            },
+            headerShadowVisible: false,
+            headerTintColor: "#000000",
+            headerTitleStyle: {
+              fontWeight: "500",
+              fontSize: 18,
+            },
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
+                <Ionicons name="arrow-back" size={24} color="#000000" />
+              </TouchableOpacity>
+            ),
+          }}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#6CC51D" />
         </View>
@@ -171,7 +160,26 @@ export default function ProducerOrderHistory() {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-        
+        <Stack.Screen
+          options={{
+            headerTitle: "Pedidos Recebidos",
+            headerTitleAlign: "center",
+            headerStyle: {
+              backgroundColor: "#ffffff",
+            },
+            headerShadowVisible: false,
+            headerTintColor: "#000000",
+            headerTitleStyle: {
+              fontWeight: "500",
+              fontSize: 18,
+            },
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
+                <Ionicons name="arrow-back" size={24} color="#000000" />
+              </TouchableOpacity>
+            ),
+          }}
+        />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => loadOrders()}>
@@ -186,7 +194,26 @@ export default function ProducerOrderHistory() {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-        
+        <Stack.Screen
+          options={{
+            headerTitle: "Pedidos Recebidos",
+            headerTitleAlign: "center",
+            headerStyle: {
+              backgroundColor: "#ffffff",
+            },
+            headerShadowVisible: false,
+            headerTintColor: "#000000",
+            headerTitleStyle: {
+              fontWeight: "500",
+              fontSize: 18,
+            },
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
+                <Ionicons name="arrow-back" size={24} color="#000000" />
+              </TouchableOpacity>
+            ),
+          }}
+        />
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconContainer}>
             <Ionicons name="receipt-outline" size={64} color="#BDC3C7" />
@@ -204,19 +231,30 @@ export default function ProducerOrderHistory() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-      
+      <Stack.Screen
+        options={{
+          headerTitle: "Pedidos Recebidos",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: "#ffffff",
+          },
+          headerShadowVisible: false,
+          headerTintColor: "#000000",
+          headerTitleStyle: {
+            fontWeight: "500",
+            fontSize: 18,
+          },
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
+              <Ionicons name="arrow-back" size={24} color="#000000" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
 
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => loadOrders(true)}
-            colors={['#6CC51D']}
-            tintColor="#6CC51D"
-          />
-        }
         renderItem={({ item }) => (
           <View style={styles.orderCard}>
             <TouchableOpacity
@@ -250,61 +288,68 @@ export default function ProducerOrderHistory() {
               </View>
             </TouchableOpacity>
 
-            {expandedOrderId === item.id && item.status.toLowerCase() !== "delivered" && (
-              <View style={styles.orderStatusContainer}>
-                <View style={styles.statusDivider} />
-                {renderStatusItem("PENDING", "Pedido Efetuado", formatDate(item.createdAt), true, false)}
-                {renderStatusItem(
-                  "PROCESSING",
-                  "Pedido Confirmado",
-                  item.status.toLowerCase() === "processing" || item.status.toLowerCase() === "shipped" ? formatDate(item.createdAt) : "Aguardando",
-                  ["processing", "shipped"].includes(item.status.toLowerCase()),
-                  false,
-                )}
-                {renderStatusItem(
-                  "SHIPPED",
-                  "Em Rota de Entrega",
-                  item.status.toLowerCase() === "shipped" ? formatDate(item.createdAt) : "Aguardando",
-                  item.status.toLowerCase() === "shipped",
-                  false,
-                )}
-                {renderStatusItem("delivered", "Pedido Entregue", "Aguardando", false, true)}
-
-                {/* Producer Action Buttons */}
-                <View style={styles.producerActionButtons}>
-                  {item.status.toLowerCase() === 'pending' && (
-                    <TouchableOpacity 
-                      style={[styles.actionButton, styles.processButton]}
-                      onPress={() => handleUpdateStatus(item.id, 'PROCESSING')}
-                    >
-                      <Ionicons name="construct-outline" size={16} color="#FFFFFF" style={styles.buttonIcon} />
-                      <Text style={styles.actionButtonText}>Processar</Text>
-                    </TouchableOpacity>
+            {/* SEÇÃO EXPANDIDA */}
+            {expandedOrderId === item.id && (
+              <View>
+                {/* STATUS TIMELINE - ATUALIZAR PARA INCLUIR CANCELADO */}
+                <View style={styles.orderStatusContainer}>
+                  <View style={styles.statusDivider} />
+                  {renderStatusItem("PENDING", "Pedido Efetuado", formatDate(item.createdAt), true, false)}
+                  
+                  {item.status.toLowerCase() !== "canceled" && (
+                    <>
+                      {renderStatusItem(
+                        "PROCESSING",
+                        "Pedido Confirmado",
+                        item.status.toLowerCase() === "processing" || item.status.toLowerCase() === "shipped" || item.status.toLowerCase() === "delivered" ? formatDate(item.createdAt) : "Aguardando",
+                        ["processing", "shipped", "delivered"].includes(item.status.toLowerCase()),
+                        false,
+                      )}
+                      {renderStatusItem(
+                        "READY",
+                        item.readyForPickup ? "Pronto para Coleta" : "Enviado",
+                        item.readyForPickup ? formatDate(item.updatedAt) : 
+                         item.status.toLowerCase() === "shipped" || item.status.toLowerCase() === "delivered" ? formatDate(item.updatedAt) : "Aguardando",
+                        item.readyForPickup || ["shipped", "delivered"].includes(item.status.toLowerCase()),
+                        false,
+                      )}
+                      {renderStatusItem(
+                        "DELIVERED", 
+                        "Pedido Entregue", 
+                        item.status.toLowerCase() === "delivered" ? formatDate(item.updatedAt) : "Aguardando", 
+                        item.status.toLowerCase() === "delivered", 
+                        true
+                      )}
+                    </>
                   )}
                   
-                  {item.status.toLowerCase() === 'processing' && (
-                    <TouchableOpacity 
-                      style={[styles.actionButton, styles.shipButton]}
-                      onPress={() => handleUpdateStatus(item.id, 'SHIPPED')}
-                    >
-                      <Ionicons name="paper-plane-outline" size={16} color="#FFFFFF" style={styles.buttonIcon} />
-                      <Text style={styles.actionButtonText}>Marcar como Enviado</Text>
-                    </TouchableOpacity>
-                  )}
-                  
-                  {item.status.toLowerCase() === 'shipped' && (
-                    <TouchableOpacity 
-                      style={[styles.actionButton, styles.deliverButton]}
-                      onPress={() => handleUpdateStatus(item.id, 'DELIVERED')}
-                    >
-                      <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" style={styles.buttonIcon} />
-                      <Text style={styles.actionButtonText}>Marcar como Entregue</Text>
-                    </TouchableOpacity>
+                  {/* STATUS CANCELADO */}
+                  {item.status.toLowerCase() === "canceled" && (
+                    <View style={styles.canceledContainer}>
+                      <View style={styles.canceledDot}>
+                        <Ionicons name="close-circle" size={16} color="#FFFFFF" />
+                      </View>
+                      <View style={styles.canceledContent}>
+                        <Text style={styles.canceledText}>Pedido Cancelado</Text>
+                        <Text style={styles.canceledDate}>{formatDate(item.updatedAt)}</Text>
+                      </View>
+                    </View>
                   )}
                 </View>
+
+                {/* BOTÕES DE AÇÃO - StatusUpdater */}
+                {item.status.toLowerCase() !== "delivered" && item.status.toLowerCase() !== "canceled" && (
+                  <StatusUpdater
+                    orderId={item.id}
+                    currentStatus={item.status}
+                    onStatusUpdated={handleStatusUpdated}
+                    readyForPickup={item.readyForPickup}
+                  />
+                )}
               </View>
             )}
 
+            {/* PEDIDO ENTREGUE - SEÇÃO FINAL */}
             {item.status.toLowerCase() === "delivered" && (
               <View style={styles.deliveredContainer}>
                 <View style={styles.statusDivider} />
@@ -316,7 +361,7 @@ export default function ProducerOrderHistory() {
                       <Text style={styles.deliveredDate}>{formatDateDayMonth(item.createdAt)}</Text>
                     </View>
                   </View>
-                    <TouchableOpacity 
+                  <TouchableOpacity 
                     style={styles.viewDetailsButton}
                     onPress={() => handleOrderPress(item.id)}
                   >
@@ -330,6 +375,13 @@ export default function ProducerOrderHistory() {
         )}
         contentContainerStyle={styles.ordersList}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadOrders(true)}
+            colors={['#6CC51D']}
+          />
+        }
       />
     </SafeAreaView>
   )
@@ -417,35 +469,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     textTransform: "uppercase",
     letterSpacing: 0.5,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 2,
-    borderBottomColor: "#F5F5F8",
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 18,
-    color: "#2C3E50",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  filterButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   ordersList: {
     padding: 16,
@@ -619,39 +642,38 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  producerActionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#F5F5F8',
-  },
-  actionButton: {
+  canceledContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FEB2B2',
+    marginTop: 8,
+  },
+  canceledDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E53E3E',
     justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  canceledContent: {
     flex: 1,
-    marginHorizontal: 4,
   },
-  buttonIcon: {
-    marginRight: 6,
+  canceledText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 14,
+    color: '#E53E3E',
+    marginBottom: 2,
   },
-  actionButtonText: {
-    fontFamily: 'Poppins_600SemiBold',
-    color: '#FFFFFF',
+  canceledDate: {
+    fontFamily: 'Poppins_400Regular',
     fontSize: 12,
-  },
-  processButton: {
-    backgroundColor: '#F39C12',
-  },
-  shipButton: {
-    backgroundColor: '#9B59B6',
-  },
-  deliverButton: {
-    backgroundColor: '#27AE60',
+    color: '#A0AEC0',
   },
 });
