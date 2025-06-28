@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import { getProfile, logout } from "../../utils/authServices";
 import * as SecureStore from 'expo-secure-store';
 import { showAlert, showError } from '../../utils/alertService';
+import { notificationService } from '../../utils/notificationService'; // Adicionar import
 
 interface UserProfile {
     id: string;
@@ -74,6 +75,16 @@ export default function ProfileScreen() {
                     text: "Sair",
                     onPress: async () => {
                         try {
+                            // Limpar token de notificação antes do logout
+                            try {
+                                console.log("Limpando token de notificação...");
+                                await notificationService.clearToken();
+                                console.log("Token de notificação limpo com sucesso");
+                            } catch (notificationError) {
+                                console.error("Erro ao limpar token de notificação:", notificationError);
+                                // Não impedir o logout se houver erro com notificações
+                            }
+                            
                             await logout();
                             router.replace('/welcome2');
                         } catch (error) {
@@ -120,12 +131,7 @@ export default function ProfileScreen() {
 
                 <View style={styles.profileSection}>
                     <View style={styles.profileImageContainer}>
-                        <View style={styles.containerCircle}>
-                            <Ionicons name="person" color="#555" size={60} style={styles.profileDP} />
-                        </View>
-                        <TouchableOpacity style={styles.editImageButton} onPress={() => router.push("/about")}>
-                            <Ionicons name="camera" size={18} color="#FFF" />
-                        </TouchableOpacity>
+                        <Ionicons name="person" size={50} color="#6CC51D" />
                     </View>
                     <Text style={styles.userName}>{userData?.name || "Fulano de Tal"}</Text>
                     <Text style={styles.userEmail}>{userData?.email || "fulano@fulanomail.com"}</Text>
@@ -244,19 +250,20 @@ const styles = StyleSheet.create({
         borderBottomColor: "#F5F5F5",
     },
     profileImageContainer: {
-        position: "relative",
-        marginBottom: 15,
-    },
-    containerCircle: {
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: "#F0F0F0",
-        justifyContent: "center",
-        alignItems: "center",
+        backgroundColor: '#F0F8FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
         borderWidth: 2,
-        borderColor: "#6CC51D",
-        overflow: "hidden",
+        borderColor: '#6CC51D',
     },
     profileDP: {
         width: "100%",

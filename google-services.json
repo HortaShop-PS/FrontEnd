@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "225621053146",
+    "project_id": "hortashop-46506",
+    "storage_bucket": "hortashop-46506.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225621053146:android:3c1ba132a323b6765d1fe3",
+        "android_client_info": {
+          "package_name": "com.hortashop.hortashop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8amKYYyXhJluWIeyXbl295wZJxU_yoaA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

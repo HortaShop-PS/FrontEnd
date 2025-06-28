@@ -2,10 +2,16 @@ import { useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, StatusBar, ImageBackground, KeyboardAvoidingView, Platform } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins" // ADICIONADO
 import { showError, showSuccess } from '../utils/alertService';
-import Config from "react-native-config"
+import LoadingIndicator from "./loadingIndicator"; // ADICIONADO
 
-const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL 
+// APENAS ATUALIZADA A CONFIGURAÇÃO DE API
+const API_URL = Platform.select({
+  android: process.env.EXPO_PUBLIC_API_BASE_URL,
+  ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,
+  default: process.env.EXPO_PUBLIC_API_BASE_URL,
+}) || 'http://10.0.2.2:3000';
 
 export default function RegisterProducer() {
   const [name, setName] = useState("")
@@ -15,6 +21,13 @@ export default function RegisterProducer() {
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  // ADICIONADO verificação de fontes
+  const [fontsLoaded, fontError] = useFonts({
+    Poppins_600SemiBold,
+    Poppins_400Regular,
+    Poppins_700Bold,
+  });
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible)
@@ -129,6 +142,11 @@ export default function RegisterProducer() {
 
   const handlePhoneChange = (text: string) => {
     setPhone(formatPhoneNumber(text))
+  }
+
+  // ADICIONADO verificação de carregamento de fontes
+  if (!fontsLoaded && !fontError) {
+    return <LoadingIndicator />;
   }
 
   return (

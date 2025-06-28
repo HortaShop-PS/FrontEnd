@@ -1,140 +1,157 @@
-import { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import { Stack, useSegments, useRouter } from "expo-router";
+import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from "@expo-google-fonts/poppins";
+import { useEffect, useState } from "react";
+import * as SplashScreen from "expo-splash-screen";
+import { getToken, getUserType } from "../utils/authServices";
+import { notificationService } from "../utils/notificationService";
+
+// IMPORTANTE: Importar o background handler o mais cedo possível
+import '../utils/notificationBackgroundHandler';
+
 import AlertProvider from '../components/AlertProvider';
 import FloatingCartButton from '../components/FloatingCartButton';
 
+// Evitar que a splash screen desapareça automaticamente
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
+  const [appIsReady, setAppIsReady] = useState(false);
   const [isUserProducer, setIsUserProducer] = useState<boolean | null>(null);
-  const [isUserDelivery, setIsUserDelivery] = useState<boolean | null>(null);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const segments = useSegments();
   const router = useRouter();
+  
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
 
   useEffect(() => {
-    const checkUserType = async () => {
+    if (fontsLoaded) {
+      setAppIsReady(true);
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    const initializeNotifications = async () => {
       try {
-        const token = await SecureStore.getItemAsync('userToken');
-        const deliveryToken = await SecureStore.getItemAsync('delivery_token');
-        const hasSeenWelcome = await SecureStore.getItemAsync('hasSeenWelcome');
-        
-        if (!hasSeenWelcome && segments[0] !== 'welcome') {
-          console.log('Redirecionando para tela de boas-vindas');
-          router.replace('/welcome');
-          return;
-        }
-        
-        // Verificar se é entregador
-        if (deliveryToken) {
-          console.log('Token de entregador encontrado');
-          setIsUserDelivery(true);
-          setIsUserProducer(false);
-          
-          const authScreens = ['welcome2', 'login', 'loginDelivery', 'register', 'registerDelivery', 'registerproducer'];
-          if (authScreens.includes(segments[0] || '')) {
-            console.log('Entregador já autenticado, redirecionando para área de entrega');
-            (router as any).replace('/(tabsDelivery)/');
-            return;
-          }
-          
-          const inDeliveryGroup = segments[0] === '(tabsDelivery)';
-          if (!inDeliveryGroup && segments[0] !== 'deliveryDashboard' && segments[0] !== 'aboutDelivery' && segments[0] !== 'vehicleData' && segments[0] !== 'earnings' && segments[0] !== 'deliveryHistory') {
-            console.log('Redirecionando entregador para área de entrega');
-            (router as any).replace('/(tabsDelivery)/');
-          }
-          return;
-        }
-        
-        if (!token) {
-          console.log('Nenhum token encontrado, usuário não autenticado');
-          setIsUserDelivery(false);
-          return; 
-        }
-        
-        const userType = await SecureStore.getItemAsync('userType');
-        console.log('Tipo de usuário verificado:', userType);
-        setIsUserProducer(userType === 'producer');
-        setIsUserDelivery(false);
-
-        const authScreens = ['welcome2', 'login', 'loginDelivery', 'register', 'registerDelivery', 'registerproducer'];
-        if (authScreens.includes(segments[0] || '')) {
-          console.log('Usuário já autenticado, redirecionando para a tela inicial');
-          if (userType === 'producer') {
-            router.replace('/(tabsProducers)');
-          } else {
-            router.replace('/(tabs)');
-          }
-          return;
-        }
-
-        const inAuthGroup = segments[0] === '(tabs)' || segments[0] === '(tabsProducers)';
-        
-        if (inAuthGroup) {
-          if (userType === 'producer' && segments[0] !== '(tabsProducers)') {
-            console.log('Redirecionando produtor para área de produtor');
-            router.replace('/(tabsProducers)');
-          } else if (userType !== 'producer' && segments[0] !== '(tabs)') {
-            console.log('Redirecionando consumidor para área de consumidor');
-            router.replace('/(tabs)');
-          }
-        }
+        console.log('🚀 Inicializando sistema de notificações...');
+        await notificationService.initializeNotifications();
+        console.log('✅ Sistema de notificações inicializado');
       } catch (error) {
-        console.error('Erro ao verificar tipo de usuário:', error);
+        console.error('❌ Erro ao inicializar notificações (não crítico):', error);
       }
     };
 
-    checkUserType();
-  }, [segments]);
+    initializeNotifications();
+  }, []);
 
-  // Determinar se deve mostrar o botão flutuante do carrinho
-  const shouldShowCartButton = () => {
-    // Mostrar o botão apenas na tela inicial para usuários comuns
-    // Verificar se estamos na tela inicial (tabs/index)
-    const isHomeScreen = segments[0] === '(tabs)' && segments.length <= 1;
-    
-    // Não mostrar para produtores ou entregadores
-    if (isUserProducer || isUserDelivery) return false;
-    
-    // Mostrar apenas na tela inicial
-    return isHomeScreen;
-  };
+  // useEffect que executa apenas uma vez quando o app estiver pronto
+  useEffect(() => {
+    const checkAuthAndRedirect = async () => {
+      // Evitar múltiplas execuções
+      if (hasCheckedAuth) return;
+      
+      try {
+        const token = await getToken();
+        
+        if (token) {
+          console.log('✅ Token encontrado, verificando tipo de usuário...');
+          const userType = await getUserType();
+          
+          if (userType === 'producer') {
+            setIsUserProducer(true);
+            
+            // Redirecionar apenas se não estiver já na área correta
+            if (!segments.includes('(tabsProducers)')) {
+              console.log('📍 Redirecionando para área de produtores...');
+              router.replace('/(tabsProducers)');
+            }
+          } else {
+            setIsUserProducer(false);
+            
+            // Redirecionar apenas se não estiver já na área correta
+            if (!segments.includes('(tabs)')) {
+              console.log('📍 Redirecionando para área de consumidores...');
+              router.replace('/(tabs)');
+            }
+          }
+          
+          // Re-registrar token FCM quando autenticado
+          try {
+            await notificationService.reRegisterToken();
+          } catch (error) {
+            console.error('Erro ao re-registrar token FCM:', error);
+          }
+        } else {
+          console.log('❌ Token não encontrado, usuário não autenticado');
+          setIsUserProducer(null);
+          
+          // Redirecionar para welcome apenas se não estiver já lá
+          if (!segments.includes('welcome') && !segments.includes('login') && !segments.includes('register')) {
+            console.log('📍 Redirecionando para tela de boas-vindas...');
+            router.replace('/welcome');
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setIsUserProducer(null);
+        
+        // Em caso de erro, redirecionar para welcome
+        if (!segments.includes('welcome')) {
+          router.replace('/welcome');
+        }
+      }
+      
+      setHasCheckedAuth(true);
+    };
+
+    // Só verificar se o app estiver pronto e as fontes carregadas
+    if (appIsReady && fontsLoaded) {
+      checkAuthAndRedirect();
+    }
+  }, [appIsReady, fontsLoaded, hasCheckedAuth, segments, router]);
+
+  if (!appIsReady || !fontsLoaded) {
+    return null;
+  }
 
   return (
     <AlertProvider>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} /> 
-        <Stack.Screen name="welcome" options={{ headerShown: false }} />
-        <Stack.Screen name="welcome2" options={{ headerShown: false }} /> 
-        <Stack.Screen name="login" options={{ headerShown: false }} /> 
-        <Stack.Screen name="loginDelivery" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ headerShown: false }} /> 
-        <Stack.Screen name="registerDelivery" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabsProducers)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabsDelivery)" options={{ headerShown: false }} />
-        <Stack.Screen name="deliveryDashboard" options={{ headerShown: false }} />
-        <Stack.Screen name="registerproducer" options={{ headerShown: false }} /> 
-        <Stack.Screen name='about' options={{headerShown: true, headerTitle: "Sobre mim", headerTitleAlign: "center", headerTitleStyle: {fontFamily: "Poppins_400Medium", fontSize: 18}}}/>
-        <Stack.Screen name='aboutDelivery' options={{headerShown: true, headerTitle: "Perfil do Entregador", headerTitleAlign: "center", headerTitleStyle: {fontFamily: "Poppins_400Medium", fontSize: 18}}}/>
-        <Stack.Screen name='deliveryHistory' options={{headerShown: false}}/>
-        <Stack.Screen name='vehicleData' options={{headerShown: true, headerTitle: "Dados do Veículo", headerTitleAlign: "center", headerTitleStyle: {fontFamily: "Poppins_400Medium", fontSize: 18}}}/>
-        <Stack.Screen name='earnings' options={{headerShown: true, headerTitle: "Meus Ganhos", headerTitleAlign: "center", headerTitleStyle: {fontFamily: "Poppins_600SemiBold", fontSize: 18}}}/>
-        <Stack.Screen name='productDetails' options={{ headerShown: false }} />
-        <Stack.Screen name='favorites' options={{ headerShown: false }} />
-        <Stack.Screen name='registerProduct' options={{ headerShown: false }} />
-        <Stack.Screen name='registerProductsCategories' options={{ headerShown: false }} />
-        <Stack.Screen name='search' options={{ headerShown: false }} />
-        <Stack.Screen name='cart' options={{ headerShown: false }} />
-        <Stack.Screen name='cards' options={{ headerShown: false }} />
-        <Stack.Screen name='addCard' options={{ headerShown: false }} />
-        <Stack.Screen name='payment' options={{ headerShown: false }} />
-        <Stack.Screen name='orderDetails/[id]' options={{ headerShown: false }} />
-        <Stack.Screen name='profile/orderHistory' options={{ headerShown: true, headerTitle: "Histórico de Pedidos" }} />
-        <Stack.Screen name='profile/producerOrderHistory' options={{ headerShown: true, headerTitle: "Histórico de Pedidos" }} />
-        <Stack.Screen name='profile/myReviews' options={{ headerShown: false }} />
-        <Stack.Screen name='productReviews/[productId]' options={{ headerShown: false }} />
-        <Stack.Screen name='checkout' options={{ headerShown: false}} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="welcome" />
+        <Stack.Screen name="welcome2" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="registerproducer" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(tabsProducers)" />
+        <Stack.Screen name="productDetails" />
+        <Stack.Screen name="registerProduct" />
+        <Stack.Screen name="registerProductsCategories" />
+        <Stack.Screen name="cart" />
+        <Stack.Screen name="favorites" />
+        <Stack.Screen name="checkout" />
+        <Stack.Screen name="payment" />
+        <Stack.Screen name="addCard" />
+        <Stack.Screen name="cards" />
+        <Stack.Screen name="notifications" />
+        <Stack.Screen name="search" />
+        <Stack.Screen name="about" />
+        <Stack.Screen name="loadingIndicator" />
+        <Stack.Screen name="editProduct/[id]" />
+        <Stack.Screen name="orderDetails/[id]" />
+        <Stack.Screen name="productReviews/[productId]" />
+        <Stack.Screen name="profile/editProfile" />
+        <Stack.Screen name="profile/editPhone" />
+        <Stack.Screen name="profile/editAddress" />
+        <Stack.Screen name="profile/changePassword" />
       </Stack>
-      {shouldShowCartButton() && <FloatingCartButton />}
+      
+      {/* Mostrar botão flutuante apenas para consumidores autenticados */}
+      {isUserProducer === false && <FloatingCartButton />}
     </AlertProvider>
   );
 }
