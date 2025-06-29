@@ -15,7 +15,6 @@ export default function WelcomeScreen() {
     });
 
     useEffect(() => {
-
         const markWelcomeScreenAsSeen = async () => {
             await SecureStore.setItemAsync('hasSeenWelcome', 'true');
         };

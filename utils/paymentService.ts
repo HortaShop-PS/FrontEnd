@@ -1,15 +1,7 @@
 import { Platform } from 'react-native';
 import { getToken } from './authServices';
 
-let API_BASE_URL_FROM_ENV: string | undefined;
-try {
-  const env = require('@env');
-  API_BASE_URL_FROM_ENV = env.API_BASE_URL;
-} catch (e) {
-  console.warn("Falha ao carregar API_BASE_URL de @env. Usando process.env.");
-}
-
-const resolvedApiBaseUrl = API_BASE_URL_FROM_ENV || Platform.select({
+const resolvedApiBaseUrl = Platform.select({
   android: process.env.EXPO_PUBLIC_API_BASE_URL,
   ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,
   default: process.env.EXPO_PUBLIC_API_BASE_URL,

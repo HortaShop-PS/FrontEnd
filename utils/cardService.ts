@@ -1,16 +1,7 @@
 import { Platform } from 'react-native';
 import { getToken } from './authServices'; // Importar getToken do seu authServices
 
-let API_BASE_URL_FROM_ENV: string | undefined;
-try {
-  // Tenta carregar de @env, pode falhar se não estiver configurado ou em certos contextos
-  const env = require('@env');
-  API_BASE_URL_FROM_ENV = env.API_BASE_URL;
-} catch (e) {
-  console.warn("Falha ao carregar API_BASE_URL de @env. Usando process.env.");
-}
-
-const resolvedApiBaseUrl = API_BASE_URL_FROM_ENV || Platform.select({
+const resolvedApiBaseUrl = Platform.select({
   android: process.env.EXPO_PUBLIC_API_BASE_URL, // Para Android (emulador geralmente usa 10.0.2.2 para localhost do host)
   ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,   // Para iOS (simulador geralmente pode usar localhost diretamente)
   default: process.env.EXPO_PUBLIC_API_BASE_URL, // Fallback para outras plataformas ou se não especificado
