@@ -206,83 +206,114 @@ export default function OrderHistory() {
             tintColor="#6CC51D"
           />
         }
-        renderItem={({ item }) => (
-          <View style={styles.orderCard}>
-            <TouchableOpacity
-              style={styles.orderHeader}
-              onPress={() => toggleOrderExpansion(item.id)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.orderIconContainer}>
-                <Ionicons name="cube" size={24} color="#FFFFFF" />
-              </View>
+        renderItem={({ item }) => {
+          console.log('Status do pedido:', item.id, '=', item.status);
 
-              <View style={styles.orderInfo}>
-                <Text style={styles.orderNumber}>#{item.id.substring(0, 8).toUpperCase()}</Text>
-                <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text><View style={styles.orderDetails}>
-                  <Text style={styles.orderItems}>{item.itemCount} itens</Text>
-                  <Text style={styles.orderTotal}>
-                    Total: R$ {typeof item.totalPrice === "number" && !isNaN(item.totalPrice)
-                      ? item.totalPrice.toFixed(2).replace(".", ",")
-                      : "0,00"}
-                  </Text>
+          return (
+            <View style={styles.orderCard}>
+              <TouchableOpacity
+                style={styles.orderHeader}
+                onPress={() => toggleOrderExpansion(item.id)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.orderIconContainer}>
+                  <Ionicons name="cube" size={24} color="#FFFFFF" />
                 </View>
-              </View>
 
-              <View style={styles.expandIconContainer}>
-                <Ionicons
-                  name={expandedOrderId === item.id ? "chevron-up" : "chevron-down"}
-                  size={20}
-                  color="#7F8C8D"
-                />
-              </View>
-            </TouchableOpacity>
-
-            {expandedOrderId === item.id && item.status.toLowerCase() !== "delivered" && (
-              <View style={styles.orderStatusContainer}>
-                <View style={styles.statusDivider} />
-                {renderStatusItem("PENDING", "Pedido Efetuado", formatDate(item.createdAt), true, false)}
-                {renderStatusItem(
-                  "PROCESSING",
-                  "Pedido Confirmado",
-                  formatDate(item.createdAt),
-                  ["processing", "shipped"].includes(item.status.toLowerCase()),
-                  false,
-                )}
-                {renderStatusItem(
-                  "SHIPPED",
-                  "Em Rota de Entrega",
-                  item.status.toLowerCase() === "shipped" ? formatDate(item.createdAt) : "Aguardando",
-                  item.status.toLowerCase() === "shipped",
-                  false,
-                )}
-                {renderStatusItem("delivered", "Pedido Entregue", "Aguardando", false, true)}
-              </View>
-            )}
-
-            {item.status.toLowerCase() === "delivered" && (
-              <View style={styles.deliveredContainer}>
-                <View style={styles.statusDivider} />
-                <View style={styles.deliveredContent}>
-                  <View style={styles.deliveredStatus}>
-                    <View style={styles.deliveredDot} />
-                    <View>
-                      <Text style={styles.deliveredText}>Pedido Entregue</Text>
-                      <Text style={styles.deliveredDate}>{formatDateDayMonth(item.createdAt)}</Text>
-                    </View>
+                <View style={styles.orderInfo}>
+                  <Text style={styles.orderNumber}>#{item.id.substring(0, 8).toUpperCase()}</Text>
+                  <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text><View style={styles.orderDetails}>
+                    <Text style={styles.orderItems}>{item.itemCount} itens</Text>
+                    <Text style={styles.orderTotal}>
+                      Total: R$ {typeof item.totalPrice === "number" && !isNaN(item.totalPrice)
+                        ? item.totalPrice.toFixed(2).replace(".", ",")
+                        : "0,00"}
+                    </Text>
                   </View>
-                    <TouchableOpacity 
-                    style={styles.viewDetailsButton}
-                    onPress={() => handleOrderPress(item.id)}
-                  >
-                    <Text style={styles.viewDetailsText}>Detalhes</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#2ECC71" />
-                  </TouchableOpacity>
                 </View>
-              </View>
-            )}
-          </View>
-        )}
+
+                <View style={styles.expandIconContainer}>
+                  <Ionicons
+                    name={expandedOrderId === item.id ? "chevron-up" : "chevron-down"}
+                    size={20}
+                    color="#7F8C8D"
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {expandedOrderId === item.id && (
+                <View style={styles.expandedSection}>
+                  <View style={styles.orderStatusContainer}>
+                    <View style={styles.statusDivider} />
+                    {renderStatusItem("PENDING", "Pedido Efetuado", formatDate(item.createdAt), true, false)}
+                    {renderStatusItem(
+                      "PROCESSING",
+                      "Pedido Confirmado",
+                      formatDate(item.createdAt),
+                      ["processing", "shipped", "delivered"].includes(item.status.toLowerCase()),
+                      false,
+                    )}
+                    {renderStatusItem(
+                      "SHIPPED",
+                      "Em Rota de Entrega",
+                      item.status.toLowerCase() === "shipped" ? formatDate(item.createdAt) : "Aguardando",
+                      ["shipped", "delivered"].includes(item.status.toLowerCase()),
+                      false,
+                    )}
+                    {renderStatusItem("delivered", "Pedido Entregue", "Aguardando", item.status.toLowerCase() === "delivered", true)}
+                  </View>
+
+                  {/* SEÇÃO DE BOTÕES - SEMPRE MOSTRAR */}
+                  <View style={styles.actionsSection}>
+                    {/* Botão Ver Detalhes - SEMPRE DISPONÍVEL */}
+                    <TouchableOpacity
+                      style={styles.detailsButton}
+                      onPress={() => handleOrderPress(item.id)}
+                    >
+                      <Ionicons name="document-text-outline" size={18} color="#2ECC71" />
+                      <Text style={styles.detailsButtonText}>Ver Detalhes do Pedido</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#2ECC71" />
+                    </TouchableOpacity>
+
+                    {/* Botão Rastreamento - CONDICIONAL MAS MAIS FLEXÍVEL */}
+                    {!['delivered', 'canceled'].includes(item.status.toLowerCase()) && (
+                      <TouchableOpacity
+                        style={styles.trackingButton}
+                        onPress={() => router.push(`/tracking/${item.id}`)}
+                      >
+                        <Ionicons name="navigate-outline" size={18} color="#6CC51D" />
+                        <Text style={styles.trackingButtonText}>Rastrear Pedido em Tempo Real</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#6CC51D" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {item.status.toLowerCase() === "delivered" && (
+                <View style={styles.deliveredContainer}>
+                  <View style={styles.statusDivider} />
+                  <View style={styles.deliveredContent}>
+                    <View style={styles.deliveredStatus}>
+                      <View style={styles.deliveredDot} />
+                      <View>
+                        <Text style={styles.deliveredText}>Pedido Entregue</Text>
+                        <Text style={styles.deliveredDate}>{formatDateDayMonth(item.createdAt)}</Text>
+                      </View>
+                    </View>
+                      <TouchableOpacity 
+                      style={styles.viewDetailsButton}
+                      onPress={() => handleOrderPress(item.id)}
+                    >
+                      <Text style={styles.viewDetailsText}>Detalhes</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#2ECC71" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          )
+        }}
         contentContainerStyle={styles.ordersList}
         showsVerticalScrollIndicator={false}
       />
@@ -573,5 +604,51 @@ const styles = StyleSheet.create({
     marginRight: 4,
     textTransform: "uppercase",
     letterSpacing: 0.5,
+  },
+  trackingSection: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  trackingButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#6CC51D",
+    justifyContent: "space-between",
+  },
+  trackingButtonText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 14,
+    color: "#6CC51D",
+    flex: 1,
+    marginLeft: 8,
+  },
+  expandedSection: {
+  },
+  actionsSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    gap: 12,
+  },
+  detailsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F8F0",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#2ECC71",
+    justifyContent: "space-between",
+  },
+  detailsButtonText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 14,
+    color: "#2ECC71",
+    flex: 1,
+    marginLeft: 8,
   },
 })

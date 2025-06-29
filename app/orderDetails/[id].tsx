@@ -329,6 +329,15 @@ export default function OrderDetailsScreen() {
             )}
           </View>
         )}
+
+        {/* Tracking Button */}
+        <TouchableOpacity
+          style={styles.trackingButton}
+          onPress={() => router.push(`/tracking/${order.id}`)}
+        >
+          <Ionicons name="navigate-outline" size={18} color="#6CC51D" />
+          <Text style={styles.trackingButtonText}>Rastrear Pedido em Tempo Real</Text>
+        </TouchableOpacity>
       </ScrollView>
       
       {/* Review Modal */}
@@ -689,5 +698,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 15,
     letterSpacing: 0.5,
+  },
+  trackingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    padding: 16,
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#6CC51D',
+    gap: 8,
+  },
+  trackingButtonText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 14,
+    color: '#6CC51D',
   },
 });

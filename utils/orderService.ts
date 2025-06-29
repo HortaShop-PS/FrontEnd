@@ -32,6 +32,7 @@ export interface OrderSummary {
   updatedAt: string;
   itemCount: number;
   items?: OrderItem[];
+  readyForPickup?: boolean; // ← ADICIONAR ESTA PROPRIEDADE
 }
 
 export interface OrderDetail {
@@ -113,13 +114,18 @@ const orderService = {
   },
 
   // Atualizar status do pedido (para produtores)
-  updateOrderStatus: async (orderId: string, status: string): Promise<any> => {
+  updateOrderStatus: async (orderId: string, statusData: { status: string; notes?: string }): Promise<any> => {
     try {
       const token = await getAuthToken();
-      const response = await axios.patch(
-        `${API_BASE_URL}/orders/${orderId}/status`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await axios.put(
+        `${API_BASE_URL}/producers/me/orders/${orderId}/status`,
+        statusData,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
       );
       return response.data;
     } catch (error) {
