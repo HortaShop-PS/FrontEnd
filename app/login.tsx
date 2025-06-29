@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, StatusBar, Switch, ActivityIndicator } from "react-native";
+import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet, StatusBar, Switch, Alert, ActivityIndicator, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import LoadingIndicator from "./loadingIndicator";
 import { login } from "../utils/authServices";
-import { showSuccess, showError, showInfo } from '../utils/alertService';
+import { showAlert, showSuccess, showError, showInfo } from '../utils/alertService';
+import { notificationService } from '../utils/notificationService';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -36,6 +37,16 @@ export default function LoginScreen() {
             
             const userType = await SecureStore.getItemAsync('userType');
             
+            // Re-registrar token de notificação após login bem-sucedido
+            try {
+                console.log("Re-registrando token de notificação após login...");
+                await notificationService.reRegisterToken();
+                console.log("Token de notificação re-registrado com sucesso");
+            } catch (notificationError) {
+                console.error("Erro ao re-registrar token de notificação:", notificationError);
+                // Não impedir o login se houver erro com notificações
+            }
+            
             if (userType === 'producer') {
                 router.replace('/(tabsProducers)');
             } else {
@@ -60,11 +71,6 @@ export default function LoginScreen() {
     function handleGoToRegister() {
         console.log("Navegar para: Cadastro");
         router.push('/register');
-    }
-
-    function handleGoToDeliveryLogin() {
-        console.log("Navegar para: Login Entregador");
-        router.push('/loginDelivery');
     }
 
     if (!fontsLoaded && !fontError) {
@@ -157,13 +163,6 @@ export default function LoginScreen() {
                     <Text style={styles.footerLinkText}>Não tem uma conta? </Text>
                     <TouchableOpacity onPress={handleGoToRegister} disabled={isLoading}>
                         <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Cadastrar</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.footerLinkContainer}>
-                    <Text style={styles.footerLinkText}>É entregador? </Text>
-                    <TouchableOpacity onPress={handleGoToDeliveryLogin} disabled={isLoading}>
-                        <Text style={[styles.footerLinkText, styles.footerLinkAction]}>Login de entregador</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -260,31 +259,30 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 30,
-        marginTop: 10,
+        marginBottom: 25,
     },
     rememberMeContainer: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     switch: {
-        transform: [{ scaleX: .8 }, { scaleY: .8 }],
-        marginRight: 5,
+        marginRight: 8,
     },
     optionText: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 13,
-        color: '#555',
+        fontSize: 14,
+        color: '#333',
     },
     linkText: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 13,
+        fontSize: 14,
         color: '#7ABC00',
+        textDecorationLine: 'underline',
     },
     footerLinkContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: 25,
+        marginTop: 20,
     },
     footerLinkText: {
         fontFamily: 'Poppins_400Regular',
@@ -292,7 +290,7 @@ const styles = StyleSheet.create({
         color: '#888',
     },
     footerLinkAction: {
+        color: '#7ABC00',
         fontFamily: 'Poppins_600SemiBold',
-        color: '#333',
     },
 });

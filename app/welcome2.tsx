@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, Alert } from "react-native";
+import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, Alert, Platform } from "react-native";
 import { router, useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { Ionicons, AntDesign } from '@expo/vector-icons';
@@ -10,6 +10,14 @@ import * as Linking from 'expo-linking';
 import { handleOAuthCallback } from "../utils/authServices";
 import * as SecureStore from 'expo-secure-store';
 import { showAlert, showSuccess, showError } from '../utils/alertService';
+import { notificationService } from '../utils/notificationService'; 
+
+
+const API_BASE_URL = Platform.select({
+  android: process.env.EXPO_PUBLIC_API_BASE_URL,
+  ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,
+  default: process.env.EXPO_PUBLIC_API_BASE_URL,
+}) || 'http://10.0.2.2:3000';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -68,6 +76,15 @@ export default function AuthScreen() {
                 try {
                     const token = await handleOAuthCallback(url);
                     if (token) {
+                        // APENAS ADICIONADA LÓGICA DE NOTIFICAÇÃO
+                        try {
+                            console.log("Re-registrando token de notificação após login Google...");
+                            await notificationService.reRegisterToken();
+                            console.log("Token de notificação re-registrado com sucesso");
+                        } catch (notificationError) {
+                            console.error("Erro ao re-registrar token de notificação:", notificationError);
+                        }
+
                         showSuccess("Sucesso", "Login com Google realizado!");
                         router.replace('/(tabs)');
                     } else {

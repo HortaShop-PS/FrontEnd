@@ -1,17 +1,16 @@
-import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, Alert, StatusBar } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import React, { useState, useCallback } from 'react';
+import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, StatusBar } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
-import { useCallback, useState } from "react";
 import { getProfile, logout } from "../../utils/authServices";
-import * as SecureStore from 'expo-secure-store';
 import { showAlert, showError } from '../../utils/alertService';
+import { notificationService } from '../../utils/notificationService';
 
 interface UserProfile {
     id: string;
     name: string;
     email: string;
-    profileImage?: string;
 }
 
 export default function ProfileScreen() {
@@ -66,6 +65,15 @@ export default function ProfileScreen() {
                     text: "Sair",
                     onPress: async () => {
                         try {
+                            // Lógica de notificação
+                            try {
+                                console.log("Limpando token de notificação...");
+                                await notificationService.clearToken();
+                                console.log("Token de notificação limpo com sucesso");
+                            } catch (notificationError) {
+                                console.error("Erro ao limpar token de notificação:", notificationError);
+                            }
+
                             await logout();
                             router.replace('/welcome2');
                         } catch (error) {
@@ -84,18 +92,12 @@ export default function ProfileScreen() {
     };
 
     const handleFavorites = () => {
-            router.push('/favorites');
+        router.push('/favorites');
     };
-
-    const handle = () => {
-            router.push('/favorites');
-    };
-
-    
 
     if (!fontsLoaded) {
         return (
-            <View style={[styles.container, styles.centered]}>
+            <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#6CC51D" />
             </View>
         );
@@ -103,7 +105,7 @@ export default function ProfileScreen() {
 
     if (loading) {
         return (
-            <View style={[styles.container, styles.centered]}>
+            <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#6CC51D" />
             </View>
         );
@@ -142,14 +144,6 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
-                    {/*
-                    <TouchableOpacity>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="cube-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Meus Pedidos</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>*/}
                     <TouchableOpacity onPress={() => handleFavorites()}>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="heart-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
@@ -174,41 +168,21 @@ export default function ProfileScreen() {
                     </View>
                 </TouchableOpacity>
 
-                {/*
-                <View style={styles.menuSection}>
-                    <Text style={styles.menuSectionTitle}>Configurações</Text>
-                    {/*<TouchableOpacity>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="location-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Meus Endereços</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>*/}
-                    <TouchableOpacity onPress={() => router.push("/cards")}>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="card-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Meus Cartões</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-                    {/*<TouchableOpacity>
-                        <View style={styles.menuItemRow}>
-                            <MaterialCommunityIcons name="history" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Histórico de Transações</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="notifications-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Notificações</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-                </View>
+                <TouchableOpacity onPress={() => router.push("/(tabs)/notifications")}>
+                    <View style={styles.menuItemRow}>
+                        <Ionicons name="notifications-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                        <Text style={styles.menuItemText}>Notificações</Text>
+                        <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                    </View>
+                </TouchableOpacity>
 
-                    </TouchableOpacity>*/}
-                {/* End of commented Configurações section */}
+                <TouchableOpacity onPress={() => router.push("/cards")}>
+                    <View style={styles.menuItemRow}>
+                        <Ionicons name="card-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                        <Text style={styles.menuItemText}>Meus Cartões</Text>
+                        <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                    </View>
+                </TouchableOpacity>
 
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={22} color="#FF6B6B" style={styles.logoutIcon} />
@@ -224,9 +198,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#FFFFFF",
     },
-    centered: {
-        justifyContent: "center",
-        alignItems: "center",
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F8F9FA',
     },
     header: {
         paddingHorizontal: 20,
