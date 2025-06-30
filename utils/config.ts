@@ -38,6 +38,91 @@ class ApiConfig {
   public getEndpoint(path: string): string {
     return `${this.BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
   }
+
+  // ✅ NOVO: Método para testar conectividade
+  public async testConnectivity(): Promise<{ isConnected: boolean; error?: string; responseTime?: number }> {
+    try {
+      const startTime = Date.now();
+      console.log('🔍 Testando conectividade com:', this.BASE_URL);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+      
+      const response = await fetch(`${this.BASE_URL}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      const responseTime = Date.now() - startTime;
+      
+      console.log(`📡 Resposta recebida em ${responseTime}ms, status: ${response.status}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Servidor respondeu:', data);
+        return { 
+          isConnected: true, 
+          responseTime 
+        };
+      } else {
+        console.log('❌ Servidor respondeu com erro:', response.status);
+        return { 
+          isConnected: false, 
+          error: `HTTP ${response.status}`,
+          responseTime 
+        };
+      }
+    } catch (error: any) {
+      console.error('❌ Erro de conectividade:', error);
+      
+      if (error.name === 'AbortError') {
+        return { 
+          isConnected: false, 
+          error: 'Timeout - servidor não respondeu em 10 segundos' 
+        };
+      }
+      
+      return { 
+        isConnected: false, 
+        error: error.message || 'Erro de rede desconhecido' 
+      };
+    }
+  }
+
+  // ✅ NOVO: Método para testar upload endpoint especificamente
+  public async testUploadEndpoint(): Promise<{ isAvailable: boolean; error?: string }> {
+    try {
+      console.log('🔍 Testando endpoint de upload...');
+      
+      const response = await fetch(`${this.BASE_URL}/upload/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        console.log('✅ Endpoint de upload disponível');
+        return { isAvailable: true };
+      } else {
+        console.log('❌ Endpoint de upload não disponível:', response.status);
+        return { 
+          isAvailable: false, 
+          error: `HTTP ${response.status}` 
+        };
+      }
+    } catch (error: any) {
+      console.error('❌ Erro ao testar endpoint de upload:', error);
+      return { 
+        isAvailable: false, 
+        error: error.message || 'Erro de rede' 
+      };
+    }
+  }
 }
 
 export const apiConfig = ApiConfig.getInstance();
