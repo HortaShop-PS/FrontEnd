@@ -20,7 +20,14 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.hortashop.hortashop",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Este app precisa de acesso à localização para selecionar endereços no mapa.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Este app precisa de acesso à localização para selecionar endereços no mapa."
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyBavIZTrGcAXRH02SzRn5XOyAN9_NG75r8"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -35,8 +42,15 @@
         "android.permission.WAKE_LOCK",
         "android.permission.VIBRATE",
         "com.google.android.c2dm.permission.RECEIVE",
-        "android.permission.POST_NOTIFICATIONS"
-      ]
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBavIZTrGcAXRH02SzRn5XOyAN9_NG75r8"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/images/favicon.png",
@@ -47,7 +61,20 @@
       "expo-secure-store",
       "expo-web-browser",
       "@react-native-firebase/app",
-      "@react-native-firebase/messaging"
+      "@react-native-firebase/messaging",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Este app precisa de acesso à localização para selecionar endereços no mapa.",
+          "locationWhenInUsePermission": "Este app precisa de acesso à localização para selecionar endereços no mapa."
+        }
+      ],
+      [
+        "expo-maps",
+        {
+          "provider": "default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

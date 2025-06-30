@@ -137,6 +137,7 @@ export default function ProfileScreen() {
 
                 <View style={styles.menuSection}>
                     <Text style={styles.menuSectionTitle}>Conta</Text>
+                    
                     <TouchableOpacity onPress={() => router.push("/about")}>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="person-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
@@ -144,6 +145,15 @@ export default function ProfileScreen() {
                             <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
                         </View>
                     </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => router.push("/addresses")}>
+                        <View style={styles.menuItemRow}>
+                            <Ionicons name="location-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
+                            <Text style={styles.menuItemText}>Meus Endereços</Text>
+                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
+                        </View>
+                    </TouchableOpacity>
+                    
                     <TouchableOpacity onPress={() => handleFavorites()}>
                         <View style={styles.menuItemRow}>
                             <Ionicons name="heart-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
