@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_500Medium } from '@expo-google-fonts/poppins';
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_500Medium, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { apiConfig } from '../../utils/config';
 
 interface AddressData {
@@ -46,7 +46,7 @@ export default function AddAddressScreen() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [isFromMap, setIsFromMap] = useState(false);
-  
+
   const [formData, setFormData] = useState<AddressData>({
     street: '',
     number: '',
@@ -60,13 +60,13 @@ export default function AddAddressScreen() {
     isDefault: false,
   });
 
-  const [fontsLoaded] = useFonts({
+  let [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_400Regular,
     Poppins_500Medium,
+    Poppins_700Bold,
   });
 
-  // Verificar se há dados do mapa quando a tela ganha foco
   useFocusEffect(
     React.useCallback(() => {
       checkMapLocation();
@@ -77,75 +77,98 @@ export default function AddAddressScreen() {
     if (global.selectedMapLocation) {
       const { latitude, longitude, address } = global.selectedMapLocation;
       
-      // Atualizar as coordenadas E marcar que veio do mapa
       setFormData(prev => ({
         ...prev,
         latitude,
         longitude,
       }));
-      setIsFromMap(true); // Marcar que esta localização veio do mapa
+      setIsFromMap(true);
 
-      // Se temos um endereço do mapa, tentar parseá-lo
       if (address && address !== 'Localização selecionada') {
         parseAddressFromMap(address);
       }
 
-      // Limpar os dados globais
       global.selectedMapLocation = null;
     }
   };
 
   const parseAddressFromMap = (address: string) => {
     try {
-      // Dividir o endereço em partes
       const parts = address.split(',').map(part => part.trim());
       
       if (parts.length >= 1) {
-        // Tentar extrair rua e número da primeira parte
         const streetPart = parts[0];
-        const streetMatch = streetPart.match(/^(.+?)(?:\s*,?\s*(\d+.*))?$/);
+        const streetMatch = streetPart.match(/^(.+?)\s+(\d+.*)$/);
         
         if (streetMatch) {
-          const street = streetMatch[1]?.trim() || '';
-          const number = streetMatch[2]?.trim() || '';
-          
           setFormData(prev => ({
             ...prev,
-            street,
-            number,
-            neighborhood: parts[1] || prev.neighborhood,
-            city: parts[2] || prev.city,
-            state: parts[3] || prev.state,
+            street: streetMatch[1].trim(),
+            number: streetMatch[2].trim(),
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            street: streetPart,
+          }));
+        }
+      }
+
+      if (parts.length >= 2) {
+        setFormData(prev => ({
+          ...prev,
+          neighborhood: parts[1],
+        }));
+      }
+
+      if (parts.length >= 3) {
+        const cityStatePart = parts[2];
+        const cityStateMatch = cityStatePart.match(/^(.+?)\s+-\s+(.+)$/);
+        
+        if (cityStateMatch) {
+          setFormData(prev => ({
+            ...prev,
+            city: cityStateMatch[1].trim(),
+            state: cityStateMatch[2].trim(),
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            city: cityStatePart,
           }));
         }
       }
     } catch (error) {
-      console.error('Erro ao parsear endereço do mapa:', error);
+      console.error('Erro ao analisar endereço do mapa:', error);
     }
   };
 
-  // Função para buscar endereços usando a API local
-  const searchAddresses = async (query: string) => {
-    if (!query || query.length < 3) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
+  // Função de busca com debounce
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      if (searchQuery.length >= 3) {
+        searchAddresses();
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 500);
 
+    return () => clearTimeout(delayedSearch);
+  }, [searchQuery]);
+
+  const searchAddresses = async () => {
+    setSearchLoading(true);
     try {
-      setSearchLoading(true);
-      
-      // Usar a API local do backend
       const response = await fetch(
-        `${apiConfig.BASE_URL}/addresses/autocomplete?input=${encodeURIComponent(query)}`
+        `${apiConfig.BASE_URL}/addresses/autocomplete?input=${encodeURIComponent(searchQuery)}`
       );
 
       if (response.ok) {
         const data = await response.json();
-        setSuggestions(data);
-        setShowSuggestions(data.length > 0);
+        setSuggestions(data || []);
+        setShowSuggestions((data || []).length > 0);
       } else {
-        console.error('Erro na busca:', response.status);
         setSuggestions([]);
         setShowSuggestions(false);
       }
@@ -158,19 +181,8 @@ export default function AddAddressScreen() {
     }
   };
 
-  // Debounce para busca
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      searchAddresses(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // CORREÇÃO: Função melhorada para mapear os campos corretamente
   const handleSuggestionSelect = async (suggestion: AddressSuggestion) => {
     try {
-      // Usar o place_id para obter detalhes via Google Maps API do backend
       const detailsResponse = await fetch(
         `${apiConfig.BASE_URL}/addresses/place-details?placeId=${suggestion.place_id}`
       );
@@ -178,7 +190,6 @@ export default function AddAddressScreen() {
       if (detailsResponse.ok) {
         const details = await detailsResponse.json();
         
-        // CORREÇÃO: Mapear corretamente os campos dos detalhes
         setFormData(prev => ({
           ...prev,
           street: details.street || '',
@@ -191,10 +202,8 @@ export default function AddAddressScreen() {
           longitude: details.longitude,
         }));
       } else {
-        // CORREÇÃO: Fallback inteligente analisando o secondary_text
         const addressParts = suggestion.secondary_text.split(',').map(part => part.trim());
         
-        // Tentar extrair informações da estrutura do endereço
         let street = suggestion.main_text;
         let number = '';
         let neighborhood = '';
@@ -202,12 +211,9 @@ export default function AddAddressScreen() {
         let state = '';
         let zipCode = '';
 
-        // Se o main_text é um CEP, usar o secondary_text como endereço principal
         if (/^\d{5}-?\d{3}$/.test(suggestion.main_text)) {
           zipCode = suggestion.main_text.replace(/\D/g, '');
           
-          // Analisar o secondary_text para extrair os componentes
-          // Formato típico: "Rua Nome - Bairro, Cidade - Estado"
           if (addressParts.length > 0) {
             const firstPart = addressParts[0];
             if (firstPart.includes(' - ')) {
@@ -234,8 +240,6 @@ export default function AddAddressScreen() {
             state = addressParts[2].trim();
           }
         } else {
-          // Se não é CEP, usar mapeamento normal
-          // O secondary_text geralmente tem: "Bairro, Cidade - Estado"
           if (addressParts.length >= 2) {
             neighborhood = addressParts[0];
             
@@ -264,17 +268,13 @@ export default function AddAddressScreen() {
         }));
       }
 
-      // Marcar que NÃO veio do mapa (veio do autocompletar)
       setIsFromMap(false);
-
-      // Limpar busca
       setSearchQuery('');
       setShowSuggestions(false);
       Keyboard.dismiss();
     } catch (error) {
       console.error('Erro ao obter detalhes do endereço:', error);
       
-      // Fallback mais simples em caso de erro
       const addressParts = suggestion.secondary_text.split(',').map(part => part.trim());
       
       setFormData(prev => ({
@@ -347,386 +347,420 @@ export default function AddAddressScreen() {
     return true;
   };
 
-  const handleSelectOnMap = () => {
-    // Navegar para a tela do mapa passando as coordenadas atuais se existirem
-    const params: any = {};
-    if (formData.latitude && formData.longitude) {
-      params.latitude = formData.latitude.toString();
-      params.longitude = formData.longitude.toString();
-    }
-    
-    router.push({
-      pathname: '/addresses/map',
-      params,
-    });
-  };
-
   const handleSave = async () => {
     if (!validateForm()) return;
 
+    setLoading(true);
     try {
-      setLoading(true);
-
-      // Preparar dados para envio
       const addressData = {
         ...formData,
         zipCode: formData.zipCode.replace(/\D/g, ''),
+        country: 'Brasil',
       };
 
-      // TODO: Implementar chamada para a API
-      console.log('Salvando endereço:', addressData);
-      
-      // Simular salvamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      Alert.alert(
-        'Sucesso',
-        'Endereço salvo com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      const response = await fetch(`${apiConfig.BASE_URL}/addresses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await getStoredToken()}`,
+        },
+        body: JSON.stringify(addressData),
+      });
 
+      if (response.ok) {
+        Alert.alert('Sucesso', 'Endereço salvo com sucesso!', [
+          { text: 'OK', onPress: () => router.back() }
+        ]);
+      } else {
+        const errorData = await response.json();
+        Alert.alert('Erro', errorData.message || 'Erro ao salvar endereço');
+      }
     } catch (error) {
       console.error('Erro ao salvar endereço:', error);
-      Alert.alert('Erro', 'Não foi possível salvar o endereço. Tente novamente.');
+      Alert.alert('Erro', 'Não foi possível salvar o endereço');
     } finally {
       setLoading(false);
     }
   };
 
-  const renderSuggestionItem = ({ item }: { item: AddressSuggestion }) => (
-    <TouchableOpacity
-      style={styles.suggestionItem}
-      onPress={() => handleSuggestionSelect(item)}
-    >
-      <Ionicons name="location-outline" size={20} color="#6CC51D" />
-      <View style={styles.suggestionTextContainer}>
-        <Text style={styles.suggestionMainText} numberOfLines={1}>
-          {item.main_text}
-        </Text>
-        <Text style={styles.suggestionSecondaryText} numberOfLines={1}>
-          {item.secondary_text}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const handleSelectOnMap = () => {
+    router.push('/addresses/map');
+  };
+
+  const getStoredToken = async () => {
+    try {
+      const { getItemAsync } = await import('expo-secure-store');
+      return await getItemAsync('userToken');
+    } catch {
+      return null;
+    }
+  };
 
   if (!fontsLoaded) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6CC51D" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
-      {/* Header */}
+    <SafeAreaView style={styles.safeArea}>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
+      />
+      <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+      
+      {/* Header seguindo padrão flat */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333333" />
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#2C3E50" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Adicionar Endereço</Text>
-        <View style={styles.placeholder} />
+        <View style={styles.headerContent}>
+          <Text style={styles.headerGreeting}>Adicionar</Text>
+          <Text style={styles.headerTitle}>Novo Endereço</Text>
+        </View>
       </View>
 
-      {/* Estrutura corrigida para evitar VirtualizedLists aninhadas */}
-      <View style={styles.content}>
-        {/* Busca de Endereços */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Buscar Endereço</Text>
+      <ScrollView style={styles.mainContainer} showsVerticalScrollIndicator={false}>
+        
+        {/* Busca de endereço */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="search-outline" size={20} color="#6CC51D" />
+            </View>
+            <Text style={styles.sectionTitle}>Buscar Endereço</Text>
+          </View>
+
           <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
-              <Ionicons name="search" size={20} color="#9E9E9E" />
+            <View style={styles.searchInputWrapper}>
+              <Ionicons name="search" size={18} color="#7F8C8D" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Digite o endereço, CEP ou nome do local..."
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                placeholderTextColor="#999999"
+                placeholder="Digite rua, bairro ou CEP..."
+                placeholderTextColor="#BDC3C7"
               />
               {searchLoading && (
                 <ActivityIndicator size="small" color="#6CC51D" />
               )}
-              {searchQuery.length > 0 && !searchLoading && (
-                <TouchableOpacity onPress={() => {
-                  setSearchQuery('');
-                  setShowSuggestions(false);
-                }}>
-                  <Ionicons name="close-circle" size={20} color="#9E9E9E" />
-                </TouchableOpacity>
-              )}
             </View>
-          </View>
 
-          {/* Lista de Sugestões - Usando ScrollView em vez de FlatList */}
-          {showSuggestions && suggestions.length > 0 && (
-            <View style={styles.suggestionsContainer}>
-              <ScrollView 
-                style={styles.suggestionsList}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={true}
-              >
-                {suggestions.map((item, index) => (
-                  <View key={index}>
+            {showSuggestions && suggestions.length > 0 && (
+              <View style={styles.suggestionsContainer}>
+                <ScrollView style={styles.suggestionsList} nestedScrollEnabled>
+                  {suggestions.map((suggestion, index) => (
                     <TouchableOpacity
+                      key={`${suggestion.place_id}-${index}`}
                       style={styles.suggestionItem}
-                      onPress={() => handleSuggestionSelect(item)}
+                      onPress={() => handleSuggestionSelect(suggestion)}
                     >
-                      <Ionicons name="location-outline" size={20} color="#6CC51D" />
-                      <View style={styles.suggestionTextContainer}>
-                        <Text style={styles.suggestionMainText} numberOfLines={1}>
-                          {item.main_text}
-                        </Text>
-                        <Text style={styles.suggestionSecondaryText} numberOfLines={1}>
-                          {item.secondary_text}
-                        </Text>
+                      <View style={styles.suggestionIconContainer}>
+                        <Ionicons name="location-outline" size={16} color="#6CC51D" />
+                      </View>
+                      <View style={styles.suggestionContent}>
+                        <Text style={styles.suggestionMain}>{suggestion.main_text}</Text>
+                        <Text style={styles.suggestionSecondary}>{suggestion.secondary_text}</Text>
                       </View>
                     </TouchableOpacity>
-                    {index < suggestions.length - 1 && (
-                      <View style={styles.suggestionSeparator} />
-                    )}
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
         </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Seleção no Mapa */}
-          <View style={styles.section}>
-            <TouchableOpacity style={styles.mapButton} onPress={handleSelectOnMap}>
-              <View style={styles.mapButtonContent}>
+        {/* Seleção no Mapa */}
+        <View style={styles.sectionCard}>
+          <TouchableOpacity style={styles.mapButton} onPress={handleSelectOnMap}>
+            <View style={styles.mapButtonContent}>
+              <View style={styles.mapIconContainer}>
                 <Ionicons name="map" size={24} color="#6CC51D" />
-                <View style={styles.mapButtonText}>
-                  <Text style={styles.mapButtonTitle}>Selecionar no Mapa</Text>
-                  <Text style={styles.mapButtonSubtitle}>
-                    {formData.latitude && formData.longitude && isFromMap
-                      ? 'Localização selecionada ✓' 
-                      : 'Marque exatamente onde é seu endereço'
-                    }
-                  </Text>
-                </View>
+              </View>
+              <View style={styles.mapButtonText}>
+                <Text style={styles.mapButtonTitle}>Selecionar no Mapa</Text>
+                <Text style={styles.mapButtonSubtitle}>
+                  {formData.latitude && formData.longitude && isFromMap
+                    ? 'Localização selecionada ✓' 
+                    : 'Marque exatamente onde é seu endereço'
+                  }
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={24} color="#6CC51D" />
-            </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Informações do Endereço */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="home-outline" size={20} color="#6CC51D" />
+            </View>
+            <Text style={styles.sectionTitle}>Informações do Endereço</Text>
           </View>
 
-          {/* Informações do Endereço */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Informações do Endereço</Text>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, { flex: 3 }]}>
-                <Text style={styles.inputLabel}>Rua *</Text>
+          <View style={styles.row}>
+            <View style={[styles.inputContainer, { flex: 3 }]}>
+              <Text style={styles.inputLabel}>Rua *</Text>
+              <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
                   value={formData.street}
                   onChangeText={(text) => handleInputChange('street', text)}
                   placeholder="Nome da rua"
-                  placeholderTextColor="#999999"
+                  placeholderTextColor="#BDC3C7"
                 />
               </View>
-              <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
-                <Text style={styles.inputLabel}>Número *</Text>
+            </View>
+            <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
+              <Text style={styles.inputLabel}>Número *</Text>
+              <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
                   value={formData.number}
                   onChangeText={(text) => handleInputChange('number', text)}
                   placeholder="123"
-                  placeholderTextColor="#999999"
+                  placeholderTextColor="#BDC3C7"
                   keyboardType="numeric"
                 />
               </View>
             </View>
+          </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Complemento</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Complemento</Text>
+            <View style={styles.inputWrapper}>
               <TextInput
                 style={styles.input}
                 value={formData.complement}
                 onChangeText={(text) => handleInputChange('complement', text)}
-                placeholder="Apartamento, bloco, casa, etc. (opcional)"
-                placeholderTextColor="#999999"
+                placeholder="Apartamento, bloco, casa, etc."
+                placeholderTextColor="#BDC3C7"
               />
             </View>
+          </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Bairro *</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Bairro *</Text>
+            <View style={styles.inputWrapper}>
               <TextInput
                 style={styles.input}
                 value={formData.neighborhood}
                 onChangeText={(text) => handleInputChange('neighborhood', text)}
                 placeholder="Nome do bairro"
-                placeholderTextColor="#999999"
+                placeholderTextColor="#BDC3C7"
               />
             </View>
+          </View>
 
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, { flex: 2 }]}>
-                <Text style={styles.inputLabel}>Cidade *</Text>
+          <View style={styles.row}>
+            <View style={[styles.inputContainer, { flex: 2 }]}>
+              <Text style={styles.inputLabel}>Cidade *</Text>
+              <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
                   value={formData.city}
                   onChangeText={(text) => handleInputChange('city', text)}
                   placeholder="Nome da cidade"
-                  placeholderTextColor="#999999"
+                  placeholderTextColor="#BDC3C7"
                 />
               </View>
-              <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
-                <Text style={styles.inputLabel}>Estado *</Text>
+            </View>
+            <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
+              <Text style={styles.inputLabel}>Estado *</Text>
+              <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
                   value={formData.state}
                   onChangeText={(text) => handleInputChange('state', text.toUpperCase())}
                   placeholder="SP"
-                  placeholderTextColor="#999999"
+                  placeholderTextColor="#BDC3C7"
                   maxLength={2}
                 />
               </View>
             </View>
+          </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>CEP *</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>CEP *</Text>
+            <View style={styles.inputWrapper}>
               <TextInput
                 style={styles.input}
                 value={formData.zipCode}
                 onChangeText={(text) => handleInputChange('zipCode', formatZipCode(text))}
                 placeholder="12345-678"
-                placeholderTextColor="#999999"
+                placeholderTextColor="#BDC3C7"
                 keyboardType="numeric"
                 maxLength={9}
               />
             </View>
           </View>
+        </View>
 
-          {/* Opções */}
-          <View style={styles.section}>
-            <TouchableOpacity 
-              style={styles.defaultContainer} 
-              onPress={() => handleInputChange('isDefault', !formData.isDefault)}
-            >
-              <View style={styles.defaultCheckbox}>
-                {formData.isDefault && (
-                  <Ionicons name="checkmark" size={16} color="#6CC51D" />
-                )}
-              </View>
-              <Text style={styles.defaultText}>Definir como endereço padrão</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Botão Salvar */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
-              onPress={handleSave}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="checkmark" size={24} color="#FFFFFF" />
-                  <Text style={styles.saveButtonText}>Salvar Endereço</Text>
-                </>
+        {/* Opções */}
+        <View style={styles.sectionCard}>
+          <TouchableOpacity 
+            style={styles.defaultContainer} 
+            onPress={() => handleInputChange('isDefault', !formData.isDefault)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.defaultCheckbox, formData.isDefault && styles.defaultCheckboxChecked]}>
+              {formData.isDefault && (
+                <Ionicons name="checkmark" size={16} color="#6CC51D" />
               )}
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
+            </View>
+            <Text style={styles.defaultText}>Definir como endereço padrão</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Botão Salvar */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
+            onPress={handleSave}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
+                <Text style={styles.saveButtonText}>Salvar Endereço</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FAFAFA",
   },
-  centerContent: {
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#FAFAFA',
   },
+
+  // Header seguindo padrão flat
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
-    backgroundColor: '#FFFFFF',
+    paddingTop: 16,
+    paddingBottom: 24,
+    backgroundColor: "#FAFAFA",
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerGreeting: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    marginBottom: 4,
   },
   headerTitle: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 18,
-    color: '#333333',
+    fontFamily: "Poppins_700Bold",
+    fontSize: 24,
+    color: "#2C3E50",
   },
-  placeholder: {
-    width: 40,
-  },
-  content: {
+
+  mainContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#FAFAFA",
   },
-  scrollView: {
-    flex: 1,
+
+  // Section Cards seguindo padrão flat
+  sectionCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
-  section: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  sectionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
   sectionTitle: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
-    color: '#333333',
-    marginBottom: 16,
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 18,
+    color: "#2C3E50",
   },
+
+  // Search container
   searchContainer: {
-    marginBottom: 8,
+    position: 'relative',
   },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+  searchInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: "#F0F0F0",
+  },
+  searchIcon: {
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#333333',
+    fontFamily: "Poppins_400Regular",
+    fontSize: 15,
+    color: "#2C3E50",
   },
+
+  // Suggestions
   suggestionsContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: '#F0F0F0',
     marginTop: 8,
     maxHeight: 200,
+    zIndex: 1000,
   },
   suggestionsList: {
     maxHeight: 200,
@@ -735,82 +769,96 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F9FA',
   },
-  suggestionTextContainer: {
+  suggestionIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  suggestionContent: {
     flex: 1,
-    marginLeft: 12,
   },
-  suggestionMainText: {
-    fontSize: 16,
-    fontFamily: 'Poppins_500Medium',
-    color: '#333333',
+  suggestionMain: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 15,
+    color: '#2C3E50',
     marginBottom: 2,
   },
-  suggestionSecondaryText: {
-    fontSize: 14,
+  suggestionSecondary: {
     fontFamily: 'Poppins_400Regular',
-    color: '#666666',
+    fontSize: 13,
+    color: '#7F8C8D',
   },
-  suggestionSeparator: {
-    height: 1,
-    backgroundColor: '#E9ECEF',
-    marginLeft: 48,
-  },
+
+  // Map button
   mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
     borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#6CC51D',
-    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   mapButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    padding: 16,
+  },
+  mapIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
   },
   mapButtonText: {
-    marginLeft: 12,
     flex: 1,
   },
   mapButtonTitle: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
-    color: '#333333',
+    color: '#2C3E50',
     marginBottom: 4,
   },
   mapButtonSubtitle: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 14,
-    color: '#666666',
+    color: '#7F8C8D',
   },
+
+  // Input fields
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputLabel: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
-    color: '#333333',
+    color: "#2C3E50",
     marginBottom: 8,
   },
-  input: {
+  inputWrapper: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
-    borderRadius: 8,
+    borderColor: "#F0F0F0",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#333333',
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
   },
+  input: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 15,
+    color: "#2C3E50",
+  },
+
+  // Default address checkbox
   defaultContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -818,22 +866,28 @@ const styles = StyleSheet.create({
   defaultCheckbox: {
     width: 24,
     height: 24,
-    borderRadius: 4,
+    borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#6CC51D',
+    borderColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
+  defaultCheckboxChecked: {
+    backgroundColor: '#E8F8F5',
+    borderColor: '#6CC51D',
+  },
   defaultText: {
     fontFamily: 'Poppins_400Regular',
-    fontSize: 16,
-    color: '#333333',
+    fontSize: 15,
+    color: '#2C3E50',
   },
+
+  // Save button
   buttonContainer: {
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   saveButton: {
     backgroundColor: '#6CC51D',
@@ -841,11 +895,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 8,
   },
   saveButtonDisabled: {
-    backgroundColor: '#AED581',
+    backgroundColor: '#BDC3C7',
   },
   saveButtonText: {
     fontFamily: 'Poppins_600SemiBold',

@@ -11,7 +11,7 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { getCart } from '../utils/cartService';
 import { 
@@ -97,6 +97,16 @@ export default function CheckoutScreen() {
     }
   }, [selectedAddress, deliveryMethod]);
 
+  // Reload addresses when returning from add address screen
+  useFocusEffect(
+    React.useCallback(() => {
+      // Only reload addresses if we have addresses and delivery method is delivery
+      if (addresses.length > 0 && deliveryMethod === 'delivery') {
+        reloadAddresses();
+      }
+    }, [addresses.length, deliveryMethod])
+  );
+
   const initializeCheckout = async () => {
     try {
       setLoading(true);
@@ -145,6 +155,22 @@ export default function CheckoutScreen() {
     }
   };
 
+  const reloadAddresses = async () => {
+    try {
+      const userAddresses = await checkoutService.getUserAddresses();
+      setAddresses(userAddresses);
+      
+      // Select the most recently added address (last in array) or default
+      const defaultAddress = userAddresses.find(addr => addr.isDefault) || userAddresses[userAddresses.length - 1];
+      if (defaultAddress) {
+        setSelectedAddress(defaultAddress);
+      }
+    } catch (error: any) {
+      console.error('Erro ao recarregar endereços:', error);
+      showError('Erro', 'Não foi possível carregar os endereços');
+    }
+  };
+
   const calculateTotals = async () => {
     if (!checkout) return;
 
@@ -187,6 +213,15 @@ export default function CheckoutScreen() {
       // Limpar endereço selecionado para pickup
       setSelectedAddress(null);
     }
+  };
+
+  const handleAddNewAddress = () => {
+    setAddressModalVisible(false);
+    // Navigate to add address screen with return parameter
+    router.push({
+      pathname: '/addresses/add',
+      params: { returnTo: 'checkout' }
+    });
   };
 
   const handleProceedToPayment = async () => {
@@ -506,7 +541,7 @@ export default function CheckoutScreen() {
             ))}
           </ScrollView>
           
-          <TouchableOpacity style={styles.addNewAddressButton}>
+          <TouchableOpacity style={styles.addNewAddressButton} onPress={handleAddNewAddress}>
             <Ionicons name="add" size={20} color="#6CC51D" />
             <Text style={styles.addNewAddressText}>Adicionar Novo Endereço</Text>
           </TouchableOpacity>

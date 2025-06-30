@@ -118,8 +118,13 @@ const orderService = {
       const token = await getAuthToken();
       const response = await axios.patch(
         `${API_BASE_URL}/orders/${orderId}/status`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { status: status.toLowerCase() },  // ✅ Converte para minúsculo
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
       );
       return response.data;
     } catch (error) {

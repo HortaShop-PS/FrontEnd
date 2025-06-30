@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, TextInput, Image, Platform, /*Alert,*/ ActivityIndicator } from 'react-native'; // Alert removido
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, TextInput, Image, Platform, ActivityIndicator, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold, Poppins_500Medium } from "@expo-google-fonts/poppins";
 import { cardService, ApiCard, UpdateCardPayload } from '../utils/cardService';
 import { showAlert, showError, showSuccess } from '../utils/alertService';
-import { Picker } from '@react-native-picker/picker'; // Import Picker
+import { Picker } from '@react-native-picker/picker';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
 
@@ -28,11 +28,9 @@ const MOCKED_CARDS: CardData[] = [
     { id: '2', brand: 'Visa', last4Digits: '5678', expiry: '11/24', cvv: '456', cardholderName: 'JANE DOE', isPrincipal: false, paymentMethodType: 'debit', nickname: 'Visa Principal', number: '************5678', expiryMonth: '11', expiryYear: '2024' },
 ];
 
-
 export default function MyCardsScreen() {
     const router = useRouter();
     const [cards, setCards] = useState<CardData[]>([]);
-    // Não expandir nenhum cartão por padrão
     const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,12 +38,12 @@ export default function MyCardsScreen() {
     // Estado para loading individual do switch principal
     const [principalLoadingId, setPrincipalLoadingId] = useState<string | null>(null);
 
-    // Hook para carregar fontes
     // Hook para carregar fontes personalizadas
     let [fontsLoaded, fontError] = useFonts({
         Poppins_600SemiBold,
         Poppins_400Regular,
         Poppins_700Bold,
+        Poppins_500Medium,
     });
 
     // Função para buscar cartões, memoizada com useCallback
@@ -94,7 +92,6 @@ export default function MyCardsScreen() {
             if (fontsLoaded) {
                 fetchCardsData();
             } else {
-                // setError(null); // Limpa erros anteriores
                 setIsLoading(true); 
             }
         }, [fontsLoaded, fetchCardsData]) 
@@ -133,23 +130,11 @@ export default function MyCardsScreen() {
 
         const payload: UpdateCardPayload = {
             cardholderName: cardToSave.cardholderName,
-            // expiry: cardToSave.expiry, // Expiry is not typically updated directly, but split into month/year if needed by backend
             isPrincipal: cardToSave.isPrincipal,
             nickname: cardToSave.nickname,
             paymentMethodType: cardToSave.paymentMethodType,
-            brand: cardToSave.brand, // Use brand instead of cardType
+            brand: cardToSave.brand,
         };
-
-        // Se a expiração precisar ser atualizada, ela deve ser dividida em mês e ano.
-        // Por ora, vamos assumir que a expiração não é editável ou é tratada de outra forma.
-        // Se for editável, você precisaria adicionar lógica para parsear 'MM/AA' de cardToSave.expiry
-        // e enviar expiryMonth e expiryYear separadamente, se for o que o backend espera.
-        // Exemplo: 
-        // if (cardToSave.expiry && cardToSave.expiry.includes('/')) {
-        //   const [month, yearSuffix] = cardToSave.expiry.split('/');
-        //   payload.expiryMonth = month;
-        //   payload.expiryYear = `20${yearSuffix}`;
-        // }
         
         // Remove undefined fields from payload to prevent issues with backend validation
         Object.keys(payload).forEach(key => {
@@ -190,7 +175,6 @@ export default function MyCardsScreen() {
                         }
                         try {
                             await cardService.deleteCard(cardId);
-                            // showSuccess("Excluído", "Cartão excluído com sucesso.");
                             fetchCardsData(); // Recarrega a lista após a exclusão bem-sucedida
                         } catch (e: any) {
                             const errorMessage = e.message || "Erro ao excluir cartão.";
@@ -208,469 +192,645 @@ export default function MyCardsScreen() {
     const getCardLogo = (cardTypeInput: string) => {
         const normalizedCardType = cardTypeInput ? cardTypeInput.toLowerCase() : "";
         if (normalizedCardType.includes('mastercard')) {
-            return <Image source={CARD_LOGOS['Mastercard']} style={styles.mastercardLogo} resizeMode="contain" />;
+            return <Image source={CARD_LOGOS['Mastercard']} style={styles.cardLogo} resizeMode="contain" />;
         } else if (normalizedCardType.includes('visa')) {
-            return <Image source={CARD_LOGOS['Visa']} style={styles.visaLogo} resizeMode="contain" />;
+            return <Image source={CARD_LOGOS['Visa']} style={styles.cardLogo} resizeMode="contain" />;
         }
-        // Ensure text is always within a Text component
-        return <View style={styles.cardLogoPlaceholder}><Text style={{fontSize: 10, color: '#777'}}>{cardTypeInput ? cardTypeInput.substring(0,4) : 'N/A'}</Text></View>;
+        return (
+            <View style={styles.cardLogoPlaceholder}>
+                <Text style={styles.cardLogoText}>
+                    {cardTypeInput ? cardTypeInput.substring(0,4) : 'Card'}
+                </Text>
+            </View>
+        );
     };
-
 
     // Lógica de renderização condicional APÓS todos os Hooks
     if (!fontsLoaded || (isLoading && cards.length === 0 && !error)) {
         return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#6CC51D" />
-                <Text style={styles.emptyText}>{!fontsLoaded ? "Carregando fontes..." : "Carregando cartões..."}</Text>
-            </View>
+            <SafeAreaView style={styles.safeArea}>
+                <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#6CC51D" />
+                    <Text style={styles.loadingText}>
+                        {!fontsLoaded ? "Carregando fontes..." : "Carregando cartões..."}
+                    </Text>
+                </View>
+            </SafeAreaView>
         );
     }
 
     if (fontError) {
-        return <View style={styles.centered}><Text style={styles.errorText}>Erro ao carregar fontes: {fontError.message || 'Erro desconhecido'}</Text></View>;
+        return (
+            <SafeAreaView style={styles.safeArea}>
+                <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+                <View style={styles.errorContainer}>
+                    <View style={styles.errorIconContainer}>
+                        <Ionicons name="alert-circle-outline" size={48} color="#E74C3C" />
+                    </View>
+                    <Text style={styles.errorTitle}>Erro ao carregar fontes</Text>
+                    <Text style={styles.errorMessage}>
+                        {fontError.message || 'Erro desconhecido'}
+                    </Text>
+                </View>
+            </SafeAreaView>
+        );
     }
 
     if (error && cards.length === 0) {
         return (
-            <View style={styles.centered}>
-                <Text style={styles.errorText}>{error || 'Ocorreu um erro.'}</Text>
-                <TouchableOpacity onPress={fetchCardsData} style={styles.addNewCardButtonEmpty}>
-                    <Ionicons name="refresh" size={22} color="#6CC51D" />
-                    <Text style={styles.emptyText}>Tentar Novamente</Text>
-                </TouchableOpacity>
-            </View>
+            <SafeAreaView style={styles.safeArea}>
+                <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+                <View style={styles.container}>
+                    {/* Header seguindo padrão do design system */}
+                    <View style={styles.header}>
+                        <TouchableOpacity 
+                            onPress={() => router.canGoBack() ? router.back() : router.replace('/')} 
+                            style={styles.backButton}
+                        >
+                            <Ionicons name="arrow-back" size={24} color="#2C3E50" />
+                        </TouchableOpacity>
+                        <View style={styles.headerContent}>
+                            <Text style={styles.headerGreeting}>Seus</Text>
+                            <Text style={styles.headerTitle}>Cartões</Text>
+                        </View>
+                        <TouchableOpacity 
+                            onPress={() => router.push('/addCard')} 
+                            style={styles.addButton}
+                        >
+                            <Ionicons name="add" size={24} color="#6CC51D" />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.errorContainer}>
+                        <View style={styles.errorIconContainer}>
+                            <Ionicons name="alert-circle-outline" size={48} color="#E74C3C" />
+                        </View>
+                        <Text style={styles.errorTitle}>Ops! Algo deu errado</Text>
+                        <Text style={styles.errorMessage}>{error}</Text>
+                        <TouchableOpacity style={styles.retryButton} onPress={fetchCardsData}>
+                            <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </SafeAreaView>
         );
     }
 
     // Renderização principal do componente
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={styles.headerButton}>
-                    <Ionicons name="arrow-back" size={28} color="#333" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Meus Cartões</Text>
-                <TouchableOpacity onPress={() => router.push('/addCard')} style={styles.headerButton}>
-                    <Ionicons name="add" size={32} color="#333" />
-                </TouchableOpacity>
-            </View>
-
-            {cards.length === 0 && !isLoading ? (
-                <View style={styles.centered}>
-                    <Text style={styles.emptyText}>Nenhum cartão cadastrado.</Text>
-                    <TouchableOpacity onPress={() => router.push('/addCard')} style={styles.addNewCardButtonEmpty}>
-                        <Ionicons name="add-circle-outline" size={22} color="#6CC51D" />
-                        <Text style={styles.emptyText}>Adicionar novo cartão</Text>
+        <SafeAreaView style={styles.safeArea}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+            <View style={styles.container}>
+                {/* Header seguindo padrão do design system */}
+                <View style={styles.header}>
+                    <TouchableOpacity 
+                        onPress={() => router.canGoBack() ? router.back() : router.replace('/')} 
+                        style={styles.backButton}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#2C3E50" />
+                    </TouchableOpacity>
+                    <View style={styles.headerContent}>
+                        <Text style={styles.headerGreeting}>Seus</Text>
+                        <Text style={styles.headerTitle}>Cartões</Text>
+                    </View>
+                    <TouchableOpacity 
+                        onPress={() => router.push('/addCard')} 
+                        style={styles.addButton}
+                    >
+                        <Ionicons name="add" size={24} color="#6CC51D" />
                     </TouchableOpacity>
                 </View>
-            ) : (
-                <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-                    {/* Garante que a mensagem de erro esteja dentro de um componente Text */}
-                    {error && <Text style={styles.errorText}>Aviso: {error || 'Ocorreu um erro.'}</Text>}
-                    {cards.map((card) => (
-                        <View key={card.id} style={[styles.cardItemContainer, card.isPrincipal && styles.principalCardBorder]}>
-                            {card.isPrincipal && (
-                                <View style={styles.principalBadge}>
-                                    <Text style={styles.principalBadgeText}>Principal</Text>
-                                </View>
-                            )}
-                            <TouchableOpacity onPress={() => toggleCardExpansion(card.id)} style={styles.cardHeader}>
-                                <View style={styles.cardInfo}>
-                                    <View style={styles.cardLogoContainer}>
-                                       {getCardLogo(card.brand)}
-                                    </View>
-                                    <View style={styles.cardTextContainer}>
-                                        <Text style={styles.cardBrand}>{card.nickname || card.brand.toUpperCase()}</Text>
-                                        <Text style={styles.cardNumber}>•••• •••• •••• {card.last4Digits}</Text>
-                                        <Text style={styles.cardDetails}>
-                                            Validade: {card.expiry || 'N/A'} - {card.paymentMethodType === 'debit' ? 'Débito' : 'Crédito'}
-                                        </Text>
-                                    </View>
-                                </View>
-                                <Ionicons
-                                    name={expandedCardId === card.id ? "chevron-up-outline" : "chevron-down-outline"}
-                                    size={24}
-                                    color={expandedCardId === card.id ? "#6CC51D" : "#888"}
-                                    style={styles.chevronIcon}
-                                />
-                            </TouchableOpacity>
 
-                            {expandedCardId === card.id && (
-                                <View style={styles.cardExpandedContentPadronizado}>
-                                    <InputField
-                                        value={card.cardholderName}
-                                        onChangeText={(text) => handleInputChange(card.id, 'cardholderName', text)}
-                                        placeholder="Nome no cartão"
-                                        icon={<Ionicons name="person-outline" size={22} color="#6C757D" />}
-                                        keyboardType="default"
-                                    />
-                                    {/* InputField for nickname REMOVED */}
-                                    <InputField
-                                        value={`•••• •••• •••• ${card.last4Digits}`}
-                                        onChangeText={() => {}}
-                                        placeholder="Número do Cartão"
-                                        icon={<Ionicons name="card-outline" size={22} color="#6C757D" />}
-                                        keyboardType="numeric"
-                                        editable={false}
-                                    />
-                                    <View style={styles.rowInputContainerPadronizado}>
-                                        <View style={[{ flex: 1, marginRight: 7 }]}> {/* metade esquerda */}
-                                            <InputField
-                                                value={card.expiry}
-                                                onChangeText={(text) => handleInputChange(card.id, 'expiry', text)}
-                                                placeholder="Mês / Ano (MM/AA)"
-                                                icon={<Ionicons name="calendar-outline" size={22} color="#6C757D" />}
-                                                keyboardType="numeric"
-                                            />
-                                        </View>
-                                        <View style={[{ flex: 1, marginLeft: 7 }]}> {/* metade direita */}
-                                            <InputField
-                                                value={card.cvv || ''}
-                                                onChangeText={(text) => handleInputChange(card.id, 'cvv', text)}
-                                                placeholder="CVV"
-                                                icon={<Ionicons name="lock-closed-outline" size={22} color="#6C757D" />}
-                                                keyboardType="numeric"
-                                                secureTextEntry
-                                            />
-                                        </View>
-                                    </View>
-                                    {/* Payment type selection REMOVED */}
-                                    <View style={styles.switchContainer}>
-                                        <Text style={styles.switchLabel}>Tornar principal</Text>
-                                        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                                            {principalLoadingId === card.id ? (
-                                                <ActivityIndicator size="small" color="#6CC51D" />
-                                            ) : (
-                                                <Switch
-                                                    trackColor={{ false: "#E0E0E0", true: "#A5D6A7" }}
-                                                    thumbColor={card.isPrincipal ? "#6CC51D" : "#f4f3f4"}
-                                                    onValueChange={() => handleSetPrincipal(card.id)}
-                                                    value={card.isPrincipal}
-                                                    disabled={card.isPrincipal || isLoading}
-                                                />
-                                            )}
-                                        </View>
-                                    </View>
-                                    <Button
-                                        title={isLoading ? 'Salvando...' : 'Salvar Alterações'}
-                                        onPress={() => handleSaveChanges(card.id)}
-                                        disabled={isLoading}
-                                    />
-                                    <View style={{ height: 12 }} />
-                                    <Button
-                                        title="Excluir Cartão"
-                                        onPress={() => handleDeleteCard(card.id)}
-                                        disabled={isLoading}
-                                    />
-                                </View>
-                            )}
+                {cards.length === 0 && !isLoading ? (
+                    <View style={styles.emptyStateContainer}>
+                        <View style={styles.emptyIconContainer}>
+                            <Ionicons name="card-outline" size={64} color="#6CC51D" />
                         </View>
-                    ))}
-                    {cards.length > 0 && (
-                        <TouchableOpacity
-                            onPress={() => router.push('/addCard')}
-                            style={[styles.addNewCardButtonEmpty, isLoading && styles.buttonDisabled]}
-                            disabled={isLoading}
+                        <Text style={styles.emptyTitle}>Nenhum cartão cadastrado</Text>
+                        <Text style={styles.emptySubtitle}>
+                            Adicione um cartão para facilitar seus pagamentos
+                        </Text>
+                        <TouchableOpacity 
+                            onPress={() => router.push('/addCard')} 
+                            style={styles.addCardButton}
                         >
-                            <Ionicons name="add-circle-outline" size={22} color="#6CC51D" style={styles.addNewCardIcon} />
-                            <Text style={styles.addNewCardButtonText}>Adicionar novo cartão</Text>
+                            <Text style={styles.addCardButtonText}>Adicionar Cartão</Text>
+                            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 8 }} />
                         </TouchableOpacity>
-                    )}
-                </ScrollView>
-            )}
-        </View>
+                    </View>
+                ) : (
+                    <ScrollView 
+                        style={styles.scrollView} 
+                        contentContainerStyle={styles.scrollViewContent}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {/* Stats Card - Total de cartões */}
+                        {cards.length > 0 && (
+                            <View style={styles.statsCard}>
+                                <View style={styles.statsIconContainer}>
+                                    <Ionicons name="card" size={20} color="#6CC51D" />
+                                </View>
+                                <Text style={styles.statsText}>
+                                    {cards.length} {cards.length === 1 ? 'cartão cadastrado' : 'cartões cadastrados'}
+                                </Text>
+                            </View>
+                        )}
+
+                        {/* Lista de cartões */}
+                        {cards.map((card) => (
+                            <View key={card.id} style={styles.cardContainer}>
+                                {card.isPrincipal && (
+                                    <View style={styles.principalBadge}>
+                                        <Text style={styles.principalBadgeText}>Principal</Text>
+                                    </View>
+                                )}
+                                
+                                <TouchableOpacity 
+                                    onPress={() => toggleCardExpansion(card.id)} 
+                                    style={styles.cardHeader}
+                                    activeOpacity={0.8}
+                                >
+                                    <View style={styles.cardInfo}>
+                                        <View style={styles.cardLogoContainer}>
+                                            {getCardLogo(card.brand)}
+                                        </View>
+                                        <View style={styles.cardDetails}>
+                                            <Text style={styles.cardName}>
+                                                {card.nickname || card.brand}
+                                            </Text>
+                                            <Text style={styles.cardNumber}>
+                                                •••• •••• •••• {card.last4Digits}
+                                            </Text>
+                                            <Text style={styles.cardMetadata}>
+                                                {card.expiry} • {card.paymentMethodType === 'debit' ? 'Débito' : 'Crédito'}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.cardActions}>
+                                        <Ionicons
+                                            name={expandedCardId === card.id ? "chevron-up" : "chevron-down"}
+                                            size={20}
+                                            color={expandedCardId === card.id ? "#6CC51D" : "#BDC3C7"}
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+
+                                {expandedCardId === card.id && (
+                                    <View style={styles.expandedContent}>
+                                        <View style={styles.divider} />
+                                        
+                                        <View style={styles.inputSection}>
+                                            <Text style={styles.sectionTitle}>Informações do Cartão</Text>
+                                            
+                                            <InputField
+                                                value={card.cardholderName}
+                                                onChangeText={(text) => handleInputChange(card.id, 'cardholderName', text)}
+                                                placeholder="Nome no cartão"
+                                                icon={<Ionicons name="person-outline" size={20} color="#6CC51D" />}
+                                                keyboardType="default"
+                                            />
+                                            
+                                            <InputField
+                                                value={`•••• •••• •••• ${card.last4Digits}`}
+                                                onChangeText={() => {}}
+                                                placeholder="Número do Cartão"
+                                                icon={<Ionicons name="card-outline" size={20} color="#6CC51D" />}
+                                                keyboardType="numeric"
+                                                editable={false}
+                                            />
+                                            
+                                            <View style={styles.rowInputs}>
+                                                <View style={styles.halfInput}>
+                                                    <InputField
+                                                        value={card.expiry}
+                                                        onChangeText={(text) => handleInputChange(card.id, 'expiry', text)}
+                                                        placeholder="MM/AA"
+                                                        icon={<Ionicons name="calendar-outline" size={20} color="#6CC51D" />}
+                                                        keyboardType="numeric"
+                                                    />
+                                                </View>
+                                                <View style={styles.halfInput}>
+                                                    <InputField
+                                                        value={card.cvv || ''}
+                                                        onChangeText={(text) => handleInputChange(card.id, 'cvv', text)}
+                                                        placeholder="CVV"
+                                                        icon={<Ionicons name="lock-closed-outline" size={20} color="#6CC51D" />}
+                                                        keyboardType="numeric"
+                                                        secureTextEntry
+                                                    />
+                                                </View>
+                                            </View>
+
+                                            <View style={styles.principalToggle}>
+                                                <View style={styles.toggleInfo}>
+                                                    <Text style={styles.toggleTitle}>Cartão Principal</Text>
+                                                    <Text style={styles.toggleSubtitle}>
+                                                        Será usado como padrão nos pagamentos
+                                                    </Text>
+                                                </View>
+                                                <Switch
+                                                    value={card.isPrincipal}
+                                                    onValueChange={(value) => {
+                                                        if (value) {
+                                                            handleSetPrincipal(card.id);
+                                                        }
+                                                    }}
+                                                    thumbColor={card.isPrincipal ? "#6CC51D" : "#BDC3C7"}
+                                                    trackColor={{ false: "#F0F0F0", true: "#E8F8F5" }}
+                                                    disabled={principalLoadingId === card.id}
+                                                />
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.actionButtons}>
+                                            <TouchableOpacity 
+                                                style={styles.saveButton}
+                                                onPress={() => handleSaveChanges(card.id)}
+                                                disabled={isLoading}
+                                                activeOpacity={0.8}
+                                            >
+                                                <Text style={styles.saveButtonText}>
+                                                    {isLoading ? 'Salvando...' : 'Salvar Alterações'}
+                                                </Text>
+                                            </TouchableOpacity>
+                                            
+                                            <TouchableOpacity 
+                                                style={styles.deleteButton}
+                                                onPress={() => handleDeleteCard(card.id)}
+                                                disabled={isLoading}
+                                                activeOpacity={0.8}
+                                            >
+                                                <Text style={styles.deleteButtonText}>Excluir Cartão</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                )}
+                            </View>
+                        ))}
+                    </ScrollView>
+                )}
+            </View>
+        </SafeAreaView>
     );
 }
 
-
 const styles = StyleSheet.create({
-    // ... (seus estilos existentes) ...
-    centered: {
+    safeArea: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    errorText: {
-        color: 'red',
-        fontSize: 16,
-        textAlign: 'center',
-        marginBottom: 10,
-    },
-    retryText: {
-        color: '#6CC51D',
-        fontSize: 16,
-        fontWeight: 'bold',
-        padding: 10,
-    },
-    emptyText: {
-        fontSize: 18,
-        color: '#6C757D',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    addNewCardButtonEmpty: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#6CC51D',
-        backgroundColor: '#F1FFF0',
-        marginTop: 20, // Added margin for spacing from the list
-    },
-    addNewCardIcon: {
-        // marginRight: 8, // Icon already has some natural spacing, adjust if needed
-    },
-    addNewCardButtonText: {
-        fontSize: 18,
-        color: '#6C757D',
-        // marginBottom: 20, // Removed, not suitable for button
-        textAlign: 'center',
-        textAlignVertical: 'center', // For Android vertical alignment
-        includeFontPadding: false, // For Android to remove extra padding
-        marginLeft: 8, // Space between icon and text
-        fontFamily: 'Poppins_400Regular', // Ensure font family is consistent
-    },
-    disabledInput: {
-        backgroundColor: '#F0F0F0', // Cor de fundo para input desabilitado
-        color: '#888', // Cor do texto para input desabilitado
+        backgroundColor: "#FAFAFA",
     },
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA', 
+        backgroundColor: "#FAFAFA",
     },
+    
+    // Header seguindo padrão do design system
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 15,
-        paddingTop: Platform.OS === 'android' ? 25 + 15 : 40 + 15, 
-        paddingBottom: 15,
-        backgroundColor: '#FFFFFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#E9ECEF',
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingTop: 16,
+        paddingBottom: 24,
+        backgroundColor: "#FAFAFA",
     },
-    headerButton: {
-        padding: 8, 
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "#FFFFFF",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 16,
+        borderWidth: 1,
+        borderColor: "#F0F0F0",
+    },
+    headerContent: {
+        flex: 1,
+    },
+    headerGreeting: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 14,
+        color: "#7F8C8D",
+        marginBottom: 4,
     },
     headerTitle: {
-        fontSize: 20,
-        fontFamily: 'Poppins_600SemiBold', 
-        color: '#212529',
+        fontFamily: "Poppins_700Bold",
+        fontSize: 24,
+        color: "#2C3E50",
     },
+    addButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "#E8F8F5",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    // Loading & Error States
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 20,
+    },
+    loadingText: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 16,
+        color: "#7F8C8D",
+        marginTop: 12,
+        textAlign: "center",
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 20,
+    },
+    errorIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: "#FFEBEE",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 20,
+    },
+    errorTitle: {
+        fontFamily: "Poppins_700Bold",
+        fontSize: 20,
+        color: "#E74C3C",
+        marginBottom: 8,
+        textAlign: "center",
+    },
+    errorMessage: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 15,
+        color: "#7F8C8D",
+        textAlign: "center",
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    retryButton: {
+        backgroundColor: "#6CC51D",
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+        borderRadius: 16,
+    },
+    retryButtonText: {
+        fontFamily: "Poppins_600SemiBold",
+        fontSize: 15,
+        color: "#FFFFFF",
+    },
+
+    // Empty State
+    emptyStateContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 40,
+    },
+    emptyIconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: "#E8F8F5",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 24,
+    },
+    emptyTitle: {
+        fontFamily: "Poppins_700Bold",
+        fontSize: 20,
+        color: "#2C3E50",
+        marginBottom: 12,
+        textAlign: "center",
+    },
+    emptySubtitle: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 15,
+        color: "#7F8C8D",
+        marginBottom: 32,
+        textAlign: "center",
+        lineHeight: 22,
+    },
+    addCardButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#6CC51D",
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+        borderRadius: 16,
+    },
+    addCardButtonText: {
+        fontFamily: "Poppins_600SemiBold",
+        fontSize: 15,
+        color: "#FFFFFF",
+    },
+
+    // ScrollView
     scrollView: {
         flex: 1,
     },
     scrollViewContent: {
-        padding: 20,
-        paddingBottom: 100,
+        paddingHorizontal: 20,
+        paddingBottom: 20,
     },
-    cardItemContainer: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        marginBottom: 18,
-        shadowColor: "#ADB5BD",
-        shadowOffset: { width: 0, height: 2, },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-        elevation: 3,
+
+    // Stats Card seguindo padrão do design system
+    statsCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#FFFFFF",
+        marginBottom: 20,
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#E9ECEF',
-        position: 'relative', 
+        borderColor: "#F0F0F0",
     },
-    chevronIcon: {
-        marginLeft: 'auto', // Garante que o ícone fique à direita
+    statsIconContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "#E8F8F5",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
     },
-    principalCardBorder: {
-        borderColor: '#6CC51D', // Cor da borda para o cartão principal
-        borderWidth: 2,
-        borderRadius: 15, // Para combinar com o cardItemContainer
-        // marginVertical: 5, // Ajuste para compensar a borda se necessário
+    statsText: {
+        fontFamily: "Poppins_500Medium",
+        fontSize: 15,
+        color: "#2C3E50",
+        flex: 1,
+    },
+
+    // Card Container seguindo padrão do design system
+    cardContainer: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: "#F0F0F0",
+        position: "relative",
+        overflow: "hidden",
     },
     principalBadge: {
-        position: 'absolute',
-        top: -10,
-        right: 10,
-        backgroundColor: '#6CC51D',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 10,
-        zIndex: 1, // Para garantir que fique sobreposto
-        elevation: 2, // Sombra para Android
-        shadowColor: '#000', // Sombra para iOS
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 1,
+        position: "absolute",
+        top: -1,
+        right: 16,
+        backgroundColor: "#6CC51D",
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderBottomLeftRadius: 8,
+        borderBottomRightRadius: 8,
+        zIndex: 1,
     },
     principalBadgeText: {
-        color: '#FFFFFF',
-        fontFamily: 'Poppins_600SemiBold',
+        fontFamily: "Poppins_600SemiBold",
         fontSize: 10,
+        color: "#FFFFFF",
+        letterSpacing: 0.5,
     },
     cardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 18,
-        paddingHorizontal: 15,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 20,
+        paddingHorizontal: 20,
     },
     cardInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         flex: 1,
     },
     cardLogoContainer: {
-        width: 50,
-        height: 32, 
-        borderRadius: 5, 
-        backgroundColor: '#F1F3F5', 
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 15,
-        overflow: 'hidden', 
+        width: 48,
+        height: 32,
+        borderRadius: 8,
+        backgroundColor: "#F8F9FA",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 16,
+        borderWidth: 1,
+        borderColor: "#F0F0F0",
     },
-    mastercardLogo: { 
-        width: '70%',
-        height: '70%',
+    cardLogo: {
+        width: 32,
+        height: 20,
     },
-    visaLogo: { 
-        width: '80%',
-        height: '80%',
+    cardLogoPlaceholder: {
+        justifyContent: "center",
+        alignItems: "center",
     },
-    cardLogoPlaceholder: { 
-        width: 40,
-        height: 25,
-        borderRadius: 4,
-        backgroundColor: '#E9ECEF',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    cardTextContainer: {
-        flex: 1,
-    },
-    cardBrand: {
-        fontSize: 16,
-        fontFamily: 'Poppins_600SemiBold',
-        color: '#343A40',
-        marginBottom: 2,
-    },
-    cardNumber: {
-        fontSize: 14,
-        fontFamily: 'Poppins_400Regular',
-        color: '#495057',
-        letterSpacing: 0.5, 
+    cardLogoText: {
+        fontFamily: "Poppins_600SemiBold",
+        fontSize: 10,
+        color: "#7F8C8D",
     },
     cardDetails: {
+        flex: 1,
+    },
+    cardName: {
+        fontFamily: "Poppins_600SemiBold",
+        fontSize: 16,
+        color: "#2C3E50",
+        marginBottom: 4,
+    },
+    cardNumber: {
+        fontFamily: "Poppins_500Medium",
+        fontSize: 14,
+        color: "#6CC51D",
+        marginBottom: 4,
+        letterSpacing: 1,
+    },
+    cardMetadata: {
+        fontFamily: "Poppins_400Regular",
         fontSize: 12,
-        fontFamily: 'Poppins_400Regular',
-        color: '#6C757D',
-        marginTop: 3,
+        color: "#7F8C8D",
     },
-    cardExpandedContentPadronizado: {
+    cardActions: {
+        marginLeft: 16,
+    },
+
+    // Expanded Content
+    expandedContent: {
         paddingHorizontal: 20,
-        paddingTop: 18,
-        paddingBottom: 18,
-        borderTopWidth: 1,
-        borderTopColor: '#EEEEEE',
-        backgroundColor: '#FFFFFF',
-        borderBottomLeftRadius: 12,
-        borderBottomRightRadius: 12,
-        marginBottom: 5,
+        paddingBottom: 20,
     },
-    rowInputContainerPadronizado: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 15,
+    divider: {
+        height: 1,
+        backgroundColor: "#F0F0F0",
+        marginBottom: 20,
     },
-    inputContainerPadronizado: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        marginBottom: 18,
-        height: 52,
-        borderWidth: 1,
-        borderColor: '#DEE2E6',
+    inputSection: {
+        marginBottom: 24,
     },
-    paymentTypeContainerPadronizado: {
-        flexDirection: 'row',
+    sectionTitle: {
+        fontFamily: "Poppins_600SemiBold",
+        fontSize: 16,
+        color: "#2C3E50",
+        marginBottom: 16,
+    },
+    rowInputs: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 12,
+    },
+    halfInput: {
         flex: 1,
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginLeft: 5,
     },
-    switchContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 18,
-        paddingVertical: 8, 
+    principalToggle: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F8F9FA",
+        padding: 16,
+        borderRadius: 12,
+        marginTop: 16,
     },
-    switchLabel: {
+    toggleInfo: {
+        flex: 1,
+        marginRight: 16,
+    },
+    toggleTitle: {
+        fontFamily: "Poppins_500Medium",
         fontSize: 15,
-        fontFamily: 'Poppins_400Regular',
-        color: '#343A40',
-        marginRight: 10, 
+        color: "#2C3E50",
+        marginBottom: 4,
     },
-    saveButtonSmall: { // Botão de salvar alterações dentro do cartão
-        backgroundColor: '#6CC51D',
-        paddingVertical: 12,
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 15,
-        marginBottom: 10,
+    toggleSubtitle: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 12,
+        color: "#7F8C8D",
+        lineHeight: 16,
     },
-    buttonDisabled: { // Estilo para botões desabilitados durante o loading
-        opacity: 0.7,
+
+    // Action Buttons
+    actionButtons: {
+        gap: 12,
     },
-    pickerStyle: { // Estilo para o Picker
-        flex: 1,
-        height: 50,
-        color: '#343A40',
-        fontFamily: 'Poppins_400Regular',
-        // backgroundColor: '#FFFFFF', // Garante fundo branco se necessário
-        // borderWidth: 1, // Opcional: adicionar borda se desejar
-        // borderColor: '#CED4DA', // Opcional: cor da borda
-        // borderRadius: 8, // Opcional: borda arredondada
+    saveButton: {
+        backgroundColor: "#6CC51D",
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: "center",
     },
-    paymentTypeButton: {
-        flex: 1,
-        paddingVertical: 10,
-        marginHorizontal: 5,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#CED4DA',
-        backgroundColor: '#F8F9FA',
-        alignItems: 'center',
-    },
-    paymentTypeButtonSelected: {
-        backgroundColor: '#6CC51D',
-        borderColor: '#6CC51D',
-    },
-    paymentTypeText: {
-        color: '#343A40',
-        fontFamily: 'Poppins_400Regular',
+    saveButtonText: {
+        fontFamily: "Poppins_600SemiBold",
         fontSize: 15,
+        color: "#FFFFFF",
     },
-    paymentTypeTextSelected: {
-        color: '#FFF',
-        fontFamily: 'Poppins_600SemiBold',
+    deleteButton: {
+        backgroundColor: "#FFFFFF",
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#E74C3C",
     },
-    paymentTypeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: 10,
-        marginBottom: 10,
-    },
-    inputIcon: {
-        marginRight: 10,
+    deleteButtonText: {
+        fontFamily: "Poppins_500Medium",
+        fontSize: 15,
+        color: "#E74C3C",
     },
 });

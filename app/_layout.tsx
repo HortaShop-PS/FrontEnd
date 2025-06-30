@@ -17,7 +17,6 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [appIsReady, setAppIsReady] = useState(false);
   const [isUserProducer, setIsUserProducer] = useState<boolean | null>(null);
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const segments = useSegments();
   const router = useRouter();
   
@@ -48,79 +47,59 @@ export default function RootLayout() {
     initializeNotifications();
   }, []);
 
-  // useEffect que executa apenas uma vez quando o app estiver pronto
+  // useEffect simplificado - apenas para definir o tipo de usuário
   useEffect(() => {
-    const checkAuthAndRedirect = async () => {
-      // Evitar múltiplas execuções
-      if (hasCheckedAuth) return;
-      
-      try {
-        const token = await getToken();
-        
-        if (token) {
-          console.log('✅ Token encontrado, verificando tipo de usuário...');
-          const userType = await getUserType();
-          
-          if (userType === 'producer') {
-            setIsUserProducer(true);
+    const checkUserType = async () => {
+      // Só fazer isso se estiver numa área autenticada
+      if (segments.includes('(tabs)') || segments.includes('(tabsProducers)')) {
+        try {
+          const token = await getToken();
+          if (token) {
+            const userType = await getUserType();
+            setIsUserProducer(userType === 'producer');
             
-            // Redirecionar apenas se não estiver já na área correta
-            if (!segments.includes('(tabsProducers)')) {
-              console.log('📍 Redirecionando para área de produtores...');
-              router.replace('/(tabsProducers)');
+            // Re-registrar token FCM quando autenticado
+            try {
+              await notificationService.reRegisterToken();
+            } catch (error) {
+              console.error('Erro ao re-registrar token FCM:', error);
             }
           } else {
-            setIsUserProducer(false);
-            
-            // Redirecionar apenas se não estiver já na área correta
-            if (!segments.includes('(tabs)')) {
-              console.log('📍 Redirecionando para área de consumidores...');
-              router.replace('/(tabs)');
-            }
+            setIsUserProducer(null);
           }
-          
-          // Re-registrar token FCM quando autenticado
-          try {
-            await notificationService.reRegisterToken();
-          } catch (error) {
-            console.error('Erro ao re-registrar token FCM:', error);
-          }
-        } else {
-          console.log('❌ Token não encontrado, usuário não autenticado');
+        } catch (error) {
+          console.error('Erro ao verificar tipo de usuário:', error);
           setIsUserProducer(null);
-          
-          // Redirecionar para welcome apenas se não estiver já lá
-          if (!segments.includes('welcome') && !segments.includes('login') && !segments.includes('register')) {
-            console.log('📍 Redirecionando para tela de boas-vindas...');
-            router.replace('/welcome');
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-        setIsUserProducer(null);
-        
-        // Em caso de erro, redirecionar para welcome
-        if (!segments.includes('welcome')) {
-          router.replace('/welcome');
         }
       }
-      
-      setHasCheckedAuth(true);
     };
 
-    // Só verificar se o app estiver pronto e as fontes carregadas
     if (appIsReady && fontsLoaded) {
-      checkAuthAndRedirect();
+      checkUserType();
     }
-  }, [appIsReady, fontsLoaded, hasCheckedAuth, segments, router]);
+  }, [appIsReady, fontsLoaded, segments]);
 
   if (!appIsReady || !fontsLoaded) {
     return null;
   }
 
+  // Determinar se deve mostrar o botão flutuante do carrinho
+  // Apenas para consumidores autenticados e apenas na tela home (index)
+  const shouldShowFloatingCartButton = () => {
+    if (isUserProducer !== false) return false; // Não é consumidor
+    
+    // Verificar se está na tela home dos consumidores
+    const isOnConsumerHome = segments.includes('(tabs)') && 
+                            (segments[segments.length - 1] === 'index' || 
+                             (segments.length === 1 && segments[0] === '(tabs)'));
+    
+    return isOnConsumerHome;
+  };
+
   return (
     <AlertProvider>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="welcome" />
         <Stack.Screen name="welcome2" />
         <Stack.Screen name="login" />
@@ -130,6 +109,15 @@ export default function RootLayout() {
         <Stack.Screen name="(tabsProducers)" />
         <Stack.Screen name="productDetails" />
         <Stack.Screen name="registerProduct" />
+        <Stack.Screen name="(tabsDelivery)" />
+        <Stack.Screen name="loginDelivery" />
+        <Stack.Screen name="registerDelivery" />
+        <Stack.Screen name="deliveryDashboard" />
+        <Stack.Screen name="deliveryHistory" />
+        <Stack.Screen name="aboutDelivery" />
+        <Stack.Screen name="vehicleData" />
+        <Stack.Screen name="earnings" />
+        <Stack.Screen name="orderDetailsDelivery/[id]" />
         <Stack.Screen name="registerProductsCategories" />
         <Stack.Screen name="cart" />
         <Stack.Screen name="favorites" />
@@ -148,10 +136,14 @@ export default function RootLayout() {
         <Stack.Screen name="profile/editPhone" />
         <Stack.Screen name="profile/editAddress" />
         <Stack.Screen name="profile/changePassword" />
+        <Stack.Screen name="profile/orderHistory" />
+        <Stack.Screen name="addresses/index" />
+        <Stack.Screen name="addresses/[id]" />
+        <Stack.Screen name="addresses/new" />
       </Stack>
       
-      {/* Mostrar botão flutuante apenas para consumidores autenticados */}
-      {isUserProducer === false && <FloatingCartButton />}
+      {/* Botão flutuante do carrinho - apenas para consumidores na home */}
+      {shouldShowFloatingCartButton() && <FloatingCartButton />}
     </AlertProvider>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, StatusBar, SafeAreaView, RefreshControl } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { showError } from '../utils/alertService';
@@ -66,11 +66,9 @@ export default function FavoritesScreen() {
     try {
       const success = await removeFromFavorites(productId);
       if (success) {
-
         setFavorites(prevFavorites => 
           prevFavorites.filter(item => item.id !== productId)
         );
-        
       }
     } catch (error) {
       console.error('Erro ao remover favorito:', error);
@@ -104,155 +102,236 @@ export default function FavoritesScreen() {
           resizeMode="cover" 
           defaultSource={require('../assets/images/logo/hortaShop_sem_fundo.png')}
         />
+        <TouchableOpacity 
+          style={styles.favoriteButton}
+          onPress={() => handleRemoveFavorite(item.id)}
+        >
+          <Ionicons name="heart" size={16} color="#E74C3C" />
+        </TouchableOpacity>
       </View>
       <View style={styles.produtoInfo}>
-        <Text style={styles.produtoNome} numberOfLines={1}>{item.name}</Text>
+        <Text style={styles.produtoNome} numberOfLines={2}>{item.name}</Text>
         <View style={styles.produtoPrecoContainer}>
           <Text style={styles.produtoPreco}>
             R$ {item.price.toFixed(2).replace('.', ',')}
           </Text>
           <Text style={styles.produtoUnidade}>/{item.unit}</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.addToCartButton}
-          onPress={() => handleRemoveFavorite(item.id)}
-        >
-          <Ionicons name="heart-dislike" size={18} color="#FFFFFF" />
-        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 
-  const renderEmptyList = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="heart-outline" size={60} color="#CCCCCC" />
-      <Text style={styles.emptyText}>Você ainda não tem favoritos</Text>
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <View style={styles.emptyIconContainer}>
+        <Ionicons name="heart-outline" size={64} color="#6CC51D" />
+      </View>
+      <Text style={styles.emptyTitle}>Nenhum favorito ainda</Text>
+      <Text style={styles.emptyText}>
+        Adicione produtos aos seus favoritos para encontrá-los facilmente aqui
+      </Text>
       <TouchableOpacity 
         style={styles.browseButton}
         onPress={() => router.push('/(tabs)')}
       >
-        <Text style={styles.browseButtonText}>Explorar produtos</Text>
+        <Ionicons name="search" size={20} color="#FFFFFF" />
+        <Text style={styles.browseButtonText}>Explorar Produtos</Text>
       </TouchableOpacity>
     </View>
   );
 
-  if (loading && !refreshing) {
+  if (!fontsLoaded || (loading && !refreshing)) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6CC51D" />
+        <Text style={styles.loadingText}>Carregando favoritos...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Header seguindo padrão flat UI */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Meus Favoritos</Text>
-        <View style={styles.placeholder} />
+        <View style={styles.headerLeft}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#2C3E50" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Meus Favoritos</Text>
+        </View>
+        <View style={styles.headerRight}>
+          {favorites.length > 0 && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{favorites.length}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
-      <FlatList
-        data={favorites}
-        renderItem={renderFavoriteItem}
-        keyExtractor={item => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={renderEmptyList}
-        onRefresh={handleRefresh}
-        refreshing={refreshing}
-      />
-    </View>
+      {/* Main Container */}
+      <View style={styles.mainContainer}>
+        <FlatList
+          data={favorites}
+          renderItem={renderFavoriteItem}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={['#6CC51D']}
+              tintColor="#6CC51D"
+            />
+          }
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
+  },
+  mainContainer: {
+    flex: 1,
+    backgroundColor: "#FAFAFA",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA',
   },
+  loadingText: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 16,
+    color: '#7F8C8D',
+    marginTop: 16,
+  },
+
+  // Header seguindo padrão flat UI
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 15,
+    paddingTop: 10,
+    paddingBottom: 20,
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 24,
+    color: '#6CC51D',
+  },
+  countBadge: {
+    backgroundColor: '#E8F8F5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  countText: {
     fontFamily: 'Poppins_600SemiBold',
-    fontSize: 18,
-    color: '#333333',
+    fontSize: 14,
+    color: '#6CC51D',
   },
-  placeholder: {
-    width: 40,
+
+  // List Container
+  listContainer: {
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  listContent: {
-    padding: 15,
-    paddingBottom: 30,
-  },
+
+  // Product Cards seguindo padrão flat UI
   produtoCard: {
-    width: "48%",
+    width: "47%",
     backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    marginBottom: 16,
-    marginRight: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    marginRight: "6%",
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   produtoImageContainer: {
     position: "relative",
     height: 140,
-    backgroundColor: "#e8f5e9",
+    backgroundColor: "#F8F9FA",
     alignItems: "center",
     justifyContent: "center",
   },
   produtoImagem: {
     width: "100%",
     height: "100%",
-    resizeMode: "contain",
+    resizeMode: "cover",
+  },
+  favoriteButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   newBadge: {
     position: "absolute",
-    top: 8,
-    left: 8,
-    backgroundColor: "#6CC51D",
+    top: 12,
+    left: 12,
+    backgroundColor: "#E74C3C",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 8,
     zIndex: 1,
   },
   newBadgeText: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 10,
     color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
   produtoInfo: {
-    padding: 12,
-    position: "relative",
-    backgroundColor: "#f5f5f5",
+    padding: 16,
   },
   produtoNome: {
     fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-    color: "#333333",
-    marginBottom: 6,
+    fontSize: 15,
+    color: "#2C3E50",
+    marginBottom: 8,
+    lineHeight: 20,
   },
   produtoPrecoContainer: {
     flexDirection: "row",
@@ -260,58 +339,60 @@ const styles = StyleSheet.create({
   },
   produtoPreco: {
     fontFamily: "Poppins_700Bold",
-    fontSize: 16,
+    fontSize: 18,
     color: "#6CC51D",
   },
   produtoUnidade: {
     fontFamily: "Poppins_400Regular",
     fontSize: 12,
-    color: "#999999",
-    marginLeft: 2,
+    color: "#7F8C8D",
+    marginLeft: 4,
   },
-  addToCartButton: {
-    position: "absolute",
-    right: 12,
-    bottom: 12,
-    backgroundColor: "#6CC51D",
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  removeButton: {
-    position: 'absolute',
-    right: 10,
-    bottom: 10,
-    padding: 6,
-    borderRadius: 15,
-    backgroundColor: '#F5F5F5',
-  },
-  emptyContainer: {
+
+  // Empty State seguindo padrão do index.tsx
+  emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    marginTop: 100,
+    paddingHorizontal: 32,
+    paddingTop: 120,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#E8F8F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 20,
+    color: '#2C3E50',
+    textAlign: 'center',
+    marginBottom: 12,
   },
   emptyText: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 16,
-    color: '#999999',
-    marginTop: 16,
-    marginBottom: 24,
+    color: '#7F8C8D',
     textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
   },
   browseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#6CC51D',
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 10,
+    borderRadius: 25,
   },
   browseButtonText: {
     fontFamily: 'Poppins_600SemiBold',
-    fontSize: 14,
+    fontSize: 16,
     color: '#FFFFFF',
+    marginLeft: 8,
   },
 });

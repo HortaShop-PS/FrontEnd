@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, SafeAreaView, StatusBar } from 'react-native';
 import { showAlert, showSuccess, showError, showWarning, showInfo } from '../utils/alertService';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,15 +8,16 @@ import { getCart, addToCart, updateCartItemQuantity, removeCartItem, clearCart }
 
 // Interface para o item do carrinho, baseada na estrutura esperada da API
 interface CartItem {
-  id: string; // ID do CartItem
+  id: string;
   productId: string;
   quantity: number;
-  price: number; // Preço total do item (produto.price * quantity)
+  price: number;
   product: {
     id: string;
     name: string;
     imageUrl: string;
-    price: number; // Preço unitário do produto
+    price: number;
+    unit?: string;
   };
 }
 
@@ -51,8 +52,8 @@ export default function CartScreen() {
       const data = await getCart();
       setCart(data);
     } catch (err: any) {
-      console.error('Erro ao carregar carrinho:', err);
-      setError(err.message || 'Não foi possível carregar o carrinho.');
+      console.error('Erro ao carregar cesta:', err);
+      setError(err.message || 'Não foi possível carregar a cesta.');
       setCart({ id: '', userId: 0, items: [], total: 0 }); // Carrinho vazio em caso de erro
     } finally {
       setLoading(false);
@@ -69,7 +70,7 @@ export default function CartScreen() {
   const handleRemoveItem = async (cartItemId: string) => {
     showAlert(
       "Remover Item",
-      "Tem certeza que deseja remover este item do carrinho?",
+      "Tem certeza que deseja remover este item da cesta?",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -92,7 +93,7 @@ export default function CartScreen() {
                 return { ...prevCart, items: updatedItems, total: newTotal };
               });
 
-              showSuccess('Sucesso', 'Item removido do carrinho.');
+              showSuccess('Sucesso', 'Item removido da cesta.');
             } catch (err: any) {
               showError('Erro', err.message || 'Não foi possível remover o item.');
             }
@@ -141,7 +142,7 @@ export default function CartScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6CC51D" />
-        <Text style={styles.loadingText}>Carregando carrinho...</Text>
+        <Text style={styles.loadingText}>Carregando cesta...</Text>
       </View>
     );
   }
@@ -149,7 +150,9 @@ export default function CartScreen() {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={64} color="#E74C3C" />
+        <View style={styles.errorIconContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#E74C3C" />
+        </View>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchCart}>
           <Text style={styles.retryButtonText}>Tentar Novamente</Text>
@@ -160,30 +163,36 @@ export default function CartScreen() {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        
+        {/* Header modernizado (seguindo padrão do index.tsx) */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color="#2C3E50" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Meu Carrinho</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <View style={styles.emptyCartContainer}>
-          <View style={styles.emptyCartIcon}>
-            <Ionicons name="cart-outline" size={80} color="#BDC3C7" />
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Minha Cesta</Text>
           </View>
-          <Text style={styles.emptyCartTitle}>Seu carrinho está vazio</Text>
-          <Text style={styles.emptyCartSubtitle}>Adicione produtos para começar suas compras</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="cart-outline" size={80} color="#6CC51D" />
+          </View>
+          <Text style={styles.emptyTitle}>Sua cesta está vazia</Text>
+          <Text style={styles.emptySubtitle}>Adicione produtos para começar suas compras</Text>
           <TouchableOpacity style={styles.shopButton} onPress={() => router.push('/')}>
             <Text style={styles.shopButtonText}>Explorar Produtos</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   const renderCartItem = ({ item }: { item: CartItem }) => (
-    <View style={styles.cartItemContainer}>
+    <View style={styles.cartCard}>
       <View style={styles.productImageContainer}>
         <Image 
           source={{ uri: `${API_BASE_URL}${item.product.imageUrl}` }}
@@ -196,7 +205,7 @@ export default function CartScreen() {
         <View style={styles.itemHeader}>
           <Text style={styles.productName} numberOfLines={2}>{item.product.name}</Text>
           <TouchableOpacity onPress={() => handleRemoveItem(item.id)} style={styles.removeButton}>
-            <Ionicons name="close" size={20} color="#95A5A6" />
+            <Ionicons name="close-circle" size={20} color="#E74C3C" />
           </TouchableOpacity>
         </View>
         
@@ -208,7 +217,7 @@ export default function CartScreen() {
               onPress={() => handleUpdateQuantity(item.id, item.quantity - 1)} 
               style={styles.quantityButton}
             >
-              <Ionicons name="remove" size={16} color="#fff" />
+              <Ionicons name="remove" size={16} color="#FFFFFF" />
             </TouchableOpacity>
             <View style={styles.quantityDisplay}>
               <Text style={styles.quantityText}>{item.quantity}</Text>
@@ -217,7 +226,7 @@ export default function CartScreen() {
               onPress={() => handleUpdateQuantity(item.id, item.quantity + 1)} 
               style={styles.quantityButton}
             >
-              <Ionicons name="add" size={16} color="#fff" />
+              <Ionicons name="add" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           
@@ -228,16 +237,21 @@ export default function CartScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Header modernizado (seguindo padrão do index.tsx) */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color="#2C3E50" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Meu Carrinho</Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Minha Cesta</Text>
+        </View>
         <TouchableOpacity onPress={() => {
           showAlert(
-            "Limpar Carrinho",
-            "Tem certeza que deseja remover todos os itens do carrinho?",
+            "Limpar Cesta",
+            "Tem certeza que deseja remover todos os itens da cesta?",
             [
               { text: "Cancelar", style: "cancel" },
               {
@@ -246,24 +260,28 @@ export default function CartScreen() {
                 onPress: async () => {
                   try {
                     await clearCart();
-                    showSuccess('Sucesso', 'Carrinho limpo com sucesso.');
+                    showSuccess('Sucesso', 'Cesta limpa com sucesso.');
                     fetchCart();
                   } catch (err: any) {
-                    showError('Erro', err.message || 'Não foi possível limpar o carrinho.');
+                    showError('Erro', err.message || 'Não foi possível limpar a cesta.');
                   }
                 }
               }
             ],
             'warning'
           );
-        }}>
-          <Ionicons name="trash-outline" size={24} color="#E74C3C" />
+        }} style={styles.clearButton}>
+          <Ionicons name="trash-outline" size={20} color="#E74C3C" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.itemsCounter}>
-        <Text style={styles.itemsCounterText}>
-          {cart.items.length} {cart.items.length === 1 ? 'item' : 'itens'} no carrinho
+      {/* Items Counter Card */}
+      <View style={styles.counterCard}>
+        <View style={styles.counterIconContainer}>
+          <Ionicons name="basket" size={20} color="#6CC51D" />
+        </View>
+        <Text style={styles.counterText}>
+          {cart.items.length} {cart.items.length === 1 ? 'item' : 'itens'} na cesta
         </Text>
       </View>
 
@@ -271,18 +289,19 @@ export default function CartScreen() {
         data={cart.items}
         renderItem={renderCartItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContentContainer}
+        contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
       />
 
+      {/* Footer Total and Checkout */}
       <View style={styles.footer}>
-        <View style={styles.totalSummary}>
+        <View style={styles.totalCard}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Subtotal</Text>
             <Text style={styles.totalValue}>R$ {cart.total.toFixed(2).replace('.', ',')}</Text>
           </View>
-          <View style={styles.totalRow}>
+          <View style={[styles.totalRow, styles.finalTotalRow]}>
             <Text style={styles.totalLabelFinal}>Total</Text>
             <Text style={styles.totalValueFinal}>R$ {cart.total.toFixed(2).replace('.', ',')}</Text>
           </View>
@@ -295,271 +314,341 @@ export default function CartScreen() {
               router.push('/checkout');
             }
           }}
+          activeOpacity={0.8}
         >
           <Text style={styles.checkoutButtonText}>Finalizar Compra</Text>
-          <Ionicons name="arrow-forward" size={20} color="#fff" />
+          <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#FAFAFA",
   },
+  
+  // Loading States (seguindo padrão do index.tsx)
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FAFAFA",
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#7F8C8D',
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    marginTop: 12,
   },
+  
+  // Error States
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#F8F9FA',
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+    backgroundColor: "#FAFAFA",
   },
-  errorText: {
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#E74C3C',
-    textAlign: 'center',
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  retryButton: {
-    backgroundColor: '#6CC51D',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Poppins_600SemiBold',
-  },
-  emptyCartContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  emptyCartIcon: {
+  errorIconContainer: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#ECF0F1',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFEBEE",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 24,
   },
-  emptyCartTitle: {
-    fontSize: 24,
-    fontFamily: 'Poppins_700Bold',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  emptyCartSubtitle: {
+  errorText: {
+    fontFamily: "Poppins_400Regular",
     fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#7F8C8D',
-    textAlign: 'center',
-    marginBottom: 32,
+    color: "#E74C3C",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 24,
   },
-  shopButton: {
-    backgroundColor: '#6CC51D',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 8,
+  retryButton: {
+    backgroundColor: "#6CC51D",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 16,
   },
-  shopButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Poppins_600SemiBold',
+  retryButtonText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#FFFFFF",
   },
+  
+  // Header (seguindo padrão do index.tsx)
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ECF0F1',
+    paddingTop: 10,
+    paddingBottom: 20,
+    backgroundColor: "#FFFFFF",
   },
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 20,
+    backgroundColor: "#F8F9FA",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Poppins_700Bold',
-    color: '#2C3E50',
+    fontFamily: "Poppins_700Bold",
+    fontSize: 24,
+    color: "#6CC51D",
   },
-  itemsCounter: {
-    backgroundColor: '#fff',
+  clearButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFEBEE",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  
+  // Counter Card (seguindo padrão do index.tsx)
+  counterCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ECF0F1',
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
-  itemsCounterText: {
-    fontSize: 14,
-    fontFamily: 'Poppins_400Regular',
-    color: '#7F8C8D',
+  counterIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
-  listContentContainer: {
-    padding: 20,
-    paddingBottom: 200,
+  counterText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#2C3E50",
+  },
+  
+  // List Container
+  listContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 200, // Espaço para o footer
   },
   itemSeparator: {
     height: 16,
   },
-  cartItemContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+  
+  // Cart Cards (seguindo padrão do index.tsx)
+  cartCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     padding: 16,
+    flexDirection: "row",
     borderWidth: 1,
-    borderColor: '#ECF0F1',
+    borderColor: "#F0F0F0",
   },
   productImageContainer: {
     width: 80,
     height: 80,
-    borderRadius: 8,
-    backgroundColor: '#ECF0F1',
-    overflow: 'hidden',
+    borderRadius: 16,
+    backgroundColor: "#F8F9FA",
+    overflow: "hidden",
     marginRight: 16,
   },
   productImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
+  
+  // Item Content
   itemContent: {
     flex: 1,
   },
   itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 8,
   },
   productName: {
-    fontSize: 16,
-    fontFamily: 'Poppins_600SemiBold',
-    color: '#2C3E50',
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#2C3E50",
     flex: 1,
     marginRight: 8,
   },
   removeButton: {
     width: 24,
     height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   productPrice: {
+    fontFamily: "Poppins_400Regular",
     fontSize: 14,
-    fontFamily: 'Poppins_400Regular',
-    color: '#7F8C8D',
+    color: "#7F8C8D",
     marginBottom: 12,
   },
+  
+  // Bottom Row with Quantity and Total
   bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   quantityControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   quantityButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#6CC51D',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#6CC51D",
+    justifyContent: "center",
+    alignItems: "center",
   },
   quantityDisplay: {
     width: 48,
     height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
     marginHorizontal: 8,
-    borderRadius: 6,
+    borderRadius: 16,
   },
   quantityText: {
-    fontSize: 16,
-    fontFamily: 'Poppins_600SemiBold',
-    color: '#2C3E50',
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#2C3E50",
   },
   itemTotalPrice: {
-    fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
-    color: '#6CC51D',
+    fontFamily: "Poppins_700Bold",
+    fontSize: 16,
+    color: "#6CC51D",
   },
+  
+  // Empty State (seguindo padrão do index.tsx)
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 24,
+    color: "#2C3E50",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 32,
+  },
+  shopButton: {
+    backgroundColor: "#6CC51D",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+  },
+  shopButtonText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#FFFFFF",
+  },
+  
+  // Footer (seguindo padrão do index.tsx)
   footer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: '#ECF0F1',
+    borderTopColor: "#F0F0F0",
     padding: 20,
   },
-  totalSummary: {
-    marginBottom: 20,
+  totalCard: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
   },
   totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
+  finalTotalRow: {
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+    paddingTop: 12,
+    marginTop: 8,
+    marginBottom: 0,
+  },
   totalLabel: {
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#7F8C8D',
+    fontFamily: "Poppins_400Regular",
+    fontSize: 15,
+    color: "#7F8C8D",
   },
   totalValue: {
-    fontSize: 16,
-    fontFamily: 'Poppins_600SemiBold',
-    color: '#2C3E50',
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#2C3E50",
   },
   totalLabelFinal: {
-    fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
-    color: '#2C3E50',
+    fontFamily: "Poppins_700Bold",
+    fontSize: 16,
+    color: "#2C3E50",
   },
   totalValueFinal: {
-    fontSize: 20,
-    fontFamily: 'Poppins_700Bold',
-    color: '#6CC51D',
+    fontFamily: "Poppins_700Bold",
+    fontSize: 18,
+    color: "#6CC51D",
   },
   checkoutButton: {
-    backgroundColor: '#6CC51D',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#6CC51D",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   checkoutButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+    color: "#FFFFFF",
     marginRight: 8,
   },
 });

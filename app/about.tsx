@@ -1,296 +1,514 @@
-import { useEffect, useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, SafeAreaView, StyleSheet } from "react-native"
-import { Stack, useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
-import { Platform } from 'react-native';
-import { getProfile } from "../utils/authServices"
-import * as authUtils from "../utils/authServices"
-import { showAlert, showSuccess, showError } from "../utils/alertService"
-
-const API_BASE_URL = Platform.select({
-  android: process.env.EXPO_PUBLIC_API_BASE_URL,
-  ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,
-  default: process.env.EXPO_PUBLIC_API_BASE_URL,
-});
+import React, { useState, useEffect } from "react";
+import { 
+  Text, 
+  View, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  StatusBar, 
+  SafeAreaView, 
+  ScrollView, 
+  ActivityIndicator,
+  Alert 
+} from "react-native";
+import { Stack, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
+import { showError, showSuccess } from "../utils/alertService";
+import { getProfile } from "../utils/authServices";
+import * as authUtils from "../utils/authServices";
 
 export default function AboutMe() {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
-  const [currentPassword, setCurrentPassword] = useState("")
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [userId, setUserId] = useState<number | null>(null)
-  const router = useRouter()
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const router = useRouter();
+
+  const [fontsLoaded] = useFonts({
+    Poppins_600SemiBold,
+    Poppins_400Regular,
+    Poppins_700Bold,
+  });
 
   useEffect(() => {
-    loadUserData()
-  }, [])
+    loadUserData();
+  }, []);
 
   const loadUserData = async () => {
     try {
-      const profile = await getProfile()
-      setName(profile.name)
-      setEmail(profile.email)
-      setPhone(profile.phoneNumber || "")
-      setUserId(profile.id)
+      const profile = await getProfile();
+      setName(profile.name);
+      setEmail(profile.email);
+      setPhone(profile.phoneNumber || "");
+      setUserId(profile.id);
     } catch (error) {
-      console.error("Erro ao carregar dados do usuário:", error)
-      showError("Erro", "Não foi possível carregar os dados do usuário")
+      console.error("Erro ao carregar dados do usuário:", error);
+      showError("Erro", "Não foi possível carregar os dados do usuário");
     }
-  }
+  };
 
   const handleUpdateProfile = async () => {
     if (!name.trim()) {
-      showError("Erro", "Nome é obrigatório")
-      return
+      showError("Erro", "Nome é obrigatório");
+      return;
     }
 
     if (!userId) {
-      showError("Erro", "ID do usuário não encontrado")
-      return
+      showError("Erro", "ID do usuário não encontrado");
+      return;
     }
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       await authUtils.updateProfile(userId, {
         name: name.trim(),
-        phoneNumber: phone.trim() || undefined
-      })
-      showSuccess("Sucesso", "Perfil atualizado com sucesso!")
+        phoneNumber: phone.trim() || undefined,
+      });
+      showSuccess("Sucesso", "Perfil atualizado com sucesso!");
     } catch (error: any) {
-      console.error("Erro ao atualizar perfil:", error)
-      showError("Erro", error.message || "Não foi possível atualizar o perfil")
+      console.error("Erro ao atualizar perfil:", error);
+      showError("Erro", error.message || "Não foi possível atualizar o perfil");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleUpdatePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      showError("Erro", "Preencha todos os campos de senha")
-      return
+      showError("Erro", "Preencha todos os campos de senha");
+      return;
     }
 
     if (newPassword !== confirmPassword) {
-      showError("Erro", "A nova senha e confirmação não coincidem")
-      return
+      showError("Erro", "As senhas não coincidem");
+      return;
     }
 
     if (newPassword.length < 6) {
-      showError("Erro", "A nova senha deve ter pelo menos 6 caracteres")
-      return
-    }
-
-    if (!userId) {
-      showError("Erro", "ID do usuário não encontrado")
-      return
+      showError("Erro", "A nova senha deve ter pelo menos 6 caracteres");
+      return;
     }
 
     try {
-      setIsLoading(true)
-      await authUtils.updatePassword(userId, {
-        currentPassword,
-        newPassword
-      })
-      showSuccess("Sucesso", "Senha atualizada com sucesso!")
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
+      setIsPasswordLoading(true);
+      await authUtils.updatePassword(currentPassword, newPassword);
+      showSuccess("Sucesso", "Senha alterada com sucesso!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error: any) {
-      console.error("Erro ao atualizar senha:", error)
-      showError("Erro", error.message || "Não foi possível atualizar a senha")
+      console.error("Erro ao atualizar senha:", error);
+      showError("Erro", error.message || "Não foi possível alterar a senha");
     } finally {
-      setIsLoading(false)
+      setIsPasswordLoading(false);
     }
+  };
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6CC51D" />
+      </View>
+    );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <Stack.Screen
         options={{
-          title: "Sobre Mim",
-          headerShown: true,
-          headerStyle: { backgroundColor: "#FFFFFF" },
-          headerTintColor: "#333",
-          headerTitleStyle: { fontWeight: "bold" },
+          headerShown: false,
         }}
       />
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
       
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-          
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Nome Completo</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="Digite seu nome completo"
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>E-mail</Text>
-            <TextInput
-              style={[styles.input, styles.inputDisabled]}
-              value={email}
-              editable={false}
-              placeholder="seu@email.com"
-              placeholderTextColor="#999"
-            />
-            <Text style={styles.helperText}>O e-mail não pode ser alterado</Text>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Telefone</Text>
-            <TextInput
-              style={styles.input}
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="(11) 99999-9999"
-              placeholderTextColor="#999"
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <TouchableOpacity 
-            style={[styles.button, isLoading && styles.buttonDisabled]} 
-            onPress={handleUpdateProfile}
-            disabled={isLoading}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? "Atualizando..." : "Atualizar Perfil"}
-            </Text>
-          </TouchableOpacity>
+      {/* Header seguindo padrão do design system */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#2C3E50" />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerGreeting}>Editar</Text>
+          <Text style={styles.headerTitle}>Meu Perfil</Text>
         </View>
+      </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Alterar Senha</Text>
+      <ScrollView style={styles.mainContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
           
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Senha Atual</Text>
-            <TextInput
-              style={styles.input}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              placeholder="Digite sua senha atual"
-              placeholderTextColor="#999"
-              secureTextEntry
-            />
+          {/* Informações Pessoais Card */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconContainer}>
+                <Ionicons name="person-outline" size={20} color="#6CC51D" />
+              </View>
+              <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Nome Completo</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={18} color="#7F8C8D" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Digite seu nome completo"
+                  placeholderTextColor="#BDC3C7"
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>E-mail</Text>
+              <View style={[styles.inputWrapper, styles.inputDisabled]}>
+                <Ionicons name="mail-outline" size={18} color="#BDC3C7" style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: "#BDC3C7" }]}
+                  value={email}
+                  editable={false}
+                  placeholder="seu@email.com"
+                  placeholderTextColor="#BDC3C7"
+                />
+                <Ionicons name="lock-closed-outline" size={16} color="#BDC3C7" />
+              </View>
+              <Text style={styles.helperText}>O e-mail não pode ser alterado</Text>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Telefone</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="call-outline" size={18} color="#7F8C8D" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="(11) 99999-9999"
+                  placeholderTextColor="#BDC3C7"
+                  keyboardType="phone-pad"
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.updateButton, isLoading && styles.buttonDisabled]} 
+              onPress={handleUpdateProfile}
+              disabled={isLoading}
+              activeOpacity={0.8}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                  <Text style={styles.updateButtonText}>Atualizar Perfil</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Nova Senha</Text>
-            <TextInput
-              style={styles.input}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="Digite a nova senha"
-              placeholderTextColor="#999"
-              secureTextEntry
-            />
+          {/* Alterar Senha Card */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconContainer}>
+                <Ionicons name="lock-closed-outline" size={20} color="#6CC51D" />
+              </View>
+              <Text style={styles.sectionTitle}>Alterar Senha</Text>
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Senha Atual</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="key-outline" size={18} color="#7F8C8D" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  placeholder="Digite sua senha atual"
+                  placeholderTextColor="#BDC3C7"
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons 
+                    name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                    size={18} 
+                    color="#7F8C8D" 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Nova Senha</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={18} color="#7F8C8D" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="Digite a nova senha"
+                  placeholderTextColor="#BDC3C7"
+                  secureTextEntry={!showNewPassword}
+                />
+                <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
+                  <Ionicons 
+                    name={showNewPassword ? "eye-outline" : "eye-off-outline"} 
+                    size={18} 
+                    color="#7F8C8D" 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Confirmar Nova Senha</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="shield-checkmark-outline" size={18} color="#7F8C8D" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirme a nova senha"
+                  placeholderTextColor="#BDC3C7"
+                  secureTextEntry={!showConfirmPassword}
+                />
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  <Ionicons 
+                    name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} 
+                    size={18} 
+                    color="#7F8C8D" 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.updateButton, styles.passwordButton, isPasswordLoading && styles.buttonDisabled]} 
+              onPress={handleUpdatePassword}
+              disabled={isPasswordLoading}
+              activeOpacity={0.8}
+            >
+              {isPasswordLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="shield-checkmark" size={20} color="#FFFFFF" />
+                  <Text style={styles.updateButtonText}>Alterar Senha</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Confirmar Nova Senha</Text>
-            <TextInput
-              style={styles.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirme a nova senha"
-              placeholderTextColor="#999"
-              secureTextEntry
-            />
+          {/* Info Card */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoIconContainer}>
+              <Ionicons name="information-circle-outline" size={20} color="#6CC51D" />
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoTitle}>Segurança da Conta</Text>
+              <Text style={styles.infoText}>
+                Mantenha seus dados sempre atualizados e use uma senha forte para proteger sua conta.
+              </Text>
+            </View>
           </View>
 
-          <TouchableOpacity 
-            style={[styles.button, styles.buttonSecondary, isLoading && styles.buttonDisabled]} 
-            onPress={handleUpdatePassword}
-            disabled={isLoading}
-          >
-            <Text style={[styles.buttonText, styles.buttonSecondaryText]}>
-              {isLoading ? "Atualizando..." : "Alterar Senha"}
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FAFAFA",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
+  },
+  
+  // Header seguindo padrão estabelecido
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+    backgroundColor: "#FAFAFA",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerGreeting: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    marginBottom: 4,
+  },
+  headerTitle: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 24,
+    color: "#2C3E50",
+  },
+
+  mainContainer: {
+    flex: 1,
+    backgroundColor: "#FAFAFA",
+  },
   container: {
-    flex: 1,
-    backgroundColor: "#f4f5f9",
+    paddingHorizontal: 20,
+    paddingBottom: 30,
   },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 16,
+
+  // Section Cards seguindo padrão do design system
+  sectionCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
-  section: {
-    marginTop: 20,
-    marginBottom: 10,
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  sectionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#E8F8E8",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
   sectionTitle: {
+    fontFamily: "Poppins_600SemiBold",
     fontSize: 18,
-    fontWeight: "600",
-    color: "#000000",
-    marginBottom: 16,
+    color: "#2C3E50",
   },
+
+  // Input fields with flat design
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputLabel: {
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
-    fontWeight: "500",
-    color: "#333333",
+    color: "#2C3E50",
     marginBottom: 8,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#e1e1e1",
-    borderRadius: 8,
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: "#ffffff",
-    color: "#333333",
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontFamily: "Poppins_400Regular",
+    fontSize: 15,
+    color: "#2C3E50",
   },
   inputDisabled: {
-    backgroundColor: "#f5f5f5",
-    color: "#666666",
+    backgroundColor: "#F5F6FA",
+    borderColor: "#E9ECEF",
   },
   helperText: {
+    fontFamily: "Poppins_400Regular",
     fontSize: 12,
-    color: "#666666",
-    marginTop: 4,
+    color: "#7F8C8D",
+    marginTop: 6,
+    marginLeft: 4,
   },
-  button: {
+
+  // Buttons seguindo padrão flat
+  updateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#6CC51D",
     paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: "center",
+    borderRadius: 12,
     marginTop: 8,
   },
-  buttonSecondary: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#6CC51D",
+  passwordButton: {
+    backgroundColor: "#6CC51D",
+  },
+  updateButtonText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#FFFFFF",
+    marginLeft: 8,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600",
+
+  // Info Card
+  infoCard: {
+    flexDirection: "row",
+    backgroundColor: "#F4FDF0",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E8F8E8",
+    marginBottom: 10,
   },
-  buttonSecondaryText: {
-    color: "#6CC51D",
+  infoIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E8F8E8",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    marginTop: 2,
   },
-})
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+    color: "#2C3E50",
+    marginBottom: 4,
+  },
+  infoText: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 13,
+    color: "#7F8C8D",
+    lineHeight: 18,
+  },
+});
