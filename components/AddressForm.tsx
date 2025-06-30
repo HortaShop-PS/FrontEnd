@@ -8,7 +8,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
-  Alert,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
@@ -74,7 +75,6 @@ export default function AddressForm({ address, onSave, onCancel, loading = false
     }
   }, [address]);
 
-  // Função de busca de endereços movida para fora do useEffect
   const searchAddresses = async (query: string) => {
     if (query.length < 3) return;
 
@@ -92,7 +92,6 @@ export default function AddressForm({ address, onSave, onCancel, loading = false
     }
   };
 
-  // Debounce para busca de endereços
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchQuery.length >= 3) {
@@ -111,7 +110,6 @@ export default function AddressForm({ address, onSave, onCancel, loading = false
     setSearchQuery(suggestion.description);
     
     try {
-      // Tentar extrair componentes do endereço
       const addressComponents = googleMapsService.parseAddressFromDescription(suggestion.description);
       
       setFormData(prev => ({
@@ -155,11 +153,9 @@ export default function AddressForm({ address, onSave, onCancel, loading = false
       let savedAddress: Address;
       
       if (address?.id) {
-        // Atualizar endereço existente
         savedAddress = await addressService.updateAddress(address.id, addressData);
         showSuccess('Sucesso', 'Endereço atualizado com sucesso!');
       } else {
-        // Criar novo endereço
         savedAddress = await addressService.createAddress(addressData);
         showSuccess('Sucesso', 'Endereço criado com sucesso!');
       }
@@ -190,244 +186,297 @@ export default function AddressForm({ address, onSave, onCancel, loading = false
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Busca por endereço */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Buscar Endereço</Text>
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputContainer}>
-            <Ionicons name="search" size={20} color="#7F8C8D" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Digite o endereço para buscar..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#BDC3C7"
-            />
-            {searchLoading && (
-              <ActivityIndicator size="small" color="#6CC51D" style={styles.searchLoader} />
-            )}
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+      
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        
+        {/* Busca por endereço */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="search-outline" size={20} color="#6CC51D" />
+            </View>
+            <Text style={styles.sectionTitle}>Buscar Endereço</Text>
           </View>
           
-          {showSuggestions && suggestions.length > 0 && (
-            <View style={styles.suggestionsContainer}>
-              {suggestions.map((suggestion, index) => (
-                <TouchableOpacity
-                  key={`${suggestion.place_id || index}`}
-                  style={styles.suggestionItem}
-                  onPress={() => selectSuggestion(suggestion)}
-                >
-                  <Ionicons name="location-outline" size={16} color="#6CC51D" />
-                  <View style={styles.suggestionText}>
-                    <Text style={styles.suggestionMain}>{suggestion.main_text}</Text>
-                    <Text style={styles.suggestionSecondary}>{suggestion.secondary_text}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <Ionicons name="search" size={18} color="#7F8C8D" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Digite o endereço para buscar..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#BDC3C7"
+              />
+              {searchLoading && (
+                <ActivityIndicator size="small" color="#6CC51D" style={styles.searchLoader} />
+              )}
             </View>
-          )}
-        </View>
-      </View>
-
-      {/* Formulário de endereço */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dados do Endereço</Text>
-        
-        <View style={styles.row}>
-          <View style={[styles.inputContainer, { flex: 3 }]}>
-            <Text style={styles.label}>Rua *</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.street}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, street: text }))}
-              placeholder="Nome da rua"
-              placeholderTextColor="#BDC3C7"
-            />
-          </View>
-          <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
-            <Text style={styles.label}>Número *</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.number}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, number: text }))}
-              placeholder="123"
-              placeholderTextColor="#BDC3C7"
-            />
+            
+            {showSuggestions && suggestions.length > 0 && (
+              <View style={styles.suggestionsContainer}>
+                {suggestions.map((suggestion, index) => (
+                  <TouchableOpacity
+                    key={`${suggestion.place_id || index}`}
+                    style={styles.suggestionItem}
+                    onPress={() => selectSuggestion(suggestion)}
+                  >
+                    <View style={styles.suggestionIconContainer}>
+                      <Ionicons name="location-outline" size={16} color="#6CC51D" />
+                    </View>
+                    <View style={styles.suggestionText}>
+                      <Text style={styles.suggestionMain}>{suggestion.main_text}</Text>
+                      <Text style={styles.suggestionSecondary}>{suggestion.secondary_text}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Complemento</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.complement}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, complement: text }))}
-            placeholder="Apto, casa, bloco..."
-            placeholderTextColor="#BDC3C7"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Bairro *</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.neighborhood}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, neighborhood: text }))}
-            placeholder="Nome do bairro"
-            placeholderTextColor="#BDC3C7"
-          />
-        </View>
-
-        <View style={styles.row}>
-          <View style={[styles.inputContainer, { flex: 2 }]}>
-            <Text style={styles.label}>Cidade *</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.city}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, city: text }))}
-              placeholder="Nome da cidade"
-              placeholderTextColor="#BDC3C7"
-            />
+        {/* Formulário de endereço */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="home-outline" size={20} color="#6CC51D" />
+            </View>
+            <Text style={styles.sectionTitle}>Dados do Endereço</Text>
           </View>
-          <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
-            <Text style={styles.label}>Estado *</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.state}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, state: text.toUpperCase() }))}
-              placeholder="SP"
-              placeholderTextColor="#BDC3C7"
-              maxLength={2}
-              autoCapitalize="characters"
-            />
+          
+          <View style={styles.row}>
+            <View style={[styles.inputContainer, { flex: 3 }]}>
+              <Text style={styles.label}>Rua *</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  value={formData.street}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, street: text }))}
+                  placeholder="Nome da rua"
+                  placeholderTextColor="#BDC3C7"
+                />
+              </View>
+            </View>
+            <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
+              <Text style={styles.label}>Número *</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  value={formData.number}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, number: text }))}
+                  placeholder="123"
+                  placeholderTextColor="#BDC3C7"
+                />
+              </View>
+            </View>
           </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Complemento</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={formData.complement}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, complement: text }))}
+                placeholder="Apto, casa, bloco..."
+                placeholderTextColor="#BDC3C7"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Bairro *</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={formData.neighborhood}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, neighborhood: text }))}
+                placeholder="Nome do bairro"
+                placeholderTextColor="#BDC3C7"
+              />
+            </View>
+          </View>
+
+          <View style={styles.row}>
+            <View style={[styles.inputContainer, { flex: 2 }]}>
+              <Text style={styles.label}>Cidade *</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  value={formData.city}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, city: text }))}
+                  placeholder="Nome da cidade"
+                  placeholderTextColor="#BDC3C7"
+                />
+              </View>
+            </View>
+            <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
+              <Text style={styles.label}>Estado *</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  value={formData.state}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, state: text.toUpperCase() }))}
+                  placeholder="SP"
+                  placeholderTextColor="#BDC3C7"
+                  maxLength={2}
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>CEP *</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={formData.zipCode}
+                onChangeText={formatZipCodeInput}
+                placeholder="00000-000"
+                placeholderTextColor="#BDC3C7"
+                keyboardType="numeric"
+                maxLength={9}
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.defaultContainer}
+            onPress={() => setFormData(prev => ({ ...prev, isDefault: !prev.isDefault }))}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.checkbox, formData.isDefault && styles.checkboxChecked]}>
+              {formData.isDefault && <Ionicons name="checkmark" size={16} color="#6CC51D" />}
+            </View>
+            <Text style={styles.defaultLabel}>Definir como endereço padrão</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>CEP *</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.zipCode}
-            onChangeText={formatZipCodeInput}
-            placeholder="00000-000"
-            placeholderTextColor="#BDC3C7"
-            keyboardType="numeric"
-            maxLength={9}
-          />
+        {/* Botões de ação */}
+        <View style={styles.actions}>
+          <TouchableOpacity 
+            style={styles.cancelButton} 
+            onPress={onCancel}
+            disabled={loading || validating}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cancelButtonText}>Cancelar</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.saveButton, (loading || validating) && styles.saveButtonDisabled]}
+            onPress={handleSave}
+            disabled={loading || validating}
+            activeOpacity={0.8}
+          >
+            {(loading || validating) ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                <Text style={styles.saveButtonText}>
+                  {address?.id ? 'Atualizar' : 'Salvar'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.defaultContainer}
-          onPress={() => setFormData(prev => ({ ...prev, isDefault: !prev.isDefault }))}
-        >
-          <View style={[styles.checkbox, formData.isDefault && styles.checkboxChecked]}>
-            {formData.isDefault && <Ionicons name="checkmark" size={16} color="#fff" />}
-          </View>
-          <Text style={styles.defaultLabel}>Definir como endereço padrão</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Botões de ação */}
-      <View style={styles.actions}>
-        <TouchableOpacity 
-          style={styles.cancelButton} 
-          onPress={onCancel}
-          disabled={loading || validating}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.saveButton, (loading || validating) && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={loading || validating}
-        >
-          {(loading || validating) ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.saveButtonText}>
-              {address?.id ? 'Atualizar' : 'Salvar'}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <View style={{ height: 50 }} />
-    </ScrollView>
+        <View style={{ height: 30 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FAFAFA",
+  },
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAFAFA',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAFAFA',
   },
-  section: {
-    backgroundColor: '#fff',
+
+  // Section Cards seguindo padrão flat
+  sectionCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     marginHorizontal: 20,
     marginTop: 16,
-    borderRadius: 12,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  sectionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
   sectionTitle: {
+    fontFamily: "Poppins_600SemiBold",
     fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
-    color: '#2C3E50',
-    marginBottom: 16,
+    color: "#2C3E50",
   },
+
+  // Search
   searchContainer: {
     position: 'relative',
   },
   searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ECF0F1',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   searchIcon: {
     marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#2C3E50',
+    fontFamily: "Poppins_400Regular",
+    fontSize: 15,
+    color: "#2C3E50",
   },
   searchLoader: {
     marginLeft: 12,
   },
+
+  // Suggestions
   suggestionsContainer: {
     position: 'absolute',
     top: '100%',
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ECF0F1',
-    marginTop: 4,
+    borderColor: '#F0F0F0',
+    marginTop: 8,
     maxHeight: 200,
     zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
   },
   suggestionItem: {
     flexDirection: 'row',
@@ -436,72 +485,88 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F8F9FA',
   },
+  suggestionIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   suggestionText: {
-    marginLeft: 12,
     flex: 1,
   },
   suggestionMain: {
-    fontSize: 16,
     fontFamily: 'Poppins_600SemiBold',
+    fontSize: 15,
     color: '#2C3E50',
+    marginBottom: 2,
   },
   suggestionSecondary: {
-    fontSize: 14,
     fontFamily: 'Poppins_400Regular',
+    fontSize: 13,
     color: '#7F8C8D',
   },
+
+  // Form fields
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
-    fontFamily: 'Poppins_600SemiBold',
-    color: '#2C3E50',
+    color: "#2C3E50",
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: '#F8F9FA',
+  inputWrapper: {
+    backgroundColor: "#F8F9FA",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ECF0F1',
+    borderColor: "#F0F0F0",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#2C3E50',
+    paddingVertical: 14,
   },
+  input: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 15,
+    color: "#2C3E50",
+  },
+
+  // Default checkbox
   defaultContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 4,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#BDC3C7',
+    borderColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   checkboxChecked: {
-    backgroundColor: '#6CC51D',
+    backgroundColor: '#E8F8F5',
     borderColor: '#6CC51D',
   },
   defaultLabel: {
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#2C3E50',
+    fontFamily: "Poppins_400Regular",
+    fontSize: 15,
+    color: "#2C3E50",
   },
+
+  // Action buttons
   actions: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingTop: 20,
     gap: 12,
   },
   cancelButton: {
@@ -512,27 +577,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ECF0F1',
+    borderColor: '#F0F0F0',
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontFamily: 'Poppins_600SemiBold',
-    color: '#7F8C8D',
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#7F8C8D",
   },
   saveButton: {
     flex: 1,
     backgroundColor: '#6CC51D',
     borderRadius: 12,
     paddingVertical: 16,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 8,
   },
   saveButtonDisabled: {
     backgroundColor: '#BDC3C7',
   },
   saveButtonText: {
-    fontSize: 16,
-    fontFamily: 'Poppins_600SemiBold',
-    color: '#fff',
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: '#FFFFFF',
   },
 });

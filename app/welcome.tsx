@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, ImageBackground, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
@@ -7,6 +7,8 @@ import * as SecureStore from 'expo-secure-store';
 
 export default function WelcomeScreen() {
     const router = useRouter();
+    const [isReady, setIsReady] = useState(false);
+    const hasNavigated = useRef(false);
 
     const [fontsLoaded, fontError] = useFonts({
         Poppins_600SemiBold,
@@ -15,18 +17,41 @@ export default function WelcomeScreen() {
     });
 
     useEffect(() => {
-        const markWelcomeScreenAsSeen = async () => {
-            await SecureStore.setItemAsync('hasSeenWelcome', 'true');
+        const initializeWelcome = async () => {
+            try {
+                // Marcar que viu a tela de welcome
+                await SecureStore.setItemAsync('hasSeenWelcome', 'true');
+                console.log('✅ Welcome screen marcada como vista');
+                
+                // Aguardar um pouco para garantir que tudo está carregado e o usuário vê a tela
+                setTimeout(() => {
+                    console.log('✅ Welcome screen pronta para mostrar');
+                    setIsReady(true);
+                }, 2000); // 2 segundos para o usuário ver a tela
+            } catch (error) {
+                console.error('Erro ao inicializar welcome:', error);
+                setIsReady(true);
+            }
         };
         
-        markWelcomeScreenAsSeen();
-    }, []);
+        if (fontsLoaded) {
+            initializeWelcome();
+        }
+    }, [fontsLoaded]);
 
     function handleStart() {
+        if (hasNavigated.current) return;
+        
+        console.log('🔄 Navegando para welcome2');
+        hasNavigated.current = true;
         router.replace("/welcome2");
     }
 
     if (!fontsLoaded && !fontError) {
+        return <LoadingIndicator />;
+    }
+
+    if (!isReady) {
         return <LoadingIndicator />;
     }
 
@@ -79,31 +104,36 @@ const styles = StyleSheet.create({
     },
     titleBold: {
         fontFamily: 'Poppins_600SemiBold',
-        color: "#000",
-        fontSize: 24,
+        fontWeight: '600',
     },
     titleGreen: {
         fontFamily: 'Poppins_700Bold',
-        color: "#7ABC00",
-        fontSize: 48,
+        fontWeight: '700',
+        color: '#6CC51D',
     },
     subtitle: {
         fontFamily: 'Poppins_400Regular',
-        color: "#000",
-        fontSize: 14,
+        fontSize: 16,
         textAlign: "center",
+        color: '#666',
+        lineHeight: 24,
+        paddingHorizontal: 20,
     },
     button: {
-        backgroundColor: "#7ABC00",
+        backgroundColor: '#6CC51D',
         paddingVertical: 16,
-        borderRadius: 10,
-        width: "100%",
-        alignItems: "center",
-        elevation: 5,
+        paddingHorizontal: 60,
+        borderRadius: 25,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
     },
     buttonText: {
         fontFamily: 'Poppins_600SemiBold',
-        color: "#fff",
+        color: '#FFFFFF',
         fontSize: 16,
+        textAlign: 'center',
     },
 });
