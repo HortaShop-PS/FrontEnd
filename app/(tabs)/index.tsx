@@ -4,7 +4,6 @@ import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } fr
 import { useEffect, useState } from "react";
 import { fetchFeaturedProducts, fetchAllProducts, Product } from "../../utils/homeService";
 import { useRouter } from "expo-router";
-import Config from "react-native-config";
 
 export default function Index() {
   const router = useRouter();
@@ -238,7 +237,7 @@ export default function Index() {
                           </View>
                         )}
                         <Image 
-                          source={{ uri: `${Config.PI_BASE_URL}${produto.imageUrl}` }}  
+                          source={{ uri: `${produto.imageUrl}` }}  
                           style={styles.produtoImagem} 
                           resizeMode="cover" 
                           defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}

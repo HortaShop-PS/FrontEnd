@@ -3,6 +3,13 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 
+// Usar Platform.select para diferentes plataformas
+const API_BASE_URL = Platform.select({
+  android: process.env.EXPO_PUBLIC_API_BASE_URL,
+  ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,
+  default: process.env.EXPO_PUBLIC_API_BASE_URL,
+}) || 'http://10.0.2.2:3000';
+
 interface LoginCredentials {
   email: string;
   password: string;
@@ -39,12 +46,6 @@ interface UserProfile {
   updatedAt: Date;
   producerUuid?: string; 
 }
-
-const API_BASE_URL = Platform.select({
-  android: process.env.EXPO_PUBLIC_API_BASE_URL,
-  ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,
-  default: process.env.EXPO_PUBLIC_API_BASE_URL,
-});
 
 const AUTH_TOKEN_KEY = 'userToken';
 
@@ -221,3 +222,27 @@ export async function removeToken(): Promise<void> {
     console.error('Erro ao remover o token:', error);
   }
 }
+
+export const getUserType = async (): Promise<string | null> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      console.log('Token não encontrado para verificar tipo de usuário');
+      return null;
+    }
+
+    const response = await axios.get(`${API_BASE_URL}/users/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    
+    const userType = response.data.userType || response.data.type || 'consumer';
+    console.log('Tipo de usuário obtido:', userType);
+    return userType;
+  } catch (error) {
+    console.error('Erro ao obter tipo de usuário:', error);
+    return 'consumer'; // fallback padrão
+  }
+};

@@ -2,11 +2,16 @@ import { useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, StatusBar, ImageBackground, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins" // ADICIONADO
 import axios from "axios"
 import { showError, showSuccess } from '../utils/alertService';
-import Config from 'react-native-config';
+import LoadingIndicator from "./loadingIndicator"; // ADICIONADO
 
-const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:3000"
+const API_URL = Platform.select({
+  android: process.env.EXPO_PUBLIC_API_BASE_URL,
+  ios: process.env.EXPO_PUBLIC_API_BASE_URL_IOS,
+  default: process.env.EXPO_PUBLIC_API_BASE_URL,
+}) || 'http://10.0.2.2:3000';
 
 export default function Register() {
   const [name, setName] = useState("")
@@ -16,6 +21,13 @@ export default function Register() {
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  // ADICIONADO verificação de fontes
+  const [fontsLoaded, fontError] = useFonts({
+    Poppins_600SemiBold,
+    Poppins_400Regular,
+    Poppins_700Bold,
+  });
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible)
@@ -118,6 +130,11 @@ export default function Register() {
 
   const handlePhoneChange = (text: string) => {
     setPhone(formatPhoneNumber(text))
+  }
+
+  // ADICIONADO verificação de carregamento de fontes
+  if (!fontsLoaded && !fontError) {
+    return <LoadingIndicator />;
   }
 
   return (
@@ -267,14 +284,16 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   title: {
-    fontFamily: 'Poppins_600SemiBold',
+    // CORRIGIDO - removido fontFamily para usar fonte padrão se não carregada
     fontSize: 24, 
+    fontWeight: '600',
     color: '#333',
     marginBottom: 4, 
   },
   subtitle: {
-    fontFamily: 'Poppins_400Regular',
+    // CORRIGIDO - removido fontFamily para usar fonte padrão se não carregada
     fontSize: 14, 
+    fontWeight: '400',
     color: '#666',
     marginBottom: 16, 
   },
@@ -293,7 +312,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
     color: '#333',
   },
@@ -313,9 +331,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#AED581',
   },
   buttonText: {
-    fontFamily: 'Poppins_600SemiBold',
     color: "#fff",
     fontSize: 16,
+    fontWeight: '600',
   },
   footerLinkContainer: {
     flexDirection: 'row',
@@ -323,12 +341,11 @@ const styles = StyleSheet.create({
     marginTop: 6, 
   },
   footerLinkText: {
-    fontFamily: 'Poppins_400Regular',
     fontSize: 13, 
     color: '#666',
   },
   footerLinkAction: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontWeight: '600',
     color: '#333',
   },
 })
