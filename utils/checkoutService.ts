@@ -85,6 +85,29 @@ const getAuthHeaders = async (): Promise<Record<string, string>> => {
   return headers;
 };
 
+// Função para obter o ID do usuário do token
+const getUserIdFromToken = async (): Promise<number> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error('Token não encontrado');
+    }
+
+    // Decodificar o token JWT para obter o user ID
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    const payload = JSON.parse(jsonPayload);
+    return payload.sub || payload.id;
+  } catch (error) {
+    console.error('Erro ao decodificar token:', error);
+    throw new Error('Erro ao obter ID do usuário');
+  }
+};
+
 // Serviço de checkout
 export const checkoutService = {
   // Iniciar checkout
@@ -153,33 +176,24 @@ export const checkoutService = {
     }
   },
 
-  // Buscar endereços do usuário (mock - você pode implementar no backend)
+  // Buscar endereços do usuário (integrado com o backend)
   getUserAddresses: async (): Promise<Address[]> => {
     try {
-      // Mock de endereços - substitua pela chamada real da API quando implementada
-      return [
-        {
-          id: 1,
-          street: "Rua das Flores",
-          number: "123",
-          complement: "Apto 45",
-          neighborhood: "Centro",
-          city: "São Paulo",
-          state: "SP",
-          zipCode: "01234-567",
-          isDefault: true
-        },
-        {
-          id: 2,
-          street: "Avenida Paulista",
-          number: "1000",
-          neighborhood: "Bela Vista",
-          city: "São Paulo",
-          state: "SP",
-          zipCode: "01310-100",
-          isDefault: false
-        }
-      ];
+      const headers = await getAuthHeaders();
+      const userId = await getUserIdFromToken();
+      
+      const response = await fetch(`${resolvedApiBaseUrl}/addresses/user/${userId}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
+        throw new Error(errorData.message || 'Erro ao buscar endereços do usuário');
+      }
+
+      const addresses = await response.json();
+      return addresses;
     } catch (error: any) {
       console.error('Erro ao buscar endereços:', error);
       throw error;

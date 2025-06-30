@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold, Poppins_500Medium } from '@expo-google-fonts/poppins';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import { getProfile } from '../../utils/authServices';
@@ -27,6 +27,7 @@ export default function ProfileScreen() {
         Poppins_600SemiBold,
         Poppins_400Regular,
         Poppins_700Bold,
+        Poppins_500Medium,
     });
     const router = useRouter();
 
@@ -42,7 +43,6 @@ export default function ProfileScreen() {
                 profileImage: data.profileImage,
             });
             
-            // Carregar imagem de perfil se existir
             if (data.profileImage) {
                 const fullImageUrl = data.profileImage.startsWith('http') 
                     ? data.profileImage 
@@ -107,7 +107,6 @@ export default function ProfileScreen() {
         }
     };
 
-    // ✅ Função auxiliar para testar conectividade sem depender do apiConfig
     const testBasicConnectivity = async (): Promise<{ isConnected: boolean; error?: string }> => {
         try {
             console.log('🔗 Testando conectividade básica...');
@@ -147,10 +146,8 @@ export default function ProfileScreen() {
             console.log('📍 URI da imagem:', imageUri);
             console.log('🌐 API Base URL:', API_BASE_URL);
             
-            // ✅ Usar conectividade básica como fallback
             let connectivityTest;
             try {
-                // Tentar usar apiConfig primeiro
                 if (typeof apiConfig !== 'undefined' && apiConfig.testConnectivity) {
                     console.log('🔗 Testando conectividade com apiConfig...');
                     connectivityTest = await apiConfig.testConnectivity();
@@ -168,7 +165,6 @@ export default function ProfileScreen() {
             
             console.log('✅ Conectividade confirmada');
             
-            // Testar endpoint de upload (opcional)
             try {
                 if (typeof apiConfig !== 'undefined' && apiConfig.testUploadEndpoint) {
                     console.log('🔗 Testando endpoint de upload...');
@@ -183,14 +179,12 @@ export default function ProfileScreen() {
                 console.log('⚠️ Não foi possível testar endpoint de upload, continuando...');
             }
             
-            // Obter token de autenticação
             const token = await SecureStore.getItemAsync('userToken');
             if (!token) {
                 throw new Error('Token de autenticação não encontrado');
             }
             console.log('🔑 Token encontrado:', token ? 'Sim' : 'Não');
             
-            // Criar FormData para upload
             const formData = new FormData();
             const filename = imageUri.split('/').pop() || 'profile.jpg';
             const match = /\.(\w+)$/.exec(filename);
@@ -207,7 +201,6 @@ export default function ProfileScreen() {
             const uploadUrl = `${API_BASE_URL}/upload/profile-image`;
             console.log('🚀 URL de upload:', uploadUrl);
 
-            // ✅ Upload com retry e timeout
             let uploadResponse: Response;
             let attempts = 0;
             const maxAttempts = 3;
@@ -221,7 +214,7 @@ export default function ProfileScreen() {
                     const timeoutId = setTimeout(() => {
                         console.log('⏰ Timeout atingido, cancelando requisição...');
                         controller.abort();
-                    }, 30000); // 30 segundos
+                    }, 30000);
                     
                     uploadResponse = await fetch(uploadUrl, {
                         method: 'POST',
@@ -233,7 +226,7 @@ export default function ProfileScreen() {
                     });
                     
                     clearTimeout(timeoutId);
-                    break; // Sucesso
+                    break;
                     
                 } catch (fetchError: any) {
                     console.error(`❌ Erro na tentativa ${attempts}:`, fetchError.message);
@@ -242,7 +235,6 @@ export default function ProfileScreen() {
                         throw fetchError;
                     }
                     
-                    // Aguardar antes da próxima tentativa
                     console.log(`⏳ Aguardando ${2 * attempts}s antes da próxima tentativa...`);
                     await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
                 }
@@ -260,7 +252,6 @@ export default function ProfileScreen() {
                     const errorData = JSON.parse(errorText);
                     errorMessage = errorData.error || errorData.message || errorMessage;
                 } catch {
-                    // Se não conseguir parsear JSON, usar texto da resposta
                     if (errorText) errorMessage = errorText;
                 }
                 
@@ -274,7 +265,6 @@ export default function ProfileScreen() {
                 throw new Error(uploadResult.error || 'Erro ao processar upload');
             }
             
-            // ✅ Atualizar estado local
             const fullImageUrl = uploadResult.imageUrl.startsWith('http') 
                 ? uploadResult.imageUrl 
                 : `${API_BASE_URL}${uploadResult.imageUrl}`;
@@ -282,7 +272,6 @@ export default function ProfileScreen() {
             console.log('🖼️ URL da imagem final:', fullImageUrl);
             setProfileImage(fullImageUrl);
             
-            // Atualizar dados do usuário
             if (userData) {
                 setUserData({
                     ...userData,
@@ -299,7 +288,6 @@ export default function ProfileScreen() {
                 stack: error.stack
             });
             
-            // Tratamento específico de erros
             if (error.name === 'AbortError') {
                 Alert.alert(
                     'Tempo Esgotado', 
@@ -370,8 +358,10 @@ export default function ProfileScreen() {
     if (error) {
         return (
             <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={64} color="#FF3B30" />
-                <Text style={styles.errorTitle}>Erro ao carregar perfil</Text>
+                <View style={styles.errorIconContainer}>
+                    <Ionicons name="alert-circle-outline" size={48} color="#FF6B6B" />
+                </View>
+                <Text style={styles.errorTitle}>Ops! Algo deu errado</Text>
                 <Text style={styles.errorMessage}>{error}</Text>
                 <TouchableOpacity style={styles.retryButton} onPress={loadUserProfile}>
                     <Text style={styles.retryButtonText}>Tentar Novamente</Text>
@@ -381,280 +371,540 @@ export default function ProfileScreen() {
     }
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-            <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Meu Perfil</Text>
-                </View>
+        <SafeAreaView style={styles.safeArea}>
 
-                {/* Profile Section */}
-                <View style={styles.profileSection}>
-                    <View style={styles.profileImageContainer}>
-                        <TouchableOpacity 
-                            style={styles.containerCircle}
-                            onPress={selectImageFromGallery}
-                            disabled={uploadingImage}
-                        >
-                            {profileImage ? (
-                                <Image source={{ uri: profileImage }} style={styles.profileImage} />
-                            ) : (
-                                <Ionicons name="person" size={50} color="#6CC51D" />
-                            )}
-                        </TouchableOpacity>
+            <ScrollView style={styles.mainContainer} showsVerticalScrollIndicator={false}>
+                <View style={styles.container}>
+                    
+                    {/* Profile Card Principal */}
+                    <View style={styles.profileMainCard}>
+                        <View style={styles.profileImageSection}>
+                            <TouchableOpacity 
+                                style={styles.imageContainer}
+                                onPress={selectImageFromGallery}
+                                disabled={uploadingImage}
+                            >
+                                {profileImage ? (
+                                    <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                                ) : (
+                                    <View style={styles.defaultImageContainer}>
+                                        <Ionicons name="person" size={40} color="#6CC51D" />
+                                    </View>
+                                )}
+                                
+                                <View style={styles.editImageOverlay}>
+                                    {uploadingImage ? (
+                                        <ActivityIndicator size="small" color="#FFFFFF" />
+                                    ) : (
+                                        <Ionicons name="camera" size={16} color="#FFFFFF" />
+                                    )}
+                                </View>
+                            </TouchableOpacity>
+                            
+                            
+                        </View>
                         
-                        <TouchableOpacity 
-                            style={styles.editImageButton} 
-                            onPress={selectImageFromGallery}
-                            disabled={uploadingImage}
-                        >
-                            {uploadingImage ? (
-                                <ActivityIndicator size="small" color="#FFFFFF" />
-                            ) : (
-                                <Ionicons name="camera" size={18} color="#FFF" />
-                            )}
-                        </TouchableOpacity>
+                        {/* Informações do usuário */}
+                        <View style={styles.profileDetails}>
+                            <Text style={styles.profileName}>{userData?.name || "Usuário"}</Text>
+                            <Text style={styles.profileEmail}>{userData?.email || "usuario@email.com"}</Text>
+                        </View>
                     </View>
+
+                   
+
+                    {/* Menu Sections */}
+                    <View style={styles.menuSections}>
+                        
+                        {/* Conta Section */}
+                        <View style={styles.menuSection}>
+                            <View style={styles.sectionHeader}>
+                                <View style={styles.sectionIconContainer}>
+                                    <Ionicons name="person-circle-outline" size={20} color="#6CC51D" />
+                                </View>
+                                <Text style={styles.sectionTitle}>Minha Conta</Text>
+                            </View>
+                            
+                            <View style={styles.menuItems}>
+                                <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/about")}>
+                                    <View style={styles.menuItemLeft}>
+                                        <View style={[styles.menuItemIcon, { backgroundColor: '#E8F8F5' }]}>
+                                            <Ionicons name="person-outline" size={18} color="#6CC51D" />
+                                        </View>
+                                        <View style={styles.menuItemContent}>
+                                            <Text style={styles.menuItemTitle}>Informações Pessoais</Text>
+                                            <Text style={styles.menuItemSubtitle}>Edite seus dados pessoais</Text>
+                                        </View>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={18} color="#BDC3C7" />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/addresses")}>
+                                    <View style={styles.menuItemLeft}>
+                                        <View style={[styles.menuItemIcon, { backgroundColor: '#E8F8F5' }]}>
+                                            <Ionicons name="location-outline" size={18} color="#6CC51D" />
+                                        </View>
+                                        <View style={styles.menuItemContent}>
+                                            <Text style={styles.menuItemTitle}>Endereços</Text>
+                                            <Text style={styles.menuItemSubtitle}>Gerencie seus endereços</Text>
+                                        </View>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={18} color="#BDC3C7" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Pedidos & Pagamentos Section */}
+                        <View style={styles.menuSection}>
+                            <View style={styles.sectionHeader}>
+                                <View style={styles.sectionIconContainer}>
+                                    <Ionicons name="card-outline" size={20} color="#6CC51D" />
+                                </View>
+                                <Text style={styles.sectionTitle}>Pedidos & Pagamentos</Text>
+                            </View>
+                            
+                            <View style={styles.menuItems}>
+                                <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/profile/orderHistory")}>
+                                    <View style={styles.menuItemLeft}>
+                                        <View style={[styles.menuItemIcon, { backgroundColor: '#E8F8F5' }]}>
+                                            <Ionicons name="bag-outline" size={18} color="#6CC51D" />
+                                        </View>
+                                        <View style={styles.menuItemContent}>
+                                            <Text style={styles.menuItemTitle}>Histórico de Pedidos</Text>
+                                            <Text style={styles.menuItemSubtitle}>Veja todos os seus pedidos</Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.menuItemRight}>
                     
-                    <Text style={styles.userName}>{userData?.name || "Usuário"}</Text>
-                    <Text style={styles.userEmail}>{userData?.email || "usuario@email.com"}</Text>
-                    <TouchableOpacity style={styles.editProfileButton} onPress={() => router.push("/about")}>
-                        <Text style={styles.editProfileText}>Editar Perfil</Text>
+                                        <Ionicons name="chevron-forward" size={18} color="#BDC3C7" />
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/cards")}>
+                                    <View style={styles.menuItemLeft}>
+                                        <View style={[styles.menuItemIcon, { backgroundColor: '#E8F8F5' }]}>
+                                            <Ionicons name="card-outline" size={18} color="#6CC51D" />
+                                        </View>
+                                        <View style={styles.menuItemContent}>
+                                            <Text style={styles.menuItemTitle}>Cartões de Pagamento</Text>
+                                            <Text style={styles.menuItemSubtitle}>Gerencie seus cartões</Text>
+                                        </View>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={18} color="#BDC3C7" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Preferências Section */}
+                        <View style={styles.menuSection}>
+                            <View style={styles.sectionHeader}>
+                                <View style={styles.sectionIconContainer}>
+                                    <Ionicons name="heart-outline" size={20} color="#6CC51D" />
+                                </View>
+                                <Text style={styles.sectionTitle}>Preferências</Text>
+                            </View>
+                            
+                            <View style={styles.menuItems}>
+                                <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/favorites")}>
+                                    <View style={styles.menuItemLeft}>
+                                        <View style={[styles.menuItemIcon, { backgroundColor: '#E8F8F5' }]}>
+                                            <Ionicons name="heart-outline" size={18} color="#6CC51D" />
+                                        </View>
+                                        <View style={styles.menuItemContent}>
+                                            <Text style={styles.menuItemTitle}>Lista de Favoritos</Text>
+                                            <Text style={styles.menuItemSubtitle}>Seus produtos favoritos</Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.menuItemRight}>
+                    
+                                        <Ionicons name="chevron-forward" size={18} color="#BDC3C7" />
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Logout Button */}
+                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                        <View style={styles.logoutContent}>
+                            <View style={styles.logoutIconContainer}>
+                                <Ionicons name="log-out-outline" size={20} color="#FF6B6B" />
+                            </View>
+                            <Text style={styles.logoutText}>Sair da Conta</Text>
+                            <Ionicons name="arrow-forward" size={16} color="#FF6B6B" />
+                        </View>
                     </TouchableOpacity>
                 </View>
-
-                {/* Menu Section - Conta */}
-                <View style={styles.menuSection}>
-                    <Text style={styles.menuSectionTitle}>Conta</Text>
-                    
-                    <TouchableOpacity onPress={() => router.push("/about")}>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="person-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Sobre Mim</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => router.push("/addresses")}>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="location-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Meus Endereços</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => router.push("/profile/orderHistory")}>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="bag-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Meus Pedidos</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => router.push("/favorites")}>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="heart-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Favoritos</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => router.push("/cards")}>
-                        <View style={styles.menuItemRow}>
-                            <Ionicons name="card-outline" size={22} color="#6CC51D" style={styles.menuIcon} />
-                            <Text style={styles.menuItemText}>Cartões de Pagamento</Text>
-                            <Ionicons name="chevron-forward" size={22} color="#BDBDBD" style={styles.chevronIcon} />
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Logout Button */}
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                    <Ionicons name="log-out-outline" size={22} color="#FF6B6B" style={styles.logoutIcon} />
-                    <Text style={styles.logoutText}>Sair da Conta</Text>
-                </TouchableOpacity>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: "#6CC51D",
+    },
+    
+    // Header com gradiente
+    headerGradient: {
+        backgroundColor: "#6CC51D",
+        paddingBottom: 20,
+    },
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        paddingHorizontal: 20,
+        paddingTop: 10,
+    },
+    headerContent: {
+        flex: 1,
+    },
+    headerGreeting: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 14,
+        color: "rgba(255, 255, 255, 0.8)",
+        marginBottom: 4,
+    },
+    headerTitle: {
+        fontFamily: "Poppins_700Bold",
+        fontSize: 24,
+        color: "#FFFFFF",
+        marginBottom: 2,
+    },
+    headerSubtitle: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 12,
+        color: "rgba(255, 255, 255, 0.7)",
+    },
+    notificationButton: {
+        position: "relative",
+        padding: 8,
+    },
+    notificationBadge: {
+        position: "absolute",
+        top: 8,
+        right: 8,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: "#FF6B6B",
+    },
+    
+    // Main Container
+    mainContainer: {
+        flex: 1,
+        backgroundColor: "#F8F9FA",
+    },
     container: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        paddingTop: 20,
+        paddingBottom: 30,
     },
+    
+    // Loading & Error States
     loadingContainer: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#F8F9FA",
     },
     loadingText: {
         fontFamily: "Poppins_400Regular",
-        fontSize: 16,
-        color: "#6CC51D",
-        marginTop: 15,
-        textAlign: "center",
+        fontSize: 14,
+        color: "#6C757D",
+        marginTop: 12,
     },
     errorContainer: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
         padding: 20,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#F8F9FA",
+    },
+    errorIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: "#FFEBEE",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 20,
     },
     errorTitle: {
         fontFamily: "Poppins_600SemiBold",
         fontSize: 18,
-        color: "#FF3B30",
-        marginTop: 15,
-        marginBottom: 10,
+        color: "#FF6B6B",
+        marginBottom: 8,
         textAlign: "center",
     },
     errorMessage: {
         fontFamily: "Poppins_400Regular",
         fontSize: 14,
-        color: "#777",
+        color: "#6C757D",
         textAlign: "center",
-        marginBottom: 20,
+        marginBottom: 24,
         paddingHorizontal: 20,
         lineHeight: 20,
     },
     retryButton: {
         backgroundColor: "#6CC51D",
         paddingVertical: 12,
-        paddingHorizontal: 30,
+        paddingHorizontal: 32,
         borderRadius: 25,
     },
     retryButtonText: {
         fontFamily: "Poppins_600SemiBold",
-        fontSize: 16,
+        fontSize: 14,
         color: "#FFFFFF",
         textAlign: "center",
     },
-    header: {
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 10,
-        flexDirection: "row",
-        justifyContent: "center",
+    
+    // Profile Main Card
+    profileMainCard: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
+        marginHorizontal: 20,
+        marginBottom: 24,
+        padding: 24,
         alignItems: "center",
     },
-    headerTitle: {
-        fontFamily: "Poppins_700Bold",
-        fontSize: 18,
-        color: "#333",
-    },
-    profileSection: {
-        alignItems: "center",
-        paddingVertical: 20,
-        borderBottomWidth: 8,
-        borderBottomColor: "#F5F5F5",
-    },
-    profileImageContainer: {
+    profileImageSection: {
         position: "relative",
-        marginBottom: 15,
+        marginBottom: 20,
     },
-    containerCircle: {
+    imageContainer: {
+        position: "relative",
         width: 100,
         height: 100,
-        borderRadius: 50,
-        backgroundColor: "#F0F8FF",
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 2,
-        borderColor: "#6CC51D",
+        borderRadius: 10,
         overflow: "hidden",
+        borderWidth: 4,
+        borderColor: "#E8F5E8",
     },
     profileImage: {
         width: "100%",
         height: "100%",
-        borderRadius: 50,
     },
-    editImageButton: {
+    defaultImageContainer: {
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#E8F5E8",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    editImageOverlay: {
         position: "absolute",
         bottom: 0,
         right: 0,
         backgroundColor: "#6CC51D",
-        width: 34,
-        height: 34,
-        borderRadius: 17,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         justifyContent: "center",
         alignItems: "center",
-        borderWidth: 2,
+        borderWidth: 3,
         borderColor: "#FFFFFF",
     },
-    userName: {
-        fontFamily: "Poppins_600SemiBold",
-        fontSize: 18,
-        color: "#333",
-        marginBottom: 4,
+    profileBadge: {
+        position: "absolute",
+        top: -5,
+        right: -5,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 15,
+        padding: 2,
     },
-    userEmail: {
+    profileDetails: {
+        alignItems: "center",
+        width: "100%",
+    },
+    profileName: {
+        fontFamily: "Poppins_700Bold",
+        fontSize: 22,
+        color: "#2C3E50",
+        marginBottom: 4,
+        textAlign: "center",
+    },
+    profileEmail: {
         fontFamily: "Poppins_400Regular",
         fontSize: 14,
-        color: "#777",
-        marginBottom: 15,
+        color: "#6C757D",
+        marginBottom: 20,
+        textAlign: "center",
     },
-    editProfileButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 20,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: "#6CC51D",
+    profileStats: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F8F9FA",
+        borderRadius: 15,
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        width: "100%",
     },
-    editProfileText: {
-        fontFamily: "Poppins_600SemiBold",
-        fontSize: 14,
+    statItem: {
+        flex: 1,
+        alignItems: "center",
+    },
+    statNumber: {
+        fontFamily: "Poppins_700Bold",
+        fontSize: 18,
         color: "#6CC51D",
+        marginBottom: 2,
+    },
+    statLabel: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 12,
+        color: "#6C757D",
+    },
+    statDivider: {
+        width: 1,
+        height: 30,
+        backgroundColor: "#E9ECEF",
+        marginHorizontal: 16,
+    },
+    
+    // Quick Actions
+    quickActionsContainer: {
+        marginHorizontal: 20,
+        marginBottom: 24,
+    },
+    quickActionsGrid: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+    },
+    quickActionItem: {
+        alignItems: "center",
+        flex: 1,
+        marginHorizontal: 4,
+    },
+    quickActionIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 8,
+    },
+    quickActionText: {
+        fontFamily: "Poppins_500Medium",
+        fontSize: 12,
+        color: "#2C3E50",
+        textAlign: "center",
+    },
+    
+    // Menu Sections
+    menuSections: {
+        paddingHorizontal: 20,
+        gap: 16,
     },
     menuSection: {
-        paddingHorizontal: 20,
-        paddingVertical: 15,
-        borderBottomWidth: 8,
-        borderBottomColor: "#F5F5F5",
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        padding: 20,
     },
-    menuSectionTitle: {
+    sectionHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    sectionIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "#E8F5E8",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
+    },
+    sectionTitle: {
         fontFamily: "Poppins_600SemiBold",
         fontSize: 16,
-        color: "#333",
-        marginBottom: 15,
+        color: "#2C3E50",
     },
-    menuItemRow: {
+    menuItems: {
+        gap: 4,
+    },
+    menuItem: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 12,
+        justifyContent: "space-between",
+        paddingVertical: 16,
+        paddingHorizontal: 4,
     },
-    menuIcon: {
-        marginRight: 15,
-    },
-    menuItemText: {
-        fontFamily: "Poppins_400Regular",
-        fontSize: 15,
-        color: "#333",
+    menuItemLeft: {
+        flexDirection: "row",
+        alignItems: "center",
         flex: 1,
     },
-    chevronIcon: {
-        marginLeft: "auto",
+    menuItemIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 16,
     },
-    logoutButton: {
+    menuItemContent: {
+        flex: 1,
+    },
+    menuItemTitle: {
+        fontFamily: "Poppins_500Medium",
+        fontSize: 15,
+        color: "#2C3E50",
+        marginBottom: 2,
+    },
+    menuItemSubtitle: {
+        fontFamily: "Poppins_400Regular",
+        fontSize: 12,
+        color: "#6C757D",
+    },
+    menuItemRight: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "center",
-        marginTop: 20,
-        marginHorizontal: 20,
-        paddingVertical: 15,
-        borderRadius: 10,
-        backgroundColor: "#FFF0F0",
-        marginBottom: 20,
+        gap: 8,
     },
-    logoutIcon: {
-        marginRight: 10,
+    badge: {
+        backgroundColor: "#6CC51D",
+        borderRadius: 10,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        minWidth: 20,
+        alignItems: "center",
+    },
+    badgeText: {
+        fontFamily: "Poppins_600SemiBold",
+        fontSize: 10,
+        color: "#FFFFFF",
+    },
+    
+    // Logout Button
+    logoutButton: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        marginHorizontal: 20,
+        marginTop: 8,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: "#FFEBEE",
+    },
+    logoutContent: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    logoutIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#FFEBEE",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 16,
     },
     logoutText: {
         fontFamily: "Poppins_600SemiBold",
-        fontSize: 16,
+        fontSize: 15,
         color: "#FF6B6B",
+        flex: 1,
     },
 });

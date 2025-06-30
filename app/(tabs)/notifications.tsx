@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,11 +42,9 @@ export default function NotificationsScreen() {
       let newNotifications = response.notifications;
       
       if (append) {
-        // Combinar notificações existentes com novas (sem filtro)
         const combined = [...notifications, ...newNotifications];
         setNotifications(combined);
       } else {
-        // Definir notificações diretamente (sem filtro)
         setNotifications(newNotifications);
       }
       
@@ -98,7 +97,6 @@ export default function NotificationsScreen() {
   };
 
   const handleDeleteNotification = (notification: NotificationData) => {
-    // Pode excluir notificações de pedidos entregues
     const canDelete = notification.type === 'order_delivered' || 
                      (notification.data?.status === 'delivered');
 
@@ -125,13 +123,11 @@ export default function NotificationsScreen() {
     );
   };
 
-  // ✅ FUNÇÃO MELHORADA: Excluir notificação e todas as relacionadas
   const deleteNotificationAndRelated = async (notification: NotificationData) => {
     try {
       const orderId = notification.data?.orderId;
       
       if (!orderId) {
-        console.warn('⚠️ Notificação sem orderId, excluindo apenas ela');
         const success = await notificationService.deleteNotification(notification.id);
         if (success) {
           setNotifications(prev => prev.filter(n => n.id !== notification.id));
@@ -139,30 +135,21 @@ export default function NotificationsScreen() {
         return;
       }
 
-      console.log(`🗑️ Iniciando exclusão de notificações para pedido ${orderId}`);
-      
-      // 1. Coletar todas as notificações relacionadas ao mesmo pedido
       const relatedNotifications = notifications.filter(n => 
         n.data?.orderId === orderId
       );
       
-      console.log(`📋 Encontradas ${relatedNotifications.length} notificações relacionadas ao pedido ${orderId}`);
-      
-      // 2. Excluir todas as notificações relacionadas do backend
       const deletePromises = relatedNotifications.map(async (relatedNotif) => {
         try {
           const success = await notificationService.deleteNotification(relatedNotif.id);
-          console.log(`${success ? '✅' : '❌'} Exclusão de notificação ${relatedNotif.type} (${relatedNotif.id}): ${success ? 'sucesso' : 'falhou'}`);
           return { id: relatedNotif.id, success };
         } catch (error) {
-          console.error(`❌ Erro ao excluir notificação ${relatedNotif.id}:`, error);
           return { id: relatedNotif.id, success: false };
         }
       });
       
       const results = await Promise.all(deletePromises);
       
-      // 3. Remover da lista local apenas as que foram excluídas com sucesso
       const successfullyDeletedIds = results
         .filter(result => result.success)
         .map(result => result.id);
@@ -171,20 +158,10 @@ export default function NotificationsScreen() {
         setNotifications(prev => 
           prev.filter(n => !successfullyDeletedIds.includes(n.id))
         );
-        
-        console.log(`✅ ${successfullyDeletedIds.length} notificações removidas da lista local`);
-      }
-      
-      // 4. Mostrar feedback ao usuário
-      if (successfullyDeletedIds.length === relatedNotifications.length) {
-        console.log(`✅ Todas as notificações do pedido ${orderId} foram excluídas com sucesso`);
-      } else {
-        console.warn(`⚠️ Algumas notificações não puderam ser excluídas`);
-        Alert.alert('Aviso', 'Algumas notificações não puderam ser excluídas.');
       }
       
     } catch (error) {
-      console.error('❌ Erro geral ao excluir notificações:', error);
+      console.error('Erro ao excluir notificações:', error);
       Alert.alert('Erro', 'Não foi possível excluir a notificação.');
     }
   };
@@ -222,13 +199,13 @@ export default function NotificationsScreen() {
       case 'order_shipped':
         return '#9B59B6';
       case 'order_delivered':
-        return '#27AE60';
+        return '#6CC51D'; // Alterado de #2ECC71 para #6CC51D
       case 'product':
         return '#E67E22';
       case 'promotion':
         return '#E74C3C';
       default:
-        return '#95A5A6';
+        return '#7F8C8D';
     }
   };
 
@@ -264,15 +241,12 @@ export default function NotificationsScreen() {
           onPress={() => handleNotificationPress(item)}
           activeOpacity={0.8}
         >
-          {/* Icon */}
-          <View style={[
-            styles.iconContainer,
-            { backgroundColor: getNotificationColor(item.type) }
-          ]}>
+          {/* Icon Container */}
+          <View style={styles.iconContainer}>
             <Ionicons 
               name={getNotificationIcon(item.type) as any} 
               size={20} 
-              color="#FFFFFF" 
+              color={getNotificationColor(item.type)} 
             />
           </View>
 
@@ -298,14 +272,14 @@ export default function NotificationsScreen() {
           {!item.read && <View style={styles.unreadDot} />}
         </TouchableOpacity>
 
-        {/* Delete button - Only for delivered orders */}
+        {/* Delete button */}
         {canDelete && (
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={() => handleDeleteNotification(item)}
             activeOpacity={0.8}
           >
-            <Ionicons name="trash-outline" size={18} color="#E74C3C" />
+            <Ionicons name="trash-outline" size={16} color="#E74C3C" />
           </TouchableOpacity>
         )}
       </View>
@@ -315,211 +289,267 @@ export default function NotificationsScreen() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#27AE60" />
+        <ActivityIndicator size="large" color="#6CC51D" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Header - Flat UI Style */}
+      {/* Header modernizado (igual ao index.tsx) */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notificações</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerGreeting}>Suas Atualizações 🔔</Text>
+          <Text style={styles.headerTitle}>Notificações</Text>
+        </View>
         {notifications.some(n => !n.read) && (
-          <TouchableOpacity onPress={markAllAsRead} activeOpacity={0.8}>
-            <Text style={styles.markAllRead}>Marcar todas como lidas</Text>
+          <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
+            <Text style={styles.markAllText}>Marcar todas</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#27AE60" />
-          <Text style={styles.loadingText}>Carregando notificações...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={notifications}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id.toString()}
-          refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={onRefresh}
-              colors={['#27AE60']}
-              tintColor="#27AE60"
-            />
-          }
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.1}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="notifications-off-outline" size={80} color="#BDC3C7" />
-              <Text style={styles.emptyTitle}>Nenhuma notificação</Text>
-              <Text style={styles.emptySubtitle}>
-                Você receberá notificações sobre seus pedidos aqui.
-              </Text>
-            </View>
-          }
-          ListFooterComponent={() => (
-            hasMore && notifications.length > 0 ? (
-              <View style={styles.loadingMore}>
-                <ActivityIndicator size="small" color="#27AE60" />
-                <Text style={styles.loadingMoreText}>Carregando mais...</Text>
+      {/* Main Container */}
+      <View style={styles.mainContainer}>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6CC51D" />
+            <Text style={styles.loadingText}>Carregando notificações...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={notifications}
+            renderItem={renderNotification}
+            keyExtractor={(item) => item.id.toString()}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh}
+                colors={['#6CC51D']}
+                tintColor="#6CC51D"
+              />
+            }
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.1}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons name="notifications-off-outline" size={64} color="#6CC51D" />
+                </View>
+                <Text style={styles.emptyTitle}>Nenhuma notificação</Text>
+                <Text style={styles.emptySubtitle}>
+                  Você receberá notificações sobre seus pedidos aqui.
+                </Text>
               </View>
-            ) : null
-          )}
-        />
-      )}
-    </View>
+            }
+            ListFooterComponent={() => (
+              hasMore && notifications.length > 0 ? (
+                <View style={styles.loadingMore}>
+                  <ActivityIndicator size="small" color="#6CC51D" />
+                  <Text style={styles.loadingMoreText}>Carregando mais...</Text>
+                </View>
+              ) : null
+            )}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
-// ...existing styles...
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#ECEFF1', // Flat UI background
+    backgroundColor: "#FFFFFF",
   },
+  mainContainer: {
+    flex: 1,
+    backgroundColor: "#FAFAFA",
+  },
+  
+  // Header modernizado (igual ao index.tsx)
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 10,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 0, // Remove border for flat design
+    backgroundColor: "#FFFFFF",
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerGreeting: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    marginBottom: 2,
   },
   headerTitle: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: "Poppins_700Bold",
     fontSize: 24,
-    color: '#2C3E50',
+    color: "#6CC51D", // Alterado de #2ECC71 para #6CC51D
   },
-  markAllRead: {
-    fontFamily: 'Poppins_500Medium',
+  markAllButton: {
+    backgroundColor: "#E8F8F5",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+  },
+  markAllText: {
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
-    color: '#27AE60',
+    color: "#6CC51D", // Alterado de #2ECC71 para #6CC51D
   },
+  
+  // Loading States
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ECEFF1',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FAFAFA",
   },
   loadingText: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 16,
-    color: '#7F8C8D',
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
     marginTop: 12,
   },
+  
+  // List Container
   listContainer: {
     paddingTop: 16,
     paddingBottom: 20,
   },
+  
+  // Notification Cards (seguindo o padrão do index.tsx)
   notificationCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    marginHorizontal: 20,
     marginBottom: 12,
-    borderRadius: 0, // Flat design - no rounded corners
-    padding: 20,
-    borderLeftWidth: 4, // Flat UI accent
-    borderLeftColor: '#ECEFF1',
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    flexDirection: "row",
+    overflow: "hidden",
   },
   unreadCard: {
-    borderLeftColor: '#27AE60',
-    backgroundColor: '#F8FFF8',
+    borderColor: "#6CC51D", // Alterado de #2ECC71 para #6CC51D
+    backgroundColor: "#F8FFF8",
   },
   notificationContent: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 16,
   },
+  
+  // Icon Container (seguindo o padrão do index.tsx)
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 0, // Flat design - square icon container
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
+  
+  // Text Content
   textContainer: {
     flex: 1,
   },
   title: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
-    color: '#2C3E50',
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#2C3E50",
     marginBottom: 4,
   },
   unreadTitle: {
-    color: '#1A1A1A',
+    color: "#1A1A1A",
   },
   body: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: "Poppins_400Regular",
     fontSize: 14,
-    color: '#7F8C8D',
+    color: "#7F8C8D",
     lineHeight: 20,
     marginBottom: 8,
   },
   date: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: "Poppins_400Regular",
     fontSize: 12,
-    color: '#95A5A6',
+    color: "#95A5A6",
   },
+  
+  // Unread indicator
   unreadDot: {
     width: 8,
     height: 8,
-    borderRadius: 0, // Flat design - square dot
-    backgroundColor: '#27AE60',
-    marginLeft: 12,
-    marginTop: 6,
+    borderRadius: 4,
+    backgroundColor: "#6CC51D", // Alterado de #2ECC71 para #6CC51D
+    alignSelf: "flex-start",
+    marginTop: 8,
+    marginRight: 16,
   },
+  
+  // Delete Button
   deleteButton: {
     width: 44,
-    height: 44,
-    borderRadius: 0, // Flat design
-    backgroundColor: '#ECEFF1',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFEBEE",
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
   },
+  
+  // Empty State (seguindo o padrão do index.tsx)
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 32,
     paddingTop: 120,
   },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
   emptyTitle: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: "Poppins_600SemiBold",
     fontSize: 20,
-    color: '#2C3E50',
-    marginTop: 20,
+    color: "#2C3E50",
     marginBottom: 8,
+    textAlign: "center",
   },
   emptySubtitle: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 16,
-    color: '#7F8C8D',
-    textAlign: 'center',
-    lineHeight: 24,
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    textAlign: "center",
+    lineHeight: 20,
   },
+  
+  // Loading More
   loadingMore: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 20,
   },
   loadingMoreText: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: "Poppins_400Regular",
     fontSize: 14,
-    color: '#7F8C8D',
+    color: "#7F8C8D",
     marginLeft: 8,
   },
 });

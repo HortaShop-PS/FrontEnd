@@ -94,17 +94,19 @@ export default function AddressesScreen() {
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="location-outline" size={80} color="#BDC3C7" />
+    <View style={styles.emptyState}>
+      <View style={styles.emptyIconContainer}>
+        <Ionicons name="location-outline" size={64} color="#6CC51D" />
+      </View>
       <Text style={styles.emptyTitle}>Nenhum endereço cadastrado</Text>
       <Text style={styles.emptyText}>
-        Adicione um endereço para facilitar suas compras
+        Adicione um endereço para facilitar suas compras e entregas
       </Text>
       <TouchableOpacity
         style={styles.addFirstButton}
         onPress={() => router.push('/addresses/add')}
       >
-        <Ionicons name="add" size={20} color="#fff" />
+        <Ionicons name="add" size={20} color="#FFFFFF" />
         <Text style={styles.addFirstButtonText}>Adicionar Primeiro Endereço</Text>
       </TouchableOpacity>
     </View>
@@ -113,7 +115,7 @@ export default function AddressesScreen() {
   const renderAddressItem = (address: Address) => (
     <View key={address.id} style={styles.addressCard}>
       <View style={styles.addressHeader}>
-        <View style={styles.addressIcon}>
+        <View style={styles.addressIconContainer}>
           <Ionicons name="location" size={20} color="#6CC51D" />
         </View>
         <View style={styles.addressInfo}>
@@ -149,7 +151,7 @@ export default function AddressesScreen() {
         )}
         
         <TouchableOpacity
-          style={styles.actionButton}
+          style={[styles.actionButton, styles.editButton]}
           onPress={() => router.push(`/addresses/edit/${address.id}`)}
         >
           <Ionicons name="pencil-outline" size={16} color="#3498DB" />
@@ -157,7 +159,7 @@ export default function AddressesScreen() {
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={styles.actionButton}
+          style={[styles.actionButton, styles.deleteButton]}
           onPress={() => handleDeleteAddress(address)}
         >
           <Ionicons name="trash-outline" size={16} color="#E74C3C" />
@@ -178,20 +180,26 @@ export default function AddressesScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header seguindo padrão flat UI */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#2C3E50" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Meus Endereços</Text>
-        {addresses.length > 0 && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/addresses/add')}
-          >
-            <Ionicons name="add" size={24} color="#6CC51D" />
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#2C3E50" />
           </TouchableOpacity>
-        )}
+        </View>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Endereços</Text>
+        </View>
+        <View style={styles.headerRight}>
+          {addresses.length > 0 && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => router.push('/addresses/add')}
+            >
+              <Ionicons name="add" size={24} color="#6CC51D" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {addresses.length === 0 ? (
@@ -209,15 +217,20 @@ export default function AddressesScreen() {
             />
           }
         >
-          {addresses.map(renderAddressItem)}
-          
-          <TouchableOpacity
-            style={styles.addNewButton}
-            onPress={() => router.push('/addresses/add')}
-          >
-            <Ionicons name="add-circle" size={24} color="#6CC51D" />
-            <Text style={styles.addNewButtonText}>Adicionar Novo Endereço</Text>
-          </TouchableOpacity>
+          <View style={styles.listContainer}>
+            {addresses.map(renderAddressItem)}
+            
+            <TouchableOpacity
+              style={styles.addNewButton}
+              onPress={() => router.push('/addresses/add')}
+            >
+              <View style={styles.addNewIconContainer}>
+                <Ionicons name="add" size={24} color="#6CC51D" />
+              </View>
+              <Text style={styles.addNewButtonText}>Adicionar Novo Endereço</Text>
+              <Ionicons name="chevron-forward" size={20} color="#BDC3C7" />
+            </TouchableOpacity>
+          </View>
 
           <View style={{ height: 50 }} />
         </ScrollView>
@@ -229,13 +242,13 @@ export default function AddressesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAFAFA',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAFAFA',
   },
   loadingText: {
     marginTop: 16,
@@ -243,94 +256,125 @@ const styles = StyleSheet.create({
     color: '#7F8C8D',
     fontFamily: 'Poppins_400Regular',
   },
+
+  // Header seguindo padrão flat UI
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ECF0F1',
+    paddingTop: 10,
+    paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F8F9FA',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
     fontFamily: 'Poppins_700Bold',
-    color: '#2C3E50',
+    fontSize: 20,
+    color: '#6CC51D',
   },
   addButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E8F8F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
+
+  // Container da lista
   scrollView: {
     flex: 1,
-    paddingTop: 16,
   },
-  emptyContainer: {
+  listContainer: {
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+
+  // Empty State seguindo padrão do index.tsx
+  emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 32,
+    paddingTop: 120,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#E8F8F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   emptyTitle: {
-    fontSize: 20,
     fontFamily: 'Poppins_700Bold',
+    fontSize: 20,
     color: '#2C3E50',
-    marginTop: 24,
     textAlign: 'center',
+    marginBottom: 12,
   },
   emptyText: {
-    fontSize: 16,
     fontFamily: 'Poppins_400Regular',
+    fontSize: 16,
     color: '#7F8C8D',
-    marginTop: 12,
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 32,
   },
   addFirstButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#6CC51D',
-    paddingHorizontal: 24,
     paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 32,
+    paddingHorizontal: 24,
+    borderRadius: 25,
   },
   addFirstButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
     fontFamily: 'Poppins_600SemiBold',
-    color: '#fff',
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
+
+  // Address Cards seguindo padrão flat UI
   addressCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 12,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
   addressHeader: {
     flexDirection: 'row',
     marginBottom: 16,
   },
-  addressIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F0F9E8',
+  addressIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E8F8F5',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -341,75 +385,94 @@ const styles = StyleSheet.create({
   addressTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   addressTitle: {
-    fontSize: 16,
     fontFamily: 'Poppins_600SemiBold',
+    fontSize: 16,
     color: '#2C3E50',
     flex: 1,
   },
   defaultBadge: {
     backgroundColor: '#6CC51D',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
     marginLeft: 8,
   },
   defaultBadgeText: {
-    fontSize: 12,
     fontFamily: 'Poppins_600SemiBold',
-    color: '#fff',
+    fontSize: 12,
+    color: '#FFFFFF',
   },
   addressComplement: {
-    fontSize: 14,
     fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
     color: '#7F8C8D',
     marginBottom: 4,
   },
   addressDetails: {
-    fontSize: 14,
     fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
     color: '#7F8C8D',
     marginBottom: 2,
   },
+
+  // Actions seguindo padrão flat
   addressActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
+    backgroundColor: '#E8F8F5',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#ECF0F1',
+    borderColor: '#F0F0F0',
+  },
+  editButton: {
+    backgroundColor: '#EBF3FD',
+  },
+  deleteButton: {
+    backgroundColor: '#FFEBEE',
   },
   actionButtonText: {
-    marginLeft: 6,
-    fontSize: 14,
     fontFamily: 'Poppins_600SemiBold',
+    fontSize: 14,
     color: '#6CC51D',
+    marginLeft: 6,
   },
+
+  // Add New Button seguindo padrão flat
   addNewButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 20,
     paddingVertical: 20,
-    borderRadius: 12,
+    paddingHorizontal: 20,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: '#6CC51D',
     borderStyle: 'dashed',
-    backgroundColor: '#F8F9FA',
+  },
+  addNewIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E8F8F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   addNewButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
     fontFamily: 'Poppins_600SemiBold',
+    fontSize: 16,
     color: '#6CC51D',
+    flex: 1,
   },
 });

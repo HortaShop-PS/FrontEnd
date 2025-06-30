@@ -27,17 +27,18 @@ export default function Index() {
     { id: 2, nome: "Frutas", icone: "nutrition-outline", categoria: "Frutas" },
     { id: 3, nome: "Orgânicos", icone: "flower-outline", categoria: "Orgânicos" },
   ];
-  
+
   const getFullImageUrl = (imageUrl: string) => {
     if (!imageUrl) return null;
-    
+
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
-    
+
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
     return `${API_BASE_URL}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
   };
+
   const loadFeaturedProducts = async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -104,8 +105,8 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <ScrollView 
-        style={styles.mainContainer} 
+      <ScrollView
+        style={styles.mainContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -117,29 +118,35 @@ export default function Index() {
         }
       >
         <View style={styles.container}>
-          {/* Cabeçalho */}
+          {/* Cabeçalho modernizado */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>HortaShop</Text>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Ionicons name="notifications-outline" size={24} color="#333333" />
+            <View style={styles.headerLeft}>
+              <Text style={styles.headerTitle}>HortaShop</Text>
+            </View>
+            <TouchableOpacity style={styles.notificationButton} onPress={() => router.push('/notifications')}>
+              <Ionicons name="notifications-outline" size={22} color="#6CC51D" />
             </TouchableOpacity>
           </View>
 
-          {/* Barra de pesquisa */}
-          <TouchableOpacity 
+          {/* Barra de pesquisa modernizada */}
+          <TouchableOpacity
             style={styles.searchBar}
             onPress={() => router.push('/search')}
           >
-            <Ionicons name="search" size={20} color="#9E9E9E" />
-            <Text style={styles.searchText}>Pesquisar produtos</Text>
+            <View style={styles.searchIconContainer}>
+              <Ionicons name="search" size={20} color="#6CC51D" />
+            </View>
+            <Text style={styles.searchText}>O que você está procurando?</Text>
+            <View style={styles.filterButton}>
+              <Ionicons name="options-outline" size={18} color="#6CC51D" />
+            </View>
           </TouchableOpacity>
-          
-          {/* Seção de categorias */}
+
+          {/* Seção de categorias modernizada */}
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Categorias</Text>
-              {/* Botão "Ver tudo" das categorias pode levar para busca geral */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.viewAllButton}
                 onPress={() =>
                   router.push({
@@ -147,21 +154,20 @@ export default function Index() {
                     params: { category: 'todas' }
                   })
                 }
-                
               >
-                <Text style={styles.viewAllText}>Ver tudo</Text>
-                <Ionicons name="chevron-forward" size={16} color="#6CC51D" />
+                <Text style={styles.viewAllText}>Ver todas</Text>
+                <Ionicons name="arrow-forward" size={16} color="#6CC51D" />
               </TouchableOpacity>
             </View>
-            
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categoriasScrollContent}
             >
               {categorias.map((categoria) => (
-                <TouchableOpacity 
-                  key={categoria.id} 
+                <TouchableOpacity
+                  key={categoria.id}
                   style={styles.categoriaItem}
                   onPress={() =>
                     router.push({
@@ -171,156 +177,96 @@ export default function Index() {
                   }
                 >
                   <View style={styles.categoriaIcone}>
-                    <Ionicons name={categoria.icone as any} size={28} color="#6CC51D" />
+                    <Ionicons name={categoria.icone as any} size={26} color="#6CC51D" />
                   </View>
                   <Text style={styles.categoriaNome}>{categoria.nome}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
-          
-          {/* Banner promocional */}
+
+          {/* Banner promocional modernizado */}
           <View style={styles.bannerContainer}>
             <View style={styles.banner}>
               <View style={styles.bannerContent}>
-                <Text style={styles.bannerTitle}>Produtos Frescos</Text>
-                <Text style={styles.bannerSubtitle}>Diretamente do produtor</Text>
-                <TouchableOpacity style={styles.bannerButton}>
-                  <Text style={styles.bannerButtonText}>Comprar agora</Text>
-                </TouchableOpacity>
+                {/*<View style={styles.bannerBadge}>
+                  <Text style={styles.bannerBadgeText}>OFERTA ESPECIAL</Text>
+                </View>*/}
+                <Text style={styles.bannerTitle}>Produtos Frescos{'\n'}Direto do Campo</Text>
+                <Text style={styles.bannerSubtitle}>Entrega rápida • Qualidade garantida</Text>
+                {/*<TouchableOpacity style={styles.bannerButton}>
+                   <Text style={styles.bannerButtonText}>Comprar agora</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                </TouchableOpacity>*/}
               </View>
               <View style={styles.bannerImageContainer}>
-                {/* Aqui poderia ser adicionada uma imagem */}
+                <View style={styles.bannerCircle1} />
+                <View style={styles.bannerCircle2} />
+                <Ionicons name="leaf" size={60} color="rgba(108, 197, 29, 0.3)" />
               </View>
             </View>
           </View>
-          
-          {/* Seção de produtos em destaque */}
+
+          {/* Seção de todos os produtos modernizada */}
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Produtos em destaque</Text>
-              {/*<TouchableOpacity 
-                style={styles.viewAllButton}
-                
-              >
-               < <Text style={styles.viewAllText}>Ver tudo</Text>
-                Ionicons name="chevron-forward" size={16} color="#6CC51D" />
-              </TouchableOpacity>*/}
+              <Text style={styles.sectionTitle}>🛒 Todos os Produtos</Text>
             </View>
-            
-            <View style={styles.produtosContainer}>
-              {loading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#6CC51D" />
-                </View>
-              ) : error ? (
-                <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle-outline" size={40} color="#FF6B6B" />
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              ) : (
-                <View style={styles.produtosGrid}>
-                  {featuredProducts.map((produto) => (
-                    <TouchableOpacity 
-                      key={produto.id} 
-                      style={styles.produtoCard}
-                      onPress={() => router.push({
-                        pathname: '/productDetails',
-                        params: { id: produto.id }
-                      })}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.produtoImageContainer}>
-                        {produto.isNew && (
-                          <View style={styles.newBadge}>
-                            <Text style={styles.newBadgeText}>Novo</Text>
-                          </View>
-                        )}
-                        <Image 
-                          source={{ uri: `${produto.imageUrl}` }}  
-                          style={styles.produtoImagem} 
-                          resizeMode="cover" 
-                          defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}
-                        />
-                      </View>
-                      <View style={styles.produtoInfo}>
-                        <Text style={styles.produtoNome} numberOfLines={1}>{produto.name}</Text>
-                        <View style={styles.produtoPrecoContainer}>
-                          <Text style={styles.produtoPreco}>
-                            R$ {produto.price.toFixed(2).replace('.', ',')}
-                          </Text>
-                          <Text style={styles.produtoUnidade}>/{produto.unit}</Text>
-                        </View>
-                        <TouchableOpacity style={styles.addToCartButton}>
-                          <Ionicons name="add" size={18} color="#FFFFFF" />
-                        </TouchableOpacity>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
-          
-          {/* Seção de todos os produtos */}
-          <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Todos os Produtos</Text>
-              {/* <TouchableOpacity 
-                style={styles.viewAllButton}
-                onPress={() => router.push('/search')}
-              >
-                <Text style={styles.viewAllText}>Ver tudo</Text>
-                <Ionicons name="chevron-forward" size={16} color="#6CC51D" />
-              </TouchableOpacity> */}
-            </View>
-            
+
             <View style={styles.produtosContainer}>
               {loadingAll ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color="#6CC51D" />
+                  <Text style={styles.loadingText}>Carregando produtos...</Text>
                 </View>
               ) : errorAll ? (
                 <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle-outline" size={40} color="#FF6B6B" />
+                  <Ionicons name="alert-circle-outline" size={48} color="#E74C3C" />
                   <Text style={styles.errorText}>{errorAll}</Text>
+                  <TouchableOpacity style={styles.retryButton} onPress={() => loadAllProducts()}>
+                    <Text style={styles.retryButtonText}>Tentar novamente</Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
                 <View style={styles.produtosGrid}>
                   {allProducts.map((produto) => (
-                    <TouchableOpacity 
-                      key={produto.id} 
+                    <TouchableOpacity
+                      key={produto.id}
                       style={styles.produtoCard}
                       onPress={() => router.push({
                         pathname: '/productDetails',
                         params: { id: produto.id }
                       })}
-                      activeOpacity={0.7}
+                      activeOpacity={0.8}
                     >
                       <View style={styles.produtoImageContainer}>
                         {produto.isNew && (
                           <View style={styles.newBadge}>
-                            <Text style={styles.newBadgeText}>Novo</Text>
+                            <Text style={styles.newBadgeText}>NOVO</Text>
                           </View>
                         )}
-                        <Image 
-                          source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${produto.imageUrl}` }}  
-                          style={styles.produtoImagem} 
-                          resizeMode="cover" 
+                        <Image
+                          source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${produto.imageUrl}` }}
+                          style={styles.produtoImagem}
+                          resizeMode="cover"
                           defaultSource={require('../../assets/images/logo/hortaShop_sem_fundo.png')}
                         />
+                        {/*<TouchableOpacity style={styles.favoriteButtonSmall}>
+                          <Ionicons name="heart-outline" size={16} color="#E74C3C" />
+                        </TouchableOpacity>*/}
                       </View>
                       <View style={styles.produtoInfo}>
-                        <Text style={styles.produtoNome} numberOfLines={1}>{produto.name}</Text>
+                        <Text style={styles.produtoNome} numberOfLines={2}>{produto.name}</Text>
                         <View style={styles.produtoPrecoContainer}>
                           <Text style={styles.produtoPreco}>
                             R$ {produto.price.toFixed(2).replace('.', ',')}
                           </Text>
                           <Text style={styles.produtoUnidade}>/{produto.unit}</Text>
                         </View>
+                        {/* 
                         <TouchableOpacity style={styles.addToCartButton}>
                           <Ionicons name="add" size={18} color="#FFFFFF" />
-                        </TouchableOpacity>
+                        </TouchableOpacity>*/}
                       </View>
                     </TouchableOpacity>
                   ))}
@@ -334,7 +280,6 @@ export default function Index() {
   );
 }
 
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -342,142 +287,304 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FAFAFA",
   },
   container: {
     flex: 1,
     paddingBottom: 20,
   },
+  // Header modernizado
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 1,
-    paddingBottom: 15,
+    paddingTop: 10,
+    paddingBottom: 20,
+    backgroundColor: "#FAFAFA"
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerGreeting: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    marginBottom: 2,
   },
   headerTitle: {
     fontFamily: "Poppins_700Bold",
-    fontSize: 22,
+    fontSize: 24,
     color: "#6CC51D",
   },
   notificationButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F5F5F5",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F8F9FA",
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
   },
+  notificationDot: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    backgroundColor: "#E74C3C",
+    borderRadius: 4,
+  },
+  // Barra de pesquisa modernizada
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 5,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     marginHorizontal: 20,
-    marginBottom: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    marginBottom: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  searchIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
   searchText: {
     fontFamily: "Poppins_400Regular",
-    fontSize: 14,
-    color: "#9E9E9E",
-    marginLeft: 10,
+    fontSize: 15,
+    color: "#7F8C8D",
+    flex: 1,
+  },
+  filterButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E8F8F5",
+    justifyContent: "center",
+    alignItems: "center",
   },
   sectionContainer: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontFamily: "Poppins_600SemiBold",
-    fontSize: 18,
-    color: "#333333",
+    fontSize: 20,
+    color: "#2C3E50",
   },
   viewAllButton: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
   viewAllText: {
-    fontFamily: "Poppins_400Regular",
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
     color: "#6CC51D",
-    marginRight: 2,
+    marginRight: 4,
   },
+  // Categorias modernizadas
   categoriasScrollContent: {
-    paddingHorizontal: 15,
-    paddingVertical: 5,
+    paddingHorizontal: 20,
+    paddingVertical: 4,
   },
   categoriaItem: {
     alignItems: "center",
-    marginHorizontal: 10,
-    width: 70,
+    marginRight: 20,
+    width: 80,
   },
   categoriaIcone: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#F0F8F0",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
-    
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   categoriaNome: {
-    fontFamily: "Poppins_400Regular",
-    fontSize: 12,
-    color: "#333333",
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
+    color: "#2C3E50",
     textAlign: "center",
   },
+  // Banner modernizado
   bannerContainer: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 28,
   },
   banner: {
     flexDirection: "row",
-    backgroundColor: "#E8F5E9",
-    borderRadius: 10,
-    padding: 16,
-    height: 140,
+    backgroundColor: "#6CC51D",
+    borderRadius: 20,
+    padding: 20,
+    minHeight: 160,
     overflow: "hidden",
+    position: "relative",
   },
   bannerContent: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "space-between",
+    zIndex: 2,
+  },
+  bannerBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  bannerBadgeText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 10,
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
   bannerTitle: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 18,
-    color: "#333333",
-    marginBottom: 4,
+    fontFamily: "Poppins_700Bold",
+    fontSize: 22,
+    color: "#FFFFFF",
+    lineHeight: 28,
+    marginBottom: 8,
   },
   bannerSubtitle: {
     fontFamily: "Poppins_400Regular",
-    fontSize: 13,
-    color: "#666666",
-    marginBottom: 12,
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.9)",
+    marginBottom: 16,
   },
   bannerButton: {
-    backgroundColor: "#6CC51D",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
     alignSelf: "flex-start",
   },
   bannerButtonText: {
     fontFamily: "Poppins_600SemiBold",
-    fontSize: 12,
-    color: "#FFFFFF",
+    fontSize: 14,
+    color: "#6CC51D",
   },
   bannerImageContainer: {
     width: 100,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
   },
+  bannerCircle1: {
+    position: "absolute",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    top: 10,
+  },
+  bannerCircle2: {
+    position: "absolute",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    bottom: 20,
+    right: 10,
+  },
+  // Produtos em destaque modernizados
+  featuredScrollContent: {
+    paddingHorizontal: 20,
+  },
+  featuredCard: {
+    width: 180,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    marginRight: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  featuredImageContainer: {
+    position: "relative",
+    height: 140,
+    backgroundColor: "#F8F9FA",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  featuredImagem: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  favoriteButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  featuredInfo: {
+    padding: 16,
+    position: "relative",
+  },
+  featuredNome: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+    color: "#2C3E50",
+    marginBottom: 8,
+  },
+  featuredPrecoContainer: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 12,
+  },
+  featuredPreco: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 18,
+    color: "#6CC51D",
+  },
+  featuredUnidade: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    color: "#7F8C8D",
+    marginLeft: 4,
+  },
+  featuredAddButton: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    backgroundColor: "#6CC51D",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  // Produtos gerais modernizados
   produtosContainer: {
     paddingHorizontal: 20,
   },
@@ -486,17 +593,36 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  loadingText: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#7F8C8D",
+    marginTop: 12,
+  },
   errorContainer: {
     height: 200,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
   },
   errorText: {
     fontFamily: "Poppins_400Regular",
-    fontSize: 14,
-    color: "#FF6B6B",
+    fontSize: 16,
+    color: "#E74C3C",
     textAlign: "center",
-    marginTop: 10,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: "#6CC51D",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+  },
+  retryButtonText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+    color: "#FFFFFF",
   },
   produtosGrid: {
     flexDirection: "row",
@@ -504,55 +630,70 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   produtoCard: {
-    width: "48%",
+    width: "47%",
     backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    marginBottom: 16,
+    borderRadius: 16,
+    marginBottom: 20,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   produtoImageContainer: {
     position: "relative",
     height: 140,
-    backgroundColor: "#e8f5e9",
+    backgroundColor: "#F8F9FA",
     alignItems: "center",
     justifyContent: "center",
   },
   produtoImagem: {
     width: "100%",
     height: "100%",
-    resizeMode: "contain",
+    resizeMode: "cover",
+  },
+  favoriteButtonSmall: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   newBadge: {
     position: "absolute",
     top: 8,
     left: 8,
-    backgroundColor: "#6CC51D",
+    backgroundColor: "#E74C3C",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 8,
     zIndex: 1,
   },
   newBadgeText: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 10,
     color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
   produtoInfo: {
-    padding: 12,
+    padding: 16,
     position: "relative",
-    backgroundColor: "#f5f5f5",
   },
   produtoNome: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
-    color: "#333333",
+    color: "#2C3E50",
     marginBottom: 6,
+    lineHeight: 20,
   },
   produtoPrecoContainer: {
     flexDirection: "row",
     alignItems: "baseline",
+    marginBottom: 12,
   },
   produtoPreco: {
     fontFamily: "Poppins_700Bold",
@@ -562,17 +703,17 @@ const styles = StyleSheet.create({
   produtoUnidade: {
     fontFamily: "Poppins_400Regular",
     fontSize: 12,
-    color: "#999999",
-    marginLeft: 2,
+    color: "#7F8C8D",
+    marginLeft: 4,
   },
   addToCartButton: {
     position: "absolute",
-    right: 12,
-    bottom: 12,
+    right: 16,
+    bottom: 16,
     backgroundColor: "#6CC51D",
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
